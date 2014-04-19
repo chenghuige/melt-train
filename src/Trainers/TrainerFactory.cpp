@@ -2,9 +2,9 @@
 #include "Trainers/SVM/LinearSVM.h"
 namespace gezi {
 
-TrainerPtr TrainerFactory::CreateTrainer(string name_)
+TrainerPtr TrainerFactory::CreateTrainer(string name)
 {
-	string name = boost::to_lower_copy(name_);
+	boost::to_lower_copy(name);
 	if (name == "linearsvm")
 	{
 		return make_shared<LinearSVM>();
@@ -13,7 +13,7 @@ TrainerPtr TrainerFactory::CreateTrainer(string name_)
 	{
 
 	}*/
-	LOG(WARNING) << name_ << " is not supported now, return nullptr";
+	LOG(WARNING) << name << " is not supported now, return nullptr";
 	return nullptr;
 }
 
