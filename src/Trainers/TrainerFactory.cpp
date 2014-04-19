@@ -4,7 +4,7 @@ namespace gezi {
 
 TrainerPtr TrainerFactory::CreateTrainer(string name)
 {
-	boost::to_lower_copy(name);
+	boost::to_lower(name);
 	if (name == "linearsvm")
 	{
 		return make_shared<LinearSVM>();
