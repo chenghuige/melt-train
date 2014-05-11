@@ -32,8 +32,12 @@ protected:
 
 	virtual void PrepareLabels() override
 	{
-		TrainSetLabels = from(TrainSet.Ratings) 
+		/*TrainSetLabels = from(TrainSet.Ratings)
 			>> select([this](short a) { return (bool)(a >= (dynamic_pointer_cast<BinaryClassificationFastRankArguments>(_args))->smallestPositive	); })
+			>> to_vector();*/
+
+		TrainSetLabels = from(TrainSet.Ratings)
+			>> select([this](short a) { return (bool)(a >= ((BinaryClassificationFastRankArguments*)(_args.get()))->smallestPositive); })
 			>> to_vector();
 	}
 
