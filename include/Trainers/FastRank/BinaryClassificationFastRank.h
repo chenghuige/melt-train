@@ -25,6 +25,13 @@ public:
 	BitArray TrainSetLabels;
 
 protected:
+	virtual PredictorPtr CreatePredictor();
+	{ 
+		//@TODO
+		PredictorPtr ptr; 
+		return ptr;
+	}
+
 	virtual void ParseArgs() override
 	{
 		FastRank::ParseArgs();
