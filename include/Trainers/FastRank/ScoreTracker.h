@@ -21,11 +21,12 @@ namespace gezi {
 
 	class ScoreTracker
 	{
-	protected:
-		dvec& _initScores;
+	public:
 		Dataset& Dataset;
 		string DatasetName;
 		dvec Scores;
+	protected:
+		dvec& _initScores;
 
 	public: 
 		ScoreTracker(ScoreTracker&&) = default;
