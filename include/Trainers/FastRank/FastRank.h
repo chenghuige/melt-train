@@ -54,7 +54,7 @@ namespace gezi {
 			}
 		}
 
-		virtual void CustomizedTrainingIteration(Instances& instances)
+		virtual void CustomizedTrainingIteration()
 		{
 
 		}
