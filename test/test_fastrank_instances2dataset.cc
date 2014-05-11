@@ -25,12 +25,23 @@ DEFINE_string(in, "./data/feature.txt", "input");
 //DEFINE_string(o, "", "output");
 DEFINE_string(type, "simple", "");
 
+#include "TreeLearner.h"
+struct TreeLearner2 : public TreeLearner
+{
+	RegressionTree FitTargets(dvec& targets)
+	{
+		return RegressionTree;
+	}
+};
+
 TEST(fastrank_instances2dataset, func)
 {
 	Noticer nt("instances2dataset");
 	auto instances = create_instances(FLAGS_in);
 	instances.PrintSummary();
 	auto dataSet = InstancesToDataset::Convert(instances);
+
+	TreeLearnerPtr = make_shared<TreeLearner2>();
 }
 
 int main(int argc, char *argv[])
