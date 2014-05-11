@@ -24,6 +24,11 @@ public:
 	BitArray TrainSetLabels;
 
 protected:
+	virtual void ParseArgs() override
+	{
+		FastRank::ParseArgs();
+	}
+
 	virtual void PrepareLabels() override
 	{
 		TrainSetLabels = from(TrainSet.Ratings) 
