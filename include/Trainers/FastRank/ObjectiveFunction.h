@@ -63,6 +63,7 @@ namespace gezi {
 		virtual void GetGradientInOneQuery(int query, const dvec& scores) = 0;
 	};
 
+	typedef shared_ptr<ObjectiveFunction> ObjectiveFunctionPtr;
 }  //----end of namespace gezi
 
 #endif  //----end of OBJECTIVE_FUNCTION_H_

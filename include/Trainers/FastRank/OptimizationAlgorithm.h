@@ -34,15 +34,16 @@ public:
 	}
 
 public:
-	shared_ptr<TreeLearner> TreeLearner; //@TODO unique_ptr就可以了？
-	shared_ptr<ObjectiveFunction> ObjectiveFunction;
+	TreeLearnerPtr TreeLearner = nullptr; 
+	ObjectiveFunctionPtr ObjectiveFunction = nullptr;
 	Ensemble& Ensemble;
 	double Smoothing;
-	vector<ScoreTracker> TrackedScores;
-	ScoreTracker TrainingScores;
+	vector<ScoreTrackerPtr> TrackedScores;
+	ScoreTrackerPtr TrainingScores = nullptr;
 	bool useFastTrainingScoresUpdate = true;
 };
 
+typedef shared_ptr<OptimizationAlgorithm> OptimizationAlgorithmPtr;
 }  //----end of namespace gezi
 
 #endif  //----end of OPTIMIZATION_ALGORITHM_H_

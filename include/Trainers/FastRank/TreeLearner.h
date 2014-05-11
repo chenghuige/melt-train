@@ -42,6 +42,8 @@ namespace gezi {
 
 	};
 
+	typedef shared_ptr<TreeLearner> TreeLearnerPtr;
+
 }  //----end of namespace gezi
 
 #endif  //----end of TREE_LEARNER_H_

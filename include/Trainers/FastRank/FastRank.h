@@ -65,7 +65,7 @@ namespace gezi {
 	protected:
 	private:
 		Ensemble _ensemble;
-		shared_ptr<OptimizationAlgorithm> _optimizationAlgorithm = nullptr;
+		OptimizationAlgorithmPtr _optimizationAlgorithm = nullptr;
 
 		dmat InitTestScores;
 		dvec InitTrainScores;

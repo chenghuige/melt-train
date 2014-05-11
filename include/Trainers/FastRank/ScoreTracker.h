@@ -114,6 +114,7 @@ namespace gezi {
 
 	};
 
+	typedef shared_ptr<ScoreTracker> ScoreTrackerPtr;
 }  //----end of namespace gezi
 
 #endif  //----end of SCORE_TRACKER_H_
