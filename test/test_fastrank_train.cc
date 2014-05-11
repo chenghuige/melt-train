@@ -21,11 +21,14 @@
 using namespace std;
 using namespace gezi;
 DEFINE_int32(level, 0, "min log level");
+DEFINE_string(in, "./data/feature.txt", "input file");
 
 TEST(fastrank_train, func)
 {
 	auto trainer = TrainerFactory::CreateTrainer("fastrank");
 	CHECK_NE((trainer == nullptr), true);
+	auto instances = create_instances(FLAGS_in);
+	trainer->Train(instances);
 }
 
 int main(int argc, char *argv[])
