@@ -35,12 +35,12 @@ namespace gezi {
 		FeatureHistogram(const FeatureHistogram&) = default;
 		FeatureHistogram& operator = (const FeatureHistogram&) = default;
 
-		FeatureHistogram(::Feature& feature, bool useWeights = false)
+		FeatureHistogram(gezi::Feature& feature, bool useWeights = false)
 		{
 			Init(feature, useWeights);
 		}
 
-		void Init(::Feature& feature, bool useWeights = false)
+		void Init(gezi::Feature& feature, bool useWeights = false)
 		{
 			SumMedians = std::numeric_limits<double>::quiet_NaN();
 			SumSquaredMedians = std::numeric_limits<double>::quiet_NaN();
@@ -80,7 +80,7 @@ namespace gezi {
 			return (((40 + (4 * numBins)) + (8 * numBins)) + (hasWeights ? (8 * numBins) : 0));
 		}
 
-		void ReassignFeature(::Feature& feature)
+		void ReassignFeature(gezi::Feature& feature)
 		{
 			if (feature.NumBins() > CountByBin.size())
 			{
