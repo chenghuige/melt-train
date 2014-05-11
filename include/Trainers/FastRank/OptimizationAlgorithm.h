@@ -28,6 +28,12 @@ public:
 	OptimizationAlgorithm(gezi::Ensemble& ensemble, Dataset& trainData, dvec& initTrainScores)
 		:Ensemble(ensemble)
 	{
+		
+	}
+
+	//因为c++的构造函数中不能有虚函数 ConstructScoreTracker 单独提出 和c#不一样
+	virtual void Initialize(Dataset& trainData, dvec& initTrainScores)
+	{
 		TrainingScores = ConstructScoreTracker("train", trainData, initTrainScores);
 		TrackedScores.push_back(TrainingScores);
 	}

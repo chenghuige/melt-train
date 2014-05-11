@@ -108,7 +108,8 @@ namespace gezi {
 		virtual OptimizationAlgorithmPtr ConstructOptimizationAlgorithm()
 		{
 			_optimizationAlgorithm = make_shared<GradientDescent>(_ensemble, TrainSet, InitTrainScores, MakeGradientWrapper());
-				_optimizationAlgorithm->TreeLearner = ConstructTreeLearner();
+			_optimizationAlgorithm->Initialize(TrainSet, InitTrainScores);
+			_optimizationAlgorithm->TreeLearner = ConstructTreeLearner();
 			_optimizationAlgorithm->ObjectiveFunction = ConstructObjFunc();
 			_optimizationAlgorithm->Smoothing = _args->smoothing;
 			return _optimizationAlgorithm;
