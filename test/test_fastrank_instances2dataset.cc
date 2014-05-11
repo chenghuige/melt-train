@@ -45,7 +45,7 @@ TEST(fastrank_instances2dataset, func)
 	auto instances = create_instances(FLAGS_in);
 	instances.PrintSummary();
 	auto dataSet = InstancesToDataset::Convert(instances);
-
+	Pval(dataSet.NumDocs);
 	//TreeLearnerPtr learner = make_shared<TreeLearner2>(dataSet, 20);
 	TreeLearner2 learner(dataSet, 20);
 }
