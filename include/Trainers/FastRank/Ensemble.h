@@ -13,7 +13,7 @@
 
 #ifndef ENSEMBLE_H_
 #define ENSEMBLE_H_
-#include "common_def.h"
+#include "common_util.h"
 #include "RegressionTree.h"
 #include "Dataset.h"
 namespace gezi {
