@@ -22,7 +22,7 @@ namespace gezi {
 	class DocumentPartitioning
 	{
 	public:
-		DocumentPartitioning(RegressionTree tree, Dataset dataset)
+		DocumentPartitioning(RegressionTree& tree, Dataset& dataset)
 			: DocumentPartitioning(dataset.NumDocs, tree.NumLeaves)
 		{
 			vector<ivec> perLeafDocumentLists(tree.NumLeaves);
