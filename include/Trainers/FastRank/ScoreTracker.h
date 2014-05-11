@@ -71,7 +71,6 @@ namespace gezi {
 			{
 				if (Scores.empty())
 				{
-					LOG(INFO) << "init scores with " << Dataset.NumDocs;
 					Scores.resize(Dataset.NumDocs);
 				}
 				else
