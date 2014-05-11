@@ -20,6 +20,7 @@
 #include "OptimizationAlgorithm.h"
 #include "FastRankArguments.h"
 #include "IGradientAdjuster.h"
+#include "GradientDescent.h"
 namespace gezi {
 
 	class FastRank : public Trainer
