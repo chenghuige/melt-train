@@ -25,7 +25,7 @@ public:
 	BitArray TrainSetLabels;
 
 protected:
-	virtual PredictorPtr CreatePredictor();
+	virtual PredictorPtr CreatePredictor()
 	{ 
 		//@TODO
 		PredictorPtr ptr; 
