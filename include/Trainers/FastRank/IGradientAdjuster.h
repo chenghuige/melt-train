@@ -19,7 +19,7 @@ namespace gezi {
 class IGradientAdjuster 
 {
 public:
-	dvec AdjustTargetAndSetWeights(dvec& gradient, ObjectiveFunction& objFunction, dvec& targetWeights) = 0;
+	virtual dvec& AdjustTargetAndSetWeights(dvec& gradient, ObjectiveFunction& objFunction, dvec& targetWeights) = 0;
 protected:
 private:
 
