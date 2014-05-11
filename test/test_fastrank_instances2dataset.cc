@@ -25,7 +25,7 @@ DEFINE_string(in, "./data/feature.txt", "input");
 //DEFINE_string(o, "", "output");
 DEFINE_string(type, "simple", "");
 
-#include "TreeLearner.h"
+#include "Trainers/FastRank/TreeLearner.h"
 struct TreeLearner2 : public TreeLearner
 {
 	RegressionTree FitTargets(dvec& targets)
