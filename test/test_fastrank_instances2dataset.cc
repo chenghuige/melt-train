@@ -35,7 +35,7 @@ struct Base
 {
 	virtual void print()
 	{
-		cout << "base" << endl;
+		LOG(INFO) << "base" << endl;
 	}
 };
 
@@ -43,7 +43,7 @@ struct Derived : public Base
 {
 	virtual void print()
 	{
-		cout << "derived" << endl;
+		LOG(INFO) << "derived" << endl;
 	}
 };
 
@@ -54,10 +54,10 @@ Base create()
 
 TEST(fastrank_instances2dataset, func)
 {
-	Noticer nt("instances2dataset");
+	/*Noticer nt("instances2dataset");
 	auto instances = create_instances(FLAGS_in);
 	instances.PrintSummary();
-	auto dataSet = InstancesToDataset::Convert(instances);
+	auto dataSet = InstancesToDataset::Convert(instances);*/
 
 	Base a = create();
 	a.print();
