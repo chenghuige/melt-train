@@ -16,6 +16,7 @@
 #include "common_util.h"
 #include "FastRank.h"
 #include "BinaryClassificationFastRankArguments.h"
+#include "BinaryClassificationObjectiveFunction.h"
 namespace gezi {
 
 class BinaryClassificationFastRank : public FastRank
