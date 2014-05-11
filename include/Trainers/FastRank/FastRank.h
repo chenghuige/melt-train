@@ -104,7 +104,7 @@ namespace gezi {
 
 		virtual OptimizationAlgorithmPtr ConstructOptimizationAlgorithm()
 		{
-			_optimizationAlgorithm = make_shared<GradientDescent>(_ensemble, TrainSet, InitTrainScores, MakeGradientWrapper())
+			_optimizationAlgorithm = make_shared<GradientDescent>(_ensemble, TrainSet, InitTrainScores, MakeGradientWrapper());
 				_optimizationAlgorithm->TreeLearner = ConstructTreeLearner();
 			_optimizationAlgorithm->ObjectiveFunction = ConstructObjFunc();
 			_optimizationAlgorithm->Smoothing = _args->smoothing;
@@ -117,7 +117,7 @@ namespace gezi {
 
 		virtual TreeLearnerPtr ConstructTreeLearner()
 		{
-			return make_shared<LeastSquaresRegressionTreeLearner>(TrainSet, _args->numLeaves, _args->minInstancesInLeaf, _args->entropyCoefficient, _args->featureFirstUsePenalty, _args->featureReusePenalty, _args->softmaxTemperature, _args->histogramPoolSize, _args->randSeed, _args->splitFraction, _args->filterZeroLambdas, _args->allowDummyRootSplits, _args->gainConfidenceLevel, this.AreTargetsWeighted(), this.BsrMaxTreeOutput());
+			return make_shared<LeastSquaresRegressionTreeLearner>(TrainSet, _args->numLeaves, _args->minInstancesInLeaf, _args->entropyCoefficient, _args->featureFirstUsePenalty, _args->featureReusePenalty, _args->softmaxTemperature, _args->histogramPoolSize, _args->randSeed, _args->splitFraction, _args->filterZeroLambdas, _args->allowDummyRootSplits, _args->gainConfidenceLevel, AreTargetsWeighted(), BsrMaxTreeOutput());
 		}
 
 		bool AreTrainWeightsUsed()
