@@ -18,6 +18,7 @@
 #include "RegressionTree.h"
 #include "ObjectiveFunction.h"
 #include "ScoreTracker.h"
+#include "Ensemble.h"
 namespace gezi {
 
 class OptimizationAlgorithm 
@@ -32,7 +33,7 @@ public:
 		TrackedScores.push_back(TrainingScores);
 	}
 
-public
+public:
 	shared_ptr<TreeLearner> TreeLearner; //@TODO unique_ptr就可以了？
 	shared_ptr<ObjectiveFunction> ObjectiveFunction;
 	Ensemble& Ensemble;
