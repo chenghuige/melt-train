@@ -13,21 +13,21 @@
 
 #ifndef FEATURE_HISTOGRAM_H_
 #define FEATURE_HISTOGRAM_H_
-#include "Feature.h"
+#include "Feature->h"
 namespace gezi {
 
 	class FeatureHistogram
 	{
 	public:
 		ivec CountByBin;
-		bool IsSplittable;
-		double SumMedians;
-		double SumMedianTargetProducts;
-		double SumSquaredMedians;
+		bool IsSplittable = true;
+		double SumMedians = std::numeric_limits<double>::quiet_NaN();
+		double SumMedianTargetProducts = std::numeric_limits<double>::quiet_NaN();
+		double SumSquaredMedians = std::numeric_limits<double>::quiet_NaN();
 		dvec SumTargetsByBin;
 		dvec SumWeightsByBin;
-		int NumFeatureValues;
-		Feature Feature;
+		int NumFeatureValues = 0;
+		Feature* Feature = NULL; 
 
 		FeatureHistogram() = default; 
 		FeatureHistogram(FeatureHistogram&&) = default;
@@ -36,43 +36,42 @@ namespace gezi {
 		FeatureHistogram& operator = (const FeatureHistogram&) = default;
 
 		FeatureHistogram(gezi::Feature& feature, bool useWeights = false)
+			:Feature(&feature), NumFeatureValues(feature.NumBins())
 		{
-			Init(feature, useWeights);
-		}
-
-		void Init(gezi::Feature& feature, bool useWeights = false)
-		{
-			SumMedians = std::numeric_limits<double>::quiet_NaN();
-			SumSquaredMedians = std::numeric_limits<double>::quiet_NaN();
-			SumMedianTargetProducts = std::numeric_limits<double>::quiet_NaN();
-			Feature = feature;
-			NumFeatureValues = feature.NumBins();
 			SumTargetsByBin.resize(NumFeatureValues);
 			CountByBin.resize(NumFeatureValues);
-			IsSplittable = true;
 			if (useWeights)
 			{
 				SumWeightsByBin.resize(NumFeatureValues);
 			}
 		}
 
-		FeatureHistogram(int numBins, dvec& sumTarget, ivec& binCount)
+		void Initialize(gezi::Feature& feature, bool useWeights = false)
 		{
-			SumMedians = std::numeric_limits<double>::quiet_NaN();
-			SumSquaredMedians = std::numeric_limits<double>::quiet_NaN();
-			SumMedianTargetProducts = std::numeric_limits<double>::quiet_NaN();
+			Feature = &feature;
+			NumFeatureValues = feature.NumBins();
+			SumTargetsByBin.resize(NumFeatureValues);
+			CountByBin.resize(NumFeatureValues);
+			if (useWeights)
+			{
+				SumWeightsByBin.resize(NumFeatureValues);
+			}
+		}
+
+		//并行处理@TODO 可能用到 注意swap是否ok 还是需要用shared_ptr
+		FeatureHistogram(int numBins, dvec& sumTarget, ivec& binCount)
+			:NumFeatureValues(numBins)
+		{
 			if (sumTarget.size() != binCount.size())
 			{
-				LOG(FATAL) << "length of input arrays is inconsistent";
+				THROW("length of input arrays is inconsistent");
 			}
 			if (numBins > sumTarget.size())
 			{
-				LOG(FATAL) << "number of bins is greater than length of input array";
+				THROW("number of bins is greater than length of input array");
 			}
-			NumFeatureValues = numBins;
-			SumTargetsByBin = sumTarget;
-			CountByBin = binCount;
-			IsSplittable = true;
+			SumTargetsByBin.swap(sumTarget); 
+			CountByBin.swap(binCount);
 		}
 
 		static int EstimateMemoryUsedForFeatureHistogram(int numBins, bool hasWeights)
@@ -82,11 +81,11 @@ namespace gezi {
 
 		void ReassignFeature(gezi::Feature& feature)
 		{
-			if (feature.NumBins() > CountByBin.size())
+			if (feature->NumBins() > CountByBin.size())
 			{
 				THROW("new feature's bin number is larger than existing array size");
 			}
-			Feature = feature;
+			Feature = &feature;
 			NumFeatureValues = feature.NumBins();
 		}
 
@@ -147,7 +146,7 @@ namespace gezi {
 		void SumupWeighted(int featureIndex, int numDocsInLeaf, double sumTargets, double sumWeights,
 			dvec& outputs, dvec& weights, ivec& docIndices)
 		{
-			SumupInputData input(numDocsInLeaf, sumTargets, sumWeights, outputs, weights, docIndices, Feature.BinMedians);
+			SumupInputData input(numDocsInLeaf, sumTargets, sumWeights, outputs, weights, docIndices, Feature->BinMedians);
 			zeroset(SumTargetsByBin);
 			if (!SumWeightsByBin.empty())
 			{
@@ -155,7 +154,7 @@ namespace gezi {
 			}
 			zeroset(CountByBin);
 			SumMedians = SumSquaredMedians = SumMedianTargetProducts = std::numeric_limits<double>::quiet_NaN();
-			Sumup(Feature.Bins, input);
+			Sumup(Feature->Bins, input);
 		}
 
 	protected:

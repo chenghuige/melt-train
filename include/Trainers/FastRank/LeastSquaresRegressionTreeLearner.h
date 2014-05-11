@@ -260,8 +260,12 @@ namespace gezi {
 				histogramPool[i].resize(TrainData.NumFeatures);
 				for (int j = 0; j < TrainData.NumFeatures; j++)
 				{
-					histogramPool[i][j].Init(TrainData.Features[j], HasWeights());
+					histogramPool[i][j].Initialize(TrainData.Features[j], HasWeights());
 				}
+				/*	for (int j = 0; j < TrainData.NumFeatures; j++)
+					{
+					histogramPool[i].emplace_back(FeatureHistogram(TrainData.Features[j], HasWeights()));
+					}*/
 			}
 			_histogramArrayPool.Initialize(histogramPool, numLeaves - 1);
 
