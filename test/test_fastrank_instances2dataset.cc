@@ -46,7 +46,7 @@ TEST(fastrank_instances2dataset, func)
 	instances.PrintSummary();
 	auto dataSet = InstancesToDataset::Convert(instances);
 
-	TreeLearnerPtr = make_shared<TreeLearner2>(dataSet, 20);
+	TreeLearnerPtr learner = make_shared<TreeLearner2>(dataSet, 20);
 }
 
 int main(int argc, char *argv[])
