@@ -94,8 +94,7 @@ namespace gezi {
 
 		void DebugPrint()
 		{
-			LOG(INFO) << "Per feature gain";
-			cout << setiosflags(ios::left) << setfill(' ') << setw(40) << 
+			VLOG(1) << "Per feature gain\n" <<
 				_ensemble.ToGainSummary(TrainSet.Features);
 		}
 

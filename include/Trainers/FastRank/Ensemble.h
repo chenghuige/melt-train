@@ -135,7 +135,8 @@ namespace gezi {
 			stringstream ss;
 			for (auto item : sortedByGain)
 			{
-				ss << featureList[item.first].Name << "\t" << std::pow(item.second, power) / normalizingFactor << endl;
+				ss << setiosflags(ios::left) << setfill(' ') << setw(40)
+					 << featureList[item.first].Name << "\t" << std::pow(item.second, power) / normalizingFactor << endl;
 			}
 			return ss.str();
 		}
