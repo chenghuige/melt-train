@@ -27,9 +27,9 @@ namespace gezi {
 		dvec SumTargetsByBin;
 		dvec SumWeightsByBin;
 		int NumFeatureValues = 0;
-		Feature* Feature = NULL; 
+		Feature* Feature = NULL;
 
-		FeatureHistogram() = default; 
+		FeatureHistogram() = default;
 		FeatureHistogram(FeatureHistogram&&) = default;
 		FeatureHistogram& operator = (FeatureHistogram&&) = default;
 		FeatureHistogram(const FeatureHistogram&) = default;
@@ -70,7 +70,7 @@ namespace gezi {
 			{
 				THROW("number of bins is greater than length of input array");
 			}
-			SumTargetsByBin.swap(sumTarget); 
+			SumTargetsByBin.swap(sumTarget);
 			CountByBin.swap(binCount);
 		}
 
@@ -123,20 +123,18 @@ namespace gezi {
 			double SumWeights;
 			int TotalCount;
 			dvec Weights;
-			SumupInputData(int TotalCount, double SumTargets, double SumWeights, dvec& Outputs,
-				dvec& Weights, ivec& DocIndices, dvec& BinMedians)
+			SumupInputData(int totalCount, double sumTargets, double sumWeights, dvec& outputs,
+				dvec& weights, ivec& docIndices, dvec& binMedians)
+				:TotalCount(totalCount), SumTargets(sumTargets), SumWeights(sumWeights)
 			{
-				TotalCount = TotalCount;
-				SumTargets = SumTargets;
-				Outputs = Outputs;
-				DocIndices = DocIndices;
-				BinMedians = BinMedians;
-				SumWeights = SumWeights;
-				Weights = Weights;
+				Outputs.swap(outputs);
+				DocIndices.swap(docIndices);
+				BinMedians.swap(binMedians)
+				Weights.swap(weights);
 			}
 		};
 
-		void Sumup(int featureIndex, int numDocsInLeaf, double sumTargets, 
+		void Sumup(int featureIndex, int numDocsInLeaf, double sumTargets,
 			dvec& outputs, ivec& docIndices)
 		{
 			dvec weights;
@@ -248,7 +246,7 @@ namespace gezi {
 			{
 				if (index == input.DocIndices[iDocIndices])
 				{
-					double output = input.Outputs[iDocIndices * 8]; //@TODO why * 8
+					double output = input.Outputs[iDocIndices];
 					SumTargetsByBin[featureBin] += output;
 					CountByBin[featureBin]++;
 					iDocIndices++;
@@ -277,7 +275,7 @@ namespace gezi {
 			{
 				if (index == input.DocIndices[iDocIndices])
 				{
-					double output = input.Outputs[iDocIndices]; 
+					double output = input.Outputs[iDocIndices];
 					SumTargetsByBin[featureBin] += output;
 					totalOutput += output;
 					CountByBin[featureBin]++;
