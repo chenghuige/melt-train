@@ -94,7 +94,9 @@ namespace gezi {
 
 		void DebugPrint()
 		{
-			cout <<_ensemble.ToGainSummary(TrainSet.Features);
+			LOG(INFO) << "Per feature gain";
+			cout << setiosflags(ios::left) << setfill(' ') << setw(40) << 
+				_ensemble.ToGainSummary(TrainSet.Features);
 		}
 
 		virtual void InnerTrain(Instances& instances) override
