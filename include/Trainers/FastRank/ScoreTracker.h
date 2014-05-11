@@ -33,7 +33,7 @@ namespace gezi {
 		ScoreTracker(const ScoreTracker&) = default;
 		ScoreTracker& operator = (const ScoreTracker&) = default;
 
-		ScoreTracker(string datasetName, ::Dataset& set, dvec& initScores)
+		ScoreTracker(string datasetName, gezi::Dataset& set, dvec& initScores)
 			:Dataset(set), DatasetName(datasetName), _initScores(initScores)
 		{
 			InitScores(initScores);

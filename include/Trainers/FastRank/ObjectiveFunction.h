@@ -33,7 +33,7 @@ namespace gezi {
 		dvec _weights;
 
 	public:
-		ObjectiveFunction(::Dataset& dataset, double learningRate, double maxTreeOutput, int gradSamplingRate, bool useBestStepRankingRegressionTree, int randomNumberGeneratorSeed)
+		ObjectiveFunction(gezi::Dataset& dataset, double learningRate, double maxTreeOutput, int gradSamplingRate, bool useBestStepRankingRegressionTree, int randomNumberGeneratorSeed)
 			:Dataset(dataset), _rnd(randomNumberGeneratorSeed)
 		{
 			_learningRate = learningRate;
