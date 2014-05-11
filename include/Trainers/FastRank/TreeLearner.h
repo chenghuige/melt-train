@@ -26,7 +26,7 @@ namespace gezi {
 		DocumentPartitioning Partitioning;
 		Dataset& TrainData;
 		TreeLearner(Dataset& trainData, int numLeaves)
-			:TrainData(trainData), NumLeaves(numLeaves), Partitioning(TrainData.NumDocs, numLeaves)
+			:TrainData(trainData), NumLeaves(numLeaves), Partitioning(trainData.NumDocs, numLeaves)
 		{
 		}
 
