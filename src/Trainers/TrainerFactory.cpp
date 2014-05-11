@@ -29,7 +29,7 @@ TrainerPtr TrainerFactory::CreateTrainer(string name)
 	{
 		LOG(INFO) << "Creating LogisticRegression trainer";
 	}
-	if (name == "binaryneuralnetwork" || name == "neural" || name == "neuralnetwork)
+	if (name == "binaryneuralnetwork" || name == "neural" || name == "neuralnetwork")
 	{
 		LOG(INFO) << "Creating BinaryNeuralNetwork trainer";
 	}
