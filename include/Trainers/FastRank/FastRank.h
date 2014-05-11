@@ -158,9 +158,9 @@ namespace gezi {
 		{
 			int bestIteration = _ensemble.NumTrees();
 			//@TODO
-			/*if (!this.cmd.writeLastEnsemble && (this.EarlyStoppingTest != null))
+			/*if (!cmd.writeLastEnsemble && (EarlyStoppingTest != null))
 			{
-			bestIteration = this.EarlyStoppingTest.BestIteration;
+			bestIteration = EarlyStoppingTest.BestIteration;
 			}*/
 			return bestIteration;
 		}
@@ -180,11 +180,11 @@ namespace gezi {
 			{
 				return InitTrainScores;
 			}
-			if (&set == &this.ValidSet)
+			if (&set == &ValidSet)
 			{
 				return InitValidScores;
 			}
-			for (int i = 0; (!TestSets.empty()) && (i < this.TestSets.size()); i++)
+			for (int i = 0; (!TestSets.empty()) && (i < TestSets.size()); i++)
 			{
 				if (&set == &TestSets[i])
 				{
@@ -192,7 +192,7 @@ namespace gezi {
 					{
 						return _tempScores;
 					}
-					return this.InitTestScores[i];
+					return InitTestScores[i];
 				}
 			}
 			throw new Exception("Queried for unknown set");
@@ -229,7 +229,7 @@ namespace gezi {
 					}
 				}
 			}
-			return this.ComputeScoresSlow(set);
+			return ComputeScoresSlow(set);
 		}
 
 		virtual FastRankArgumentsPtr GetArguments() = 0;
