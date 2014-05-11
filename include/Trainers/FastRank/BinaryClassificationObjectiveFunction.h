@@ -29,7 +29,7 @@ namespace gezi {
 		BitArray& Labels;
 
 	public:
-		BinaryClassificationObjectiveFunction(Dataset& trainSet, BitArray& trainSetLabels,
+		BinaryClassificationObjectiveFunction(::Dataset& trainSet, BitArray& trainSetLabels,
 			BinaryClassificationFastRankArguments& args)
 			: ObjectiveFunction(trainSet, args.learningRate, args.maxTreeOutput, args.derivativesSampleRate, args.bestStepRankingRegressionTrees, args.randSeed), Labels(trainSetLabels)
 		{
