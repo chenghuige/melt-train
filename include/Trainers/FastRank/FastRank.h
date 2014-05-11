@@ -186,7 +186,7 @@ namespace gezi {
 			{
 				return InitValidScores;
 			}
-			for (int i = 0; (!TestSets.empty()) && (i < TestSets.size()); i++)
+			for (size_t i = 0; (!TestSets.empty()) && (i < TestSets.size()); i++)
 			{
 				if (&set == &TestSets[i])
 				{

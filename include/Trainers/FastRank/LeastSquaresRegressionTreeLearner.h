@@ -521,7 +521,7 @@ namespace gezi {
 			double minShiftedGain = (_gainConfidenceInSquaredStandardDeviations <= 0.0) ? 0.0 : ((((_gainConfidenceInSquaredStandardDeviations * leafSplitCandidates.VarianceTargets()) * totalCount) / ((double)(totalCount - 1))) + gainShift);
 			histogram.IsSplittable = false;
 			double minDocsForThis = ((double)_minDocsInLeaf) / trust;
-			for (uint t = 0; t < (histogram.NumFeatureValues - 1); t += 1)
+			for (int t = 0; t < (histogram.NumFeatureValues - 1); t += 1)
 			{
 				sumLTETargets += histogram.SumTargetsByBin[t];
 				if (!histogram.SumWeightsByBin.empty())
