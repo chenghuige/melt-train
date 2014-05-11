@@ -28,6 +28,11 @@ DEFINE_string(type, "simple", "");
 #include "Trainers/FastRank/TreeLearner.h"
 struct TreeLearner2 : public TreeLearner
 {
+	TreeLearner2(Dataset& trainData, int numLeaves)
+		:TreeLearner(trainData, numLeaves)
+	{
+
+	}
 	RegressionTree FitTargets(dvec& targets)
 	{
 		return RegressionTree(20);
@@ -41,7 +46,7 @@ TEST(fastrank_instances2dataset, func)
 	instances.PrintSummary();
 	auto dataSet = InstancesToDataset::Convert(instances);
 
-	TreeLearnerPtr = make_shared<TreeLearner2>();
+	TreeLearnerPtr = make_shared<TreeLearner2>(dataSet, 20);
 }
 
 int main(int argc, char *argv[])
