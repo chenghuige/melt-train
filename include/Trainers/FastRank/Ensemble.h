@@ -100,6 +100,15 @@ namespace gezi {
 			{
 				_trees[i].GainMap(m, normalize);
 			}		
+
+			if (normalize)
+			{
+				for (auto item : m)
+				{
+					item.second /= (double)NumTrees();
+				}
+			}
+
 			return m;
 		}
 

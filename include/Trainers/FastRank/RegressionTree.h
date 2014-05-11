@@ -199,14 +199,6 @@ namespace gezi {
 			{
 				add_value(m, _splitFeature[n], _splitGain[n]);
 			}
-
-			if (normalize)
-			{
-				for (auto item : m)
-				{
-					item.second /= (double)NumTrees();
-				}
-			}
 		}
 	protected:
 	private:
