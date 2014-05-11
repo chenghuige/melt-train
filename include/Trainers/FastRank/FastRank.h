@@ -25,53 +25,220 @@ namespace gezi {
 	{
 	public:
 		Dataset TrainSet;
-
-	/*	enum class OptimizationAlgorithm
-		{
-			GradientDescent,
-			AcceleratedGradientDescent,
-			ConjugateGradientDescent
-		}*/
-
-		struct Arguments
-		{
-			//important
-		
-		};
-
-		FastRank()
-		{
-			ParseArgs();
-		}
-
-		void ParseArgs()
-		{
-			if (_args.histogramPoolSize < 2)
-			{
-				_args.histogramPoolSize = (_args.numLeaves * 2) / 3;
-			}
-			if (_args.histogramPoolSize >(_args.numLeaves - 1))
-			{
-				_args.histogramPoolSize = _args.numLeaves - 1;
-			}
-		}
-
-		virtual void InnerTrain(Instances& instances) override
-		{
-			TrainSet = InstancesToDataset::Convert(instances, _args.maxBins, _args.sparsifyRatio);
-
-
-		}
-	protected:
-	private:
-		Ensemble _ensemble;
-		OptimizationAlgorithmPtr _optimizationAlgorithm = nullptr;
+		vector<Dataset> TestSets;
+		Dataset ValidSet;
 
 		dmat InitTestScores;
 		dvec InitTrainScores;
 		dvec InitValidScores;
 
-		FastRankArguments _args;
+		/*	enum class OptimizationAlgorithm
+			{
+			GradientDescent,
+			AcceleratedGradientDescent,
+			ConjugateGradientDescent
+			}*/
+
+
+		virtual void ParseArgs()
+		{
+			_args = GetArguments();
+			if (_args->histogramPoolSize < 2)
+			{
+				_args->histogramPoolSize = (_args->numLeaves * 2) / 3;
+			}
+			if (_args->histogramPoolSize >(_args->numLeaves - 1))
+			{
+				_args->histogramPoolSize = _args->numLeaves - 1;
+			}
+		}
+
+		virtual void CustomizedTrainingIteration(Instances& instances)
+		{
+
+		}
+
+		void ConvertData(Instances& instances)
+		{
+			TrainSet = InstancesToDataset::Convert(instances, _args->maxBins, _args->sparsifyRatio);
+		}
+
+		void TrainCore()
+		{
+			int numTotalTrees = _args->numTrees;
+			bool revertRandomStart = false;
+			if (_args->randomStart && (Ensemble.NumTrees() < numTotalTrees))
+			{
+				VLOG(1) << "Randomizing start point";
+				(_optimizationAlgorithm->TrainingScores)->RandomizeScores(_args->randSeed, false);
+				revertRandomStart = true;
+			}
+			while (Ensemble.NumTrees < numTotalTrees)
+			{
+				_optimizationAlgorithm->TrainingIteration();
+				CustomizedTrainingIteration();
+				/*	{
+				PrintIterationMessage();
+				PrintTestResults();
+				}*/
+				if (revertRandomStart)
+				{
+					revertRandomStart = false;
+					VLOG(1) << "Reverting random score assignment";
+					(_optimizationAlgorithm->TrainingScores)->RandomizeScores(_args->randSeed, true);
+				}
+				continue;
+			}
+			_optimizationAlgorithm->FinalizeLearning(GetBestIteration());
+		}
+
+		virtual void InnerTrain(Instances& instances) override
+		{
+			ParseArgs();
+			ConvertData(instances);
+			Initialize();
+			TrainCore();
+		}
+
+		virtual OptimizationAlgorithmPtr ConstructOptimizationAlgorithm()
+		{
+			_optimizationAlgorithm = make_shared<GradientDescent>(_ensemble, TrainSet, InitTrainScores, MakeGradientWrapper())
+				_optimizationAlgorithm->TreeLearner = ConstructTreeLearner();
+			_optimizationAlgorithm->ObjectiveFunction = ConstructObjFunc();
+			_optimizationAlgorithm->Smoothing = _args->smoothing;
+			return _optimizationAlgorithm;
+		}
+
+	protected:
+		virtual ObjectiveFunctionPtr ConstructObjFunc() = 0;
+		virtual void InitializeTests() = 0;
+
+		virtual TreeLearnerPtr ConstructTreeLearner()
+		{
+			return make_shared<LeastSquaresRegressionTreeLearner>(TrainSet, _args->numLeaves, _args->minInstancesInLeaf, _args->entropyCoefficient, _args->featureFirstUsePenalty, _args->featureReusePenalty, _args->softmaxTemperature, _args->histogramPoolSize, _args->randSeed, _args->splitFraction, _args->filterZeroLambdas, _args->allowDummyRootSplits, _args->gainConfidenceLevel, this.AreTargetsWeighted(), this.BsrMaxTreeOutput());
+		}
+
+		bool AreTrainWeightsUsed()
+		{
+			return true;
+		}
+
+		bool AreSamplesWeighted()
+		{
+			return (AreTrainWeightsUsed() && (!TrainSet.SampleWeights.empty()));
+		}
+
+		bool AreTargetsWeighted()
+		{
+			if (!AreSamplesWeighted())
+			{
+				return _args->bestStepRankingRegressionTrees;
+			}
+			return true;
+		}
+
+		double BsrMaxTreeOutput()
+		{
+			if (_args->bestStepRankingRegressionTrees)
+			{
+				return _args->maxTreeOutput;
+			}
+			return -1.0;
+		}
+
+		virtual IGradientAdjusterPtr MakeGradientWrapper()
+		{
+			return make_shared<TrivialGradientWrapper>();
+		}
+
+		virtual int GetBestIteration()
+		{
+			int bestIteration = Ensemble.NumTrees();
+			//@TODO
+			/*if (!this.cmd.writeLastEnsemble && (this.EarlyStoppingTest != null))
+			{
+			bestIteration = this.EarlyStoppingTest.BestIteration;
+			}*/
+			return bestIteration;
+		}
+
+		virtual void Initialize()
+		{
+			PrepareLabels();
+			_optimizationAlgorithm = ConstructOptimizationAlgorithm();
+			InitializeTests();
+		}
+
+		virtual void PrepareLabels() = 0;
+
+		dvec& GetInitScores(Dataset& set)
+		{
+			if (&set == &TrainSet)
+			{
+				return InitTrainScores;
+			}
+			if (&set == &this.ValidSet)
+			{
+				return InitValidScores;
+			}
+			for (int i = 0; (!TestSets.empty()) && (i < this.TestSets.size()); i++)
+			{
+				if (&set == &TestSets[i])
+				{
+					if (InitTestScores.empty())
+					{
+						return _tempScores;
+					}
+					return this.InitTestScores[i];
+				}
+			}
+			throw new Exception("Queried for unknown set");
+		}
+
+		dvec ComputeScoresSlow(Dataset& set)
+		{
+			dvec scores(set.NumDocs);
+			Ensemble.GetOutputs(set, scores);
+			dvec& initScores = GetInitScores(set);
+			if (!initScores.empty())
+			{
+				if (scores.size() != initScores.size())
+				{
+					THROW("Length of initscores and scores mismatch");
+				}
+				for (size_t i = 0; i < scores.size(); i++)
+				{
+					scores[i] += initScores[i];
+				}
+			}
+			return scores;
+		}
+
+		dvec ComputeScoresSmart(Dataset& set)
+		{
+			if (!_args->compressEnsemble)
+			{
+				for (ScoreTrackerPtr st : _optimizationAlgorithm->TrackedScores)
+				{
+					if (&(st->Dataset) == &set)
+					{
+						return st.Scores;
+					}
+				}
+			}
+			return this.ComputeScoresSlow(set);
+		}
+
+		virtual FastRankArgumentsPtr GetArguments() = 0;
+	protected:
+		FastRankArgumentsPtr _args;
+	private:
+		Ensemble _ensemble;
+		OptimizationAlgorithmPtr _optimizationAlgorithm = nullptr;
+
+		dvec _tempScores;
+
+		RandomPtr _random = nullptr;
 	};
 
 }  //----end of namespace gezi

@@ -13,17 +13,39 @@
 
 #ifndef BINARY_CLASSIFICATION_FAST_RANK_H_
 #define BINARY_CLASSIFICATION_FAST_RANK_H_
-
+#include "common_util.h"
 #include "FastRank.h"
+#include "BinaryClassificationFastRankArguments.h"
 namespace gezi {
 
 class BinaryClassificationFastRank : public FastRank
 {
 public:
+	BitArray TrainSetLabels;
 
 protected:
-private:
+	virtual void PrepareLabels() override
+	{
+		TrainSetLabels = from(TrainSet.Ratings) 
+			>> select([](short a) { return (bool)(a >= _args->smallestPositive); }) 
+			>> to_vector();
+	}
 
+	virtual ObjectiveFunction ConstructObjFunc() override
+	{
+		return new BinaryClassificationObjectiveFunction(TrainSet, TrainSetLabels, *_args);
+	}
+
+	virtual FastRankArgumentsPtr GetArguments() override
+	{
+		return make_shared<BinaryClassificationFastRankArguments>();
+	}
+
+	virtual void InitializeTests() override
+	{
+
+	}
+private:
 };
 
 }  //----end of namespace gezi

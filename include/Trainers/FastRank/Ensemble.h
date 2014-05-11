@@ -25,7 +25,7 @@ namespace gezi {
 		string _firstInputInitializationContent;
 		vector<RegressionTree> _trees;
 	public:
-		void AddTree(RegressionTree& tree)
+		void AddTree(RegressionTree& tree) //@TODO RegressionTree&& ? python wrapper ok?
 		{
 			_trees.emplace_back(tree);
 		}
@@ -77,6 +77,11 @@ namespace gezi {
 		int NumTrees()
 		{
 			return _trees.size();
+		}
+
+		const RegressionTree& Tree() const
+		{
+			return _trees.back();
 		}
 	};
 

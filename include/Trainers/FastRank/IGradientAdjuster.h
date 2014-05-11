@@ -25,6 +25,7 @@ private:
 
 };
 
+typedef shared_ptr<IGradientAdjuster> IGradientAdjusterPtr;
 }  //----end of namespace gezi
 
 #endif  //----end of I_GRADIENT_ADJUSTER_H_

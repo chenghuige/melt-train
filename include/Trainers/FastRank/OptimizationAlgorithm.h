@@ -19,6 +19,7 @@
 #include "ObjectiveFunction.h"
 #include "ScoreTracker.h"
 #include "Ensemble.h"
+#include "IStepSearch.h"
 namespace gezi {
 
 class OptimizationAlgorithm 
@@ -66,17 +67,46 @@ public:
 
 	virtual void SmoothTree(RegressionTree& tree, double smoothing)
 	{
-		if (smoothing != 0.0)
+		//if (smoothing != 0.0)
 		{//@TODO smooth
 			
 		}
 	}
 
+	RegressionTree& TrainingIteration() = 0;
+
+	virtual void UpdateAllScores(RegressionTree& tree)
+	{
+			for(ScoreTrackerPtr t : TrackedScores)
+			{
+				UpdateScores(t, tree);
+			}
+	}
+
+	virtual void UpdateScores(ScoreTrackerPtr t, RegressionTree& tree)
+	{
+		if (t == TrainingScores)
+		{
+			if (AdjustTreeOutputsOverride != nullptr)
+			{ //@TODO
+			}
+			else
+			{
+				t->AddScores(tree, TreeLearner->Partitioning, 1.0);
+			}
+		}
+		else
+		{
+			t->AddScores(tree, 1.0);
+		}
+	}
+
 public:
+	IStepSearchPtr AdjustTreeOutputsOverride = nullptr;
 	TreeLearnerPtr TreeLearner = nullptr; 
 	ObjectiveFunctionPtr ObjectiveFunction = nullptr;
 	Ensemble& Ensemble;
-	double Smoothing;
+	double Smoothing = 0.0;
 	vector<ScoreTrackerPtr> TrackedScores;
 	ScoreTrackerPtr TrainingScores = nullptr;
 	bool useFastTrainingScoresUpdate = true;

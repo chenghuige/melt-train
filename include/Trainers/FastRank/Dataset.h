@@ -43,7 +43,7 @@ namespace gezi {
 		Dataset& operator = (const Dataset&) = default;
 
 		Dataset(vector<Feature>& features, vector<short>& ratings, dvec& weights)
-			:Features(features), _ratings(ratings), _weights(weights)
+			:Features(features), Ratings(ratings), Weights(weights)
 		{
 			for (auto feature : Features)
 			{
@@ -58,17 +58,21 @@ namespace gezi {
 			return FeatureBin(Features, index);
 		}
 
+		bool Empty()
+		{
+			return Features.empty();
+		}
 	public:
 		int NumDocs;
 		int NumFeatures;
 		vector<Fvec*> FeatureBinMedians;
 		vector<Feature> Features;
-
+		vector<short> Ratings; //二分类 0,1 排序 ndcg 0,1,2,3,4 ?
+		dvec Weights;
 		dvec SampleWeights;
 	protected:
 	private:
-		vector<short> _ratings; //二分类 0,1 排序 ndcg 0,1,2,3,4 ?
-		dvec _weights;
+		
 	};
 
 }  //----end of namespace gezi

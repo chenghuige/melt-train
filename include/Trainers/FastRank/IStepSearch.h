@@ -27,6 +27,7 @@ private:
 
 };
 
+typedef shared_ptr<IStepSearch> IStepSearchPtr;
 }  //----end of namespace gezi
 
 #endif  //----end of I_STEP_SEARCH_H_
