@@ -39,10 +39,12 @@ namespace gezi {
 			{
 				_normalizer = NormalizerFactory::CreateNormalizer(_args.normalizerName);
 			}
+			PVAL((_normalizer == nullptr));
 			if (_args.calibrateOutput)
 			{ 
 				_calibrator = CalibratorFactory::CreateCalibrator(_args.calibratorName);
 			}
+			PVAL((_calibrator == nullptr));
 		}
 	
 		struct Arguments
