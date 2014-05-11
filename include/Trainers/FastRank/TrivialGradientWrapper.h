@@ -15,7 +15,7 @@
 #define TRIVIAL_GRADIENT_WRAPPER_H_
 #include "IGradientAdjuster.h"
 namespace gezi {
-	class TrivialGradientWrapper : IGradientAdjuster
+	class TrivialGradientWrapper : public IGradientAdjuster
 	{
 	public:
 		virtual dvec& AdjustTargetAndSetWeights(dvec& gradient, ObjectiveFunction& objFunction, dvec& targetWeights)
