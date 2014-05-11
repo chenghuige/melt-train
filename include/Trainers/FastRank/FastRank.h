@@ -94,7 +94,7 @@ namespace gezi {
 
 		void DebugPrint()
 		{
-			Pval(Ensemble.ToGainSummary(TrainSet.Features));
+			Pval(_ensemble.ToGainSummary(TrainSet.Features));
 		}
 
 		virtual void InnerTrain(Instances& instances) override
