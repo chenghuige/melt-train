@@ -21,6 +21,7 @@
 #include "FastRankArguments.h"
 #include "IGradientAdjuster.h"
 #include "GradientDescent.h"
+#include "TrivialGradientWrapper.h"
 namespace gezi {
 
 	class FastRank : public Trainer
