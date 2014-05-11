@@ -48,7 +48,9 @@ protected:
 
 	virtual ObjectiveFunctionPtr ConstructObjFunc() override
 	{
-		return make_shared<BinaryClassificationObjectiveFunction>(TrainSet, TrainSetLabels, *(dynamic_pointer_cast<BinaryClassificationFastRankArguments>(_args)));
+		/*return make_shared<BinaryClassificationObjectiveFunction>(TrainSet, TrainSetLabels, *(dynamic_pointer_cast<BinaryClassificationFastRankArguments>(_args)));*/
+
+		return make_shared<BinaryClassificationObjectiveFunction>(TrainSet, TrainSetLabels, *(((BinaryClassificationFastRankArguments*)(_args.get()))));
 	}
 
 	virtual void InitializeTests() override
