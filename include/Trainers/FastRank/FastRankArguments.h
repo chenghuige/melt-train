@@ -27,7 +27,7 @@ struct FastRankArguments
 	double sparsifyRatio = 0.3;//sr|if not big data (large instances num, large feature num can set 0 so to be all dense) that will make running faster
 
 	unsigned randSeed = 0x7b; //rs|controls wether the expermient can reproduce, 0 means not reproduce rngSeed
-	bool randomStart = true; //rst|Training starts from random ordering (determined by /r1)
+	bool randomStart = false; //rst|Training starts from random ordering (determined by /r1)
 	
 	int histogramPoolSize = -1; //|[2, numLeaves - 1]
 
