@@ -51,18 +51,14 @@ namespace gezi {
 		{
 			for (int l = 0; l < tree.NumLeaves; l++)
 			{
-				ivec* pdocuments;
 				int begin;
 				int count;
-				partitioning.ReferenceLeafDocuments(l, pdocuments, begin, count);
+				ivec& documents = partitioning.ReferenceLeafDocuments(l, begin, count);
 				double output = tree.LeafValue(l) * multiplier;
-				ivec& documents = *pdocuments;
 				int end = begin + count;
-//#pragma  omp parallel for
-				Pval3(l, Scores.size(), documents.size());
+#pragma  omp parallel for
 				for (int i = begin; i < end; i++)
 				{
-					Pval(documents[i]);
 					Scores[documents[i]] += output;
 				}
 				SendScoresUpdatedMessage();
