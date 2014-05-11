@@ -27,7 +27,7 @@ namespace gezi {
 		IGradientAdjusterPtr _gradientWrapper; //@TODO
 		dvec _adjustedGradient; //AdjustTargetsAndSetWeights 如果改变了结果 那么返回这个值
 
-		GradientDescent(::Ensemble& ensemble, Dataset& trainData, 
+		GradientDescent(gezi::Ensemble& ensemble, Dataset& trainData, 
 			dvec& initTrainScores, IGradientAdjusterPtr gradientWrapper)
 			: OptimizationAlgorithm(ensemble, trainData, initTrainScores), _gradientWrapper(gradientWrapper)
 		{

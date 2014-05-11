@@ -25,7 +25,7 @@ namespace gezi {
 class OptimizationAlgorithm 
 {
 public:
-	OptimizationAlgorithm(::Ensemble& ensemble, Dataset& trainData, dvec& initTrainScores)
+	OptimizationAlgorithm(gezi::Ensemble& ensemble, Dataset& trainData, dvec& initTrainScores)
 		:Ensemble(ensemble)
 	{
 		TrainingScores = ConstructScoreTracker("train", trainData, initTrainScores);
