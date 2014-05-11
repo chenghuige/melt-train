@@ -29,7 +29,7 @@ DEFINE_string(type, "simple", "");
 #include "Trainers/FastRank/LeastSquaresRegressionTreeLearner.h"
 #include "Trainers/FastRank/Feature.h"
 #include "Trainers/FastRank/FeatureHistogram.h"
-#include "Trainers/FastRank/FastRank.h"
+//#include "Trainers/FastRank/FastRank.h"
 
 struct Base
 {
