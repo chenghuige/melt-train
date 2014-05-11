@@ -73,7 +73,7 @@ public:
 		}
 	}
 
-	RegressionTree& TrainingIteration() = 0;
+	virtual RegressionTree& TrainingIteration() = 0;
 
 	virtual void UpdateAllScores(RegressionTree& tree)
 	{
