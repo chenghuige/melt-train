@@ -27,7 +27,7 @@ protected:
 	virtual void PrepareLabels() override
 	{
 		TrainSetLabels = from(TrainSet.Ratings) 
-			>> select([this](short a) { return (bool)(a >= _args->smallestPositive); }) 
+			>> select([this](short a) { return (bool)(a >= ((BinaryClassificationFastRankArguments*)_args)->smallestPositive); }) 
 			>> to_vector();
 	}
 
