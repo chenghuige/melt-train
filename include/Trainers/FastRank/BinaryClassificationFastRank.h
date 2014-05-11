@@ -33,7 +33,7 @@ protected:
 	virtual void PrepareLabels() override
 	{
 		TrainSetLabels = from(TrainSet.Ratings) 
-			>> select([this](short a) { return (bool)(a >= dynamic_pointer_cast<BinaryClassificationFastRankArguments>(_args)->smallestPositive	); })
+			>> select([this](short a) { return (bool)(a >= (dynamic_pointer_cast<BinaryClassificationFastRankArguments>(_args))->smallestPositive	); })
 			>> to_vector();
 	}
 
@@ -44,7 +44,7 @@ protected:
 
 	virtual ObjectiveFunctionPtr ConstructObjFunc() override
 	{
-		return make_shared<BinaryClassificationObjectiveFunction>(TrainSet, TrainSetLabels, *_args);
+		return make_shared<BinaryClassificationObjectiveFunction>(TrainSet, TrainSetLabels, *(dynamic_pointer_cast<BinaryClassificationFastRankArguments>(_args)));
 	}
 
 	virtual void InitializeTests() override
