@@ -23,6 +23,7 @@
 #include "IGradientAdjuster.h"
 #include "GradientDescent.h"
 #include "TrivialGradientWrapper.h"
+#include "LeastSquaresRegressionTreeLearner.h"
 namespace gezi {
 
 	class FastRank : public Trainer
