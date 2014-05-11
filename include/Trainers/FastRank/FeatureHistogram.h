@@ -13,7 +13,7 @@
 
 #ifndef FEATURE_HISTOGRAM_H_
 #define FEATURE_HISTOGRAM_H_
-#include "Feature->h"
+#include "Feature.h"
 namespace gezi {
 
 	class FeatureHistogram
