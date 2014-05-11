@@ -38,7 +38,7 @@ namespace gezi {
 			RegressionTree tree = TreeLearner->FitTargets(AdjustTargetsAndSetWeights());
 			if (AdjustTreeOutputsOverride == nullptr)
 			{
-				((IStepSearch*)(ObjectiveFunction.get()))->AdjustTreeOutputs(tree, TreeLearner->Partitioning, *TrainingScores);
+				dynamic_pointer_cast<IStepSearch>(ObjectiveFunction)->AdjustTreeOutputs(tree, TreeLearner->Partitioning, *TrainingScores);
 			}
 			else
 			{//@TODO
