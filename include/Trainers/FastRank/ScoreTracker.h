@@ -58,9 +58,11 @@ namespace gezi {
 				double output = tree.LeafValue(l) * multiplier;
 				ivec& documents = *pdocuments;
 				int end = begin + count;
-#pragma  omp parallel for
+//#pragma  omp parallel for
+				Pval3(l, Scores.size(), documents.size());
 				for (int i = begin; i < end; i++)
 				{
+					Pval(documents[i]);
 					Scores[documents[i]] += output;
 				}
 				SendScoresUpdatedMessage();
@@ -73,6 +75,7 @@ namespace gezi {
 			{
 				if (Scores.empty())
 				{
+					LOG(INFO) << "init scores with " << Dataset.NumDocs;
 					Scores.resize(Dataset.NumDocs);
 				}
 				else
@@ -86,6 +89,7 @@ namespace gezi {
 				{
 					THROW("The length of initScores do not match the length of training set");
 				}
+				LOG(INFO) << "init scores with initScores" << initScores.size();
 				Scores = initScores;
 			}
 			SendScoresUpdatedMessage();

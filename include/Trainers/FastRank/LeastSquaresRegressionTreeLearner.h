@@ -429,10 +429,9 @@ namespace gezi {
 			_parentHistogramArray.clear();
 			_histogramArrayPool.Get(0, _smallerChildHistogramArray);
 			_largerChildSplitCandidates.Initialize();
-//#pragma omp parallel for
+#pragma omp parallel for
 			for (int featureIndex = 0; featureIndex < TrainData.NumFeatures; featureIndex++)
 			{
-				Pval(featureIndex);
 				FindBestThresholdForFeature(featureIndex);
 			}
 			FindAndSetBestFeatureForLeaf(_smallerChildSplitCandidates);

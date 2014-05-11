@@ -140,7 +140,6 @@ namespace gezi {
 		void SumupWeighted(int featureIndex, int numDocsInLeaf, double sumTargets, double sumWeights,
 			dvec& outputs, dvec& weights, ivec& docIndices)
 		{
-			Pval(outputs.size());
 			SumupInputData input(numDocsInLeaf, sumTargets, sumWeights, outputs, weights, docIndices, Feature->BinMedians);
 			zeroset(SumTargetsByBin);
 			if (!SumWeightsByBin.empty())
