@@ -82,19 +82,19 @@ namespace gezi {
 			{
 				_optimizationAlgorithm->TrainingIteration();
 				CustomizedTrainingIteration();
-				/*	{
-				PrintIterationMessage();
-				PrintTestResults();
-				}*/
 				if (revertRandomStart)
 				{
 					revertRandomStart = false;
 					VLOG(1) << "Reverting random score assignment";
 					(_optimizationAlgorithm->TrainingScores)->RandomizeScores(_args->randSeed, true);
 				}
-				continue;
 			}
 			_optimizationAlgorithm->FinalizeLearning(GetBestIteration());
+		}
+
+		void DebugPrint()
+		{
+			Pval(Ensemble.ToGainSummary(TrainSet.Features));
 		}
 
 		virtual void InnerTrain(Instances& instances) override
@@ -103,6 +103,7 @@ namespace gezi {
 			ConvertData(instances);
 			Initialize();
 			TrainCore();
+			DebugPrint();
 		}
 
 		virtual OptimizationAlgorithmPtr ConstructOptimizationAlgorithm()

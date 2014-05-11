@@ -185,6 +185,29 @@ namespace gezi {
 			_leafValue[leaf] = value;
 		}
 
+		map<int, double> GainMap(bool normalize = true)
+		{
+			map<int, double> m;
+			GainMap(m);
+			return m;
+		}
+
+		void GainMap(map<int, double>& m, bool normalize = true)
+		{
+			int numNonLeaves = NumLeaves - 1;
+			for (int n = 0; n < numNonLeaves; n++)
+			{
+				add_value(m, _splitFeature[n], _splitGain[n]);
+			}
+
+			if (normalize)
+			{
+				for (auto item : m)
+				{
+					item.second /= (double)NumTrees();
+				}
+			}
+		}
 	protected:
 	private:
 

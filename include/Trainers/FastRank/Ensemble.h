@@ -79,9 +79,51 @@ namespace gezi {
 			return _trees.size();
 		}
 
-		RegressionTree& Tree() 
+		RegressionTree& Tree()
 		{
 			return _trees.back();
+		}
+
+		//统计前prefix棵数目一般用所有的树
+		map<int, double> GainMap(int prefix, bool normalize)
+		{
+			map<int, double> m;
+			if (_trees.empty())
+			{
+				return m;
+			}
+			if ((prefix > NumTrees()) || (prefix < 0))
+			{
+				prefix = NumTrees();
+			}
+			for (int i = 0; i < prefix; i++)
+			{
+				_trees[i].GainMap(m, normalize);
+			}		
+			return m;
+		}
+
+		string ToGainSummary(vector<Feature>& featureList, int prefix = -1, bool includeZeroGainFeatures = true, bool normalize = true)
+		{
+			map<int, double> m = GainMap(prefix, normalize);
+			if (includeZeroGainFeatures)
+			{
+				for (size_t k = 0; k < featureList.size(); k++)
+				{
+					add_value(m, k, 0.0);
+				}
+			}
+			vector<pair<int, double> > sortedByGain = sort_map_by_value_reverse(m);
+			double maxValue = sortedByGain[0].second;
+			double normalizingFactor = (normalize && (maxValue != 0.0)) ? std::sqrt(maxValue) : 1.0;
+			double power = normalize ? 0.5 : 1.0;
+
+			stringstream ss;
+			for (auto item : sortedByGain)
+			{
+				ss << featureList[item.first].Name << "\t" << std::pow(item.second, power) / normalizingFactor << endl;
+			}
+			return ss.str();
 		}
 	};
 
