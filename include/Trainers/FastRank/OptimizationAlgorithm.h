@@ -54,7 +54,7 @@ public:
 			}
 		}
 		ScoreTrackerPtr newTracker = ConstructScoreTracker(name, set, InitScores);
-		TrackedScores.Add(newTracker);
+		TrackedScores.push_back(newTracker);
 		return newTracker;
 	}
 
