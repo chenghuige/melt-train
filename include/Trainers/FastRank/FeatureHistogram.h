@@ -116,21 +116,17 @@ namespace gezi {
 
 		struct SumupInputData
 		{
-			dvec BinMedians;
-			ivec DocIndices;
-			dvec Outputs;
+			dvec& BinMedians;
+			ivec& DocIndices;
+			dvec& Outputs;
+			dvec& Weights;
 			double SumTargets;
 			double SumWeights;
 			int TotalCount;
-			dvec Weights;
 			SumupInputData(int totalCount, double sumTargets, double sumWeights, dvec& outputs,
 				dvec& weights, ivec& docIndices, dvec& binMedians)
-				:TotalCount(totalCount), SumTargets(sumTargets), SumWeights(sumWeights)
+				:TotalCount(totalCount), SumTargets(sumTargets), SumWeights(sumWeights), Outputs(outputs), Weights(weights), DocIndices(docIndices), BinMedians(binMedians)
 			{
-				Outputs.swap(outputs);
-				DocIndices.swap(docIndices);
-				BinMedians.swap(binMedians);
-				Weights.swap(weights);
 			}
 		};
 

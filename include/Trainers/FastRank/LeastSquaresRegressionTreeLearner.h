@@ -225,13 +225,13 @@ namespace gezi {
 		ivec _featureUseCount;
 		bool _filterZeros;
 		double _gainConfidenceInSquaredStandardDeviations;
-		MappedObjectPool<vector<FeatureHistogram> > _histogramArrayPool;
-		vector<FeatureHistogram> _largerChildHistogramArray;
-		LeafSplitCandidates _largerChildSplitCandidates;
 		int _minDocsInLeaf;
 		int _numLeaves;
-		vector<FeatureHistogram> _parentHistogramArray;
 		Random _rand;
+		MappedObjectPool<vector<FeatureHistogram> > _histogramArrayPool;
+		vector<FeatureHistogram> _parentHistogramArray;
+		vector<FeatureHistogram> _largerChildHistogramArray;
+		LeafSplitCandidates _largerChildSplitCandidates;
 		vector<FeatureHistogram> _smallerChildHistogramArray;
 		LeafSplitCandidates _smallerChildSplitCandidates;
 		double _softmaxTemperature;
