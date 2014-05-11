@@ -69,6 +69,8 @@ namespace gezi {
 			}
 		}
 
+		
+
 	protected:
 		virtual void GetGradientInOneQuery(int query, const dvec& scores) override
 		{

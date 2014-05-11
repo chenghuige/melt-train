@@ -41,6 +41,11 @@ protected:
 		return make_shared<BinaryClassificationFastRankArguments>();
 	}
 
+	virtual ObjectiveFunctionPtr ConstructObjFunc() override
+	{
+		return make_shared<BinaryClassificationObjectiveFunction>(TrainSet, TrainSetLabels, *_args);
+	}
+
 	virtual void InitializeTests() override
 	{
 
