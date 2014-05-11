@@ -122,7 +122,12 @@ namespace gezi {
 					add_value(m, k, 0.0);
 				}
 			}
-			vector<pair<int, double> > sortedByGain = sort_map_by_value_reverse(m);
+			
+			//@TODO
+			//vector<pair<int, double> > sortedByGain = sort_map_by_value_reverse(m);
+			//auto sortedByGain = sort_map_by_value_reverse(m);
+			vector<pair<int, double> > sortedByGain;
+			sort_map_by_value_reverse(m, sortedByGain);
 			double maxValue = sortedByGain[0].second;
 			double normalizingFactor = (normalize && (maxValue != 0.0)) ? std::sqrt(maxValue) : 1.0;
 			double power = normalize ? 0.5 : 1.0;
