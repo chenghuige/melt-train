@@ -17,6 +17,7 @@
 #define protected public
 #include "common_util.h"
 #include "Trainers/FastRank/InstancesToDataset.h"
+#include "Prediction/Instances/instances_util.h"
 using namespace std;
 using namespace gezi;
 DEFINE_int32(level, 0, "min log level");
