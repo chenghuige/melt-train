@@ -25,8 +25,6 @@ namespace gezi {
 class OptimizationAlgorithm 
 {
 public:
-	virtual RegressionTree TrainingIteration() = 0;
-
 	OptimizationAlgorithm(::Ensemble& ensemble, Dataset& trainData, dvec& initTrainScores)
 		:Ensemble(ensemble)
 	{
@@ -34,6 +32,7 @@ public:
 		TrackedScores.push_back(TrainingScores);
 	}
 
+	virtual RegressionTree& TrainingIteration() = 0;
 	virtual ScoreTrackerPtr ConstructScoreTracker(string name, Dataset set, dvec& InitScores) = 0;
 
 	virtual void FinalizeLearning(int bestIteration)
@@ -72,8 +71,6 @@ public:
 			
 		}
 	}
-
-	virtual RegressionTree& TrainingIteration() = 0;
 
 	virtual void UpdateAllScores(RegressionTree& tree)
 	{
