@@ -80,6 +80,7 @@ namespace gezi {
 			}
 			while (_ensemble.NumTrees() < numTotalTrees)
 			{
+				Pval(_ensemble.NumTrees());
 				_optimizationAlgorithm->TrainingIteration();
 				CustomizedTrainingIteration();
 				/*	{
