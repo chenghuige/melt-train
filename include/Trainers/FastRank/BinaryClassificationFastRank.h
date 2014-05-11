@@ -31,11 +31,6 @@ protected:
 			>> to_vector();
 	}
 
-	virtual ObjectiveFunction ConstructObjFunc() override
-	{
-		return new BinaryClassificationObjectiveFunction(TrainSet, TrainSetLabels, *_args);
-	}
-
 	virtual FastRankArgumentsPtr GetArguments() override
 	{
 		return make_shared<BinaryClassificationFastRankArguments>();

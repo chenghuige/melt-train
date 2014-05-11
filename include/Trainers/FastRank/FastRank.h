@@ -225,7 +225,7 @@ namespace gezi {
 				{
 					if (&(st->Dataset) == &set)
 					{
-						return st.Scores;
+						return st->Scores;
 					}
 				}
 			}
