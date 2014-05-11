@@ -14,6 +14,7 @@
 #ifndef TRAINERS__FAST_RANK__FAST_RANK_H_
 #define TRAINERS__FAST_RANK__FAST_RANK_H_
 #include "common_def.h"
+#include "InstancesToDataset.h"
 #include "MLCore/Trainer.h"
 #include "Dataset.h"
 #include "Ensemble.h"
