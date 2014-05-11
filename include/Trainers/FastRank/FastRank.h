@@ -68,13 +68,13 @@ namespace gezi {
 		{
 			int numTotalTrees = _args->numTrees;
 			bool revertRandomStart = false;
-			if (_args->randomStart && (Ensemble.NumTrees() < numTotalTrees))
+			if (_args->randomStart && (_ensemble.NumTrees() < numTotalTrees))
 			{
 				VLOG(1) << "Randomizing start point";
 				(_optimizationAlgorithm->TrainingScores)->RandomizeScores(_args->randSeed, false);
 				revertRandomStart = true;
 			}
-			while (Ensemble.NumTrees < numTotalTrees)
+			while (_ensemble.NumTrees() < numTotalTrees)
 			{
 				_optimizationAlgorithm->TrainingIteration();
 				CustomizedTrainingIteration();
@@ -154,7 +154,7 @@ namespace gezi {
 
 		virtual int GetBestIteration()
 		{
-			int bestIteration = Ensemble.NumTrees();
+			int bestIteration = _ensemble.NumTrees();
 			//@TODO
 			/*if (!this.cmd.writeLastEnsemble && (this.EarlyStoppingTest != null))
 			{
@@ -199,7 +199,7 @@ namespace gezi {
 		dvec ComputeScoresSlow(Dataset& set)
 		{
 			dvec scores(set.NumDocs);
-			Ensemble.GetOutputs(set, scores);
+			_ensemble.GetOutputs(set, scores);
 			dvec& initScores = GetInitScores(set);
 			if (!initScores.empty())
 			{
