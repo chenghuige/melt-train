@@ -129,7 +129,7 @@ namespace gezi {
 			{
 				Outputs.swap(outputs);
 				DocIndices.swap(docIndices);
-				BinMedians.swap(binMedians)
+				BinMedians.swap(binMedians);
 				Weights.swap(weights);
 			}
 		};
