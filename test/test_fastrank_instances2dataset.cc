@@ -47,10 +47,6 @@ struct Derived : public Base
 	}
 };
 
-Base create()
-{
-	return Derived();
-}
 
 TEST(fastrank_instances2dataset, func)
 {
@@ -59,7 +55,8 @@ TEST(fastrank_instances2dataset, func)
 	instances.PrintSummary();
 	auto dataSet = InstancesToDataset::Convert(instances);*/
 
-	Base a = create();
+	Derived d;
+	Base& a = d;
 	a.print();
 }
 
