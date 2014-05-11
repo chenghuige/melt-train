@@ -81,7 +81,7 @@ namespace gezi {
 
 		void ReassignFeature(gezi::Feature& feature)
 		{
-			if (feature->NumBins() > CountByBin.size())
+			if (feature.NumBins() > CountByBin.size())
 			{
 				THROW("new feature's bin number is larger than existing array size");
 			}
