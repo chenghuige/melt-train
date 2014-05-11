@@ -30,7 +30,7 @@ struct TreeLearner2 : public TreeLearner
 {
 	RegressionTree FitTargets(dvec& targets)
 	{
-		return RegressionTree();
+		return RegressionTree(20);
 	}
 };
 
