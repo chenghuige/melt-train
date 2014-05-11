@@ -63,8 +63,8 @@ namespace gezi {
 			return Features.empty();
 		}
 	public:
-		int NumDocs;
-		int NumFeatures;
+		int NumDocs = 0;
+		int NumFeatures = 0;
 		vector<Fvec*> FeatureBinMedians;
 		vector<Feature> Features;
 		vector<short> Ratings; //¶ş·ÖÀà 0,1 ÅÅĞò ndcg 0,1,2,3,4 ?
