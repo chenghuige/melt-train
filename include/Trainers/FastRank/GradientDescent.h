@@ -49,7 +49,7 @@ namespace gezi {
 				SmoothTree(tree, Smoothing);
 				useFastTrainingScoresUpdate = false;
 			}
-			this.UpdateAllScores(tree);
+			UpdateAllScores(tree);
 			Ensemble.AddTree(tree);
 			return Ensemble.Tree();
 		}
