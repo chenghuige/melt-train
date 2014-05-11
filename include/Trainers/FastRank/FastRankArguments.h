@@ -34,7 +34,7 @@ struct FastRankArguments
 	int maxTreeOutput = 100; //mo|Upper bound on absolute value of single tree output
 
 	bool affineRegressionTrees = false; //art|Use affine regression trees
-	bool allowDummyRootSplits = false; //dummies|When a root split is impossible, construct a dummy empty tree rather than fail
+	bool allowDummyRootSplits = true; //dummies|When a root split is impossible, construct a dummy empty tree rather than fail
 
 	double baggingTrainFraction = 0.7;//bagfrac|Percentage of training queries used in each bag
 	bool bestStepRankingRegressionTrees = false; //bsr|Use best ranking step trees

@@ -290,7 +290,7 @@ namespace gezi {
 			FindBestSplitOfRoot(targets);
 			int bestLeaf = 0;
 			SplitInfo rootSplitInfo = _bestSplitInfoPerLeaf[0];
-			if (rootSplitInfo.Gain = -std::numeric_limits<double>::infinity())
+			if (rootSplitInfo.Gain == -std::numeric_limits<double>::infinity())
 			{
 				if (!_allowDummies)
 				{
