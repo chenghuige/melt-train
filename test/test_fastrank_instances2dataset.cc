@@ -29,24 +29,8 @@ DEFINE_string(type, "simple", "");
 #include "Trainers/FastRank/LeastSquaresRegressionTreeLearner.h"
 #include "Trainers/FastRank/Feature.h"
 #include "Trainers/FastRank/FeatureHistogram.h"
-//#include "Trainers/FastRank/FastRank.h"
-
-struct Base
-{
-	virtual void print()
-	{
-		LOG(INFO) << "base" << endl;
-	}
-};
-
-struct Derived : public Base
-{
-	virtual void print()
-	{
-		LOG(INFO) << "derived" << endl;
-	}
-};
-
+#include "Trainers/FastRank/FastRank.h"
+#include "Trainers/FastRank/BinaryClassificationFastRank.h"
 
 TEST(fastrank_instances2dataset, func)
 {
@@ -54,10 +38,6 @@ TEST(fastrank_instances2dataset, func)
 	auto instances = create_instances(FLAGS_in);
 	instances.PrintSummary();
 	auto dataSet = InstancesToDataset::Convert(instances);*/
-
-	Derived d;
-	Base& a = d;
-	a.print();
 }
 
 int main(int argc, char *argv[])

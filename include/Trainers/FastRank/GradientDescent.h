@@ -34,8 +34,14 @@ public:
 
 	virtual dvec& GetGradient()
 	{
-		return GetGradient(base.TrainingScores.Scores);
+		return ObjectiveFunction.GetGradient(TrainingScores->Scores);
 	}
+
+	virtual ScoreTrackerPtr ConstructScoreTracker(string name, Dataset set, dvec& initScores) override
+	{
+		return make_shared<ScoreTracker>(name, set, initScores);
+	}
+
 
 protected:
 private:

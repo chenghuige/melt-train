@@ -33,6 +33,45 @@ public:
 		TrackedScores.push_back(TrainingScores);
 	}
 
+	virtual ScoreTrackerPtr ConstructScoreTracker(string name, Dataset set, dvec& InitScores) = 0;
+
+	virtual void FinalizeLearning(int bestIteration)
+	{
+		if (bestIteration != Ensemble.NumTrees())
+		{
+			Ensemble.RemoveAfter(std::max(bestIteration, 0));
+			TrackedScores.clear();
+		}
+	}
+
+	ScoreTrackerPtr GetScoreTracker(string name, Dataset& set, dvec& InitScores)
+	{
+		for(ScoreTrackerPtr st : TrackedScores)
+		{
+			if (&(st->Dataset) == &set)
+			{
+				return st;
+			}
+		}
+		ScoreTrackerPtr newTracker = ConstructScoreTracker(name, set, InitScores);
+		TrackedScores.Add(newTracker);
+		return newTracker;
+	}
+
+	void SetTrainingData(Dataset& trainData, dvec& initTrainScores)
+	{
+		TrainingScores = ConstructScoreTracker("train", trainData, initTrainScores);
+		TrackedScores[0] = TrainingScores;
+	}
+
+	virtual void SmoothTree(RegressionTree& tree, double smoothing)
+	{
+		if (smoothing != 0.0)
+		{//@TODO smooth
+			
+		}
+	}
+
 public:
 	TreeLearnerPtr TreeLearner = nullptr; 
 	ObjectiveFunctionPtr ObjectiveFunction = nullptr;

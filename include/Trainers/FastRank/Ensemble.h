@@ -73,6 +73,11 @@ namespace gezi {
 		{
 			_trees.erase(_trees.begin() + index);
 		}
+
+		int NumTrees()
+		{
+			return _trees.size();
+		}
 	};
 
 }  //----end of namespace gezi
