@@ -16,9 +16,7 @@
 #define private public
 #define protected public
 #include "common_util.h"
-#include "Prediction/Instances/instances_util.h"
 #include "Trainers/FastRank/InstancesToDataset.h"
-#include "Trainers/FastRank/RegressionTree.h"
 using namespace std;
 using namespace gezi;
 DEFINE_int32(level, 0, "min log level");
@@ -26,18 +24,12 @@ DEFINE_string(in, "./data/feature.txt", "input");
 //DEFINE_string(o, "", "output");
 DEFINE_string(type, "simple", "");
 
-#include "Trainers/FastRank/LeastSquaresRegressionTreeLearner.h"
-#include "Trainers/FastRank/Feature.h"
-#include "Trainers/FastRank/FeatureHistogram.h"
-#include "Trainers/FastRank/FastRank.h"
-#include "Trainers/FastRank/BinaryClassificationFastRank.h"
-
 TEST(fastrank_instances2dataset, func)
 {
-	/*Noticer nt("instances2dataset");
+	Noticer nt("instances2dataset");
 	auto instances = create_instances(FLAGS_in);
 	instances.PrintSummary();
-	auto dataSet = InstancesToDataset::Convert(instances);*/
+	auto dataSet = InstancesToDataset::Convert(instances);
 }
 
 int main(int argc, char *argv[])

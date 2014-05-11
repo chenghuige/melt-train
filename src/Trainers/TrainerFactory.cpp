@@ -6,13 +6,13 @@ namespace gezi {
 TrainerPtr TrainerFactory::CreateTrainer(string name)
 {
 	boost::to_lower(name);
-	if (name == "linearsvm" || name == "svm)
+	if (name == "linearsvm" || name == "svm")
 	{
 		LOG(INFO) << "Creating LinearSVM trainer";
 		return make_shared<LinearSVM>();
 	}
 	if (name == "fastrankbinaryclassification" ||
-		name = "fastrank" || name == "gbdt")
+		name == "fastrank" || name == "gbdt")
 	{
 		LOG(INFO) << "Creating FastRank/GBDT trainer";
 		return make_shared<BinaryClassificationFastRank>();
