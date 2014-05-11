@@ -18,6 +18,7 @@
 #include "common_util.h"
 //#include "Trainers/FastRank/BinaryClassificationFastRank.h"
 #include "MLCore/TrainerFactory.h"
+#include "Prediction/Instances/instances_util.h"
 using namespace std;
 using namespace gezi;
 DEFINE_int32(level, 0, "min log level");
