@@ -79,7 +79,7 @@ namespace gezi {
 			return _trees.size();
 		}
 
-		const RegressionTree& Tree() const
+		RegressionTree& Tree() 
 		{
 			return _trees.back();
 		}
