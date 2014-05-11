@@ -21,7 +21,7 @@ namespace gezi {
 class IStepSearch 
 {
 public:
-	void AdjustTreeOutputs(RegressionTree& tree, DocumentPartitioning& partitioning, ScoreTracker& trainingScores) = 0;
+	virtual void AdjustTreeOutputs(RegressionTree& tree, DocumentPartitioning& partitioning, ScoreTracker& trainingScores) = 0;
 protected:
 private:
 
