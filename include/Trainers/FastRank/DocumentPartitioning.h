@@ -57,7 +57,9 @@ namespace gezi {
 		{
 			_leafBegin.resize(maxLeaves);
 			_leafCount.resize(maxLeaves);
+			Pval(numDocuments);
 			_documents.resize(numDocuments);
+			Pval(_documents.size());
 		}
 
 		DocumentPartitioning(ivec& documents, int numDocuments, int maxLeaves)
@@ -70,6 +72,8 @@ namespace gezi {
 			{
 				_initialDocuments[d] = documents[d];
 			}
+			Pval(numDocuments);
+			Pval(_documents.size());
 		}
 
 		void Initialize()
@@ -190,8 +194,9 @@ namespace gezi {
 			return (mean / sumWeight);
 		}
 
-		void ReferenceLeafDocuments(int leaf, ivec* pdocuments, int& begin, int& count)
+		void ReferenceLeafDocuments(int leaf, ivec*& pdocuments, int& begin, int& count)
 		{
+			Pval(_documents.size());
 			pdocuments = &_documents;
 			begin = _leafBegin[leaf];
 			count = _leafCount[leaf];
