@@ -69,7 +69,7 @@ namespace gezi {
 			}
 		}
 
-		
+
 
 	protected:
 		virtual void GetGradientInOneQuery(int query, const dvec& scores) override
@@ -89,9 +89,8 @@ namespace gezi {
 			_gradient[query] = response * recip;
 			_weights[query] = (absResponse * ((2.0 * sigmoidParam) - absResponse)) * recip;
 		}
-	}
 
-};
+	};
 
 }  //----end of namespace gezi
 
