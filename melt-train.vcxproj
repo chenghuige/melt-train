@@ -66,23 +66,36 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="include\Trainers\FastRank\BinaryClassificationFastRank.h" />
+    <ClInclude Include="include\Trainers\FastRank\BinaryClassificationFastRankArguments.h" />
+    <ClInclude Include="include\Trainers\FastRank\BinaryClassificationObjectiveFunction.h" />
     <ClInclude Include="include\Trainers\FastRank\Dataset.h" />
     <ClInclude Include="include\Trainers\FastRank\DerivedFeature.h" />
     <ClInclude Include="include\Trainers\FastRank\DocumentPartitioning.h" />
     <ClInclude Include="include\Trainers\FastRank\Ensemble.h" />
     <ClInclude Include="include\Trainers\FastRank\FastRank.h" />
+    <ClInclude Include="include\Trainers\FastRank\FastRankArguments.h" />
     <ClInclude Include="include\Trainers\FastRank\Feature.h" />
+    <ClInclude Include="include\Trainers\FastRank\FeatureHistogram.h" />
     <ClInclude Include="include\Trainers\FastRank\GradientDescent.h" />
+    <ClInclude Include="include\Trainers\FastRank\IGradientAdjuster.h" />
     <ClInclude Include="include\Trainers\FastRank\InstancesToDataset.h" />
+    <ClInclude Include="include\Trainers\FastRank\IStepSearch.h" />
+    <ClInclude Include="include\Trainers\FastRank\LeastSquaresRegressionTreeLearner.h" />
+    <ClInclude Include="include\Trainers\FastRank\MappedObjectPool.h" />
+    <ClInclude Include="include\Trainers\FastRank\ObjectiveFunction.h" />
     <ClInclude Include="include\Trainers\FastRank\OptimizationAlgorithm.h" />
+    <ClInclude Include="include\Trainers\FastRank\ProbabilityFunctions.h" />
     <ClInclude Include="include\Trainers\FastRank\RegressionTree.h" />
+    <ClInclude Include="include\Trainers\FastRank\ScoreTracker.h" />
     <ClInclude Include="include\Trainers\FastRank\TreeLearner.h" />
+    <ClInclude Include="include\Trainers\FastRank\TrivialGradientWrapper.h" />
     <ClInclude Include="include\Trainers\SVM\LinearSVM.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Trainers\LinearSVM.cpp" />
     <ClCompile Include="src\Trainers\TrainerFactory.cpp" />
     <ClCompile Include="test\test_fastrank_instances2dataset.cc" />
+    <ClCompile Include="test\test_fastrank_train.cc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
