@@ -45,8 +45,9 @@ namespace gezi {
 			}*/
 
 
-		virtual void ParseArgs()
-		{
+		//@TODO 
+		virtual void ParseArgs();
+		/*{
 			_args = GetArguments();
 			if (_args->histogramPoolSize < 2)
 			{
@@ -56,7 +57,7 @@ namespace gezi {
 			{
 				_args->histogramPoolSize = _args->numLeaves - 1;
 			}
-		}
+		}*/
 
 		virtual void CustomizedTrainingIteration()
 		{
