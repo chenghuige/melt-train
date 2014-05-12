@@ -89,6 +89,7 @@ namespace gezi {
 					VLOG(1) << "Reverting random score assignment";
 					(_optimizationAlgorithm->TrainingScores)->RandomizeScores(_args->randSeed, true);
 				}
+				_ensemble.Back().Print();
 			}
 			_optimizationAlgorithm->FinalizeLearning(GetBestIteration());
 		}

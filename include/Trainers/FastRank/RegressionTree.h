@@ -35,6 +35,17 @@ namespace gezi {
 			NumLeaves = 1;
 		}
 
+		void Print()
+		{
+			Pvector(_splitFeature);
+			Pvector(_splitGain);
+			Pvector(_gainPValue);
+			Pvector(_lteChild);
+			Pvector(_gtChild);
+			Pvector(_threshold);
+			Pvector(_leafValue);
+		}
+
 		//score“—æ≠resize∫√
 		void AddOutputsToScores(Dataset& dataset, dvec& scores)
 		{
@@ -178,10 +189,6 @@ namespace gezi {
 
 		void SetOutput(int leaf, double value)
 		{
-			//if (this is AffineRegressionTree)
-			//{
-			//	throw new InvalidOperationException("Cannot set output of affine leaf trees.");
-			//}
 			_leafValue[leaf] = value;
 		}
 
@@ -200,9 +207,6 @@ namespace gezi {
 				add_value(m, _splitFeature[n], _splitGain[n]);
 			}
 		}
-	protected:
-	private:
-
 	};
 
 }  //----end of namespace gezi

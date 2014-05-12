@@ -84,6 +84,16 @@ namespace gezi {
 			return _trees.back();
 		}
 
+		RegressionTree& LastTree()
+		{
+			return _trees.back();
+		}
+
+		RegressionTree& Back()
+		{
+			return _trees.back();
+		}
+
 		//统计前prefix棵数目一般用所有的树
 		map<int, double> GainMap(int prefix, bool normalize)
 		{
