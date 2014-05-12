@@ -20,10 +20,6 @@
 DECLARE_string(calibrator);
 DECLARE_uint64(rs);
 
-
-DEFINE_int32(iter, 50000, "numIterExamples: Number of iterations");
-DEFINE_double(lr, 0.001, "lambda: learning rate");
-
 DEFINE_int32(nt, 100, "numTrees: Number of trees/iteraiton number");
 DECLARE_double(lr);
 DEFINE_int32(nl, 20, "numLeaves: Number of leaves maximam allowed in each regression tree");
