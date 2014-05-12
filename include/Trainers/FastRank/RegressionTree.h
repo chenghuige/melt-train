@@ -16,6 +16,7 @@
 
 #include "Trainers/FastRank/OnlineRegressionTree.h"
 #include "Dataset.h"
+#include "Feature.h"
 namespace gezi {
 
 	class RegressionTree : public OnlineRegressionTree
@@ -28,7 +29,7 @@ namespace gezi {
 			_splitGain.resize(maxLeaves - 1);
 			_gainPValue.resize(maxLeaves - 1);
 			_previousLeafValue.resize(maxLeaves - 1);
-			_threshold.resize(maxLeaves - 1);
+			_threshold.resize(maxLeaves - 1); //online是double离线训练其实是uint 
 			_lteChild.resize(maxLeaves - 1);
 			_gtChild.resize(maxLeaves - 1);
 			_leafValue.resize(maxLeaves);
@@ -38,12 +39,30 @@ namespace gezi {
 		void Print()
 		{
 			Pvector(_splitFeature)
-			Pvector(_splitGain)
-			Pvector(_gainPValue)
-			Pvector(_lteChild)
-			Pvector(_gtChild)
-			Pvector(_threshold)
-			Pvector(_leafValue)
+				Pvector(_splitGain)
+				Pvector(_gainPValue)
+				Pvector(_lteChild)
+				Pvector(_gtChild)
+				Pvector(_threshold)
+				Pvector(_leafValue)
+		}
+
+		void Print(vector<Feature>& features)
+		{
+			Pvector(_splitFeature)
+				Pvector(_splitGain)
+				Pvector(_gainPValue)
+				Pvector(_lteChild)
+				Pvector(_gtChild)
+				dvec thredshold;
+			for (size_t i = 0; i < _threshold.size(); i++)
+			{
+				uint val = (uint)_threshold[i];
+				thredshold.push_back(features[_splitFeature[i]].BinMedians[val]);
+			}
+			Pvector(_threshold);
+			Pvector(threshold)
+				Pvector(_leafValue)
 		}
 
 		//score已经resize好
