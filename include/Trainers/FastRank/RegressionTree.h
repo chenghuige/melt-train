@@ -54,14 +54,14 @@ namespace gezi {
 				Pvector(_gainPValue)
 				Pvector(_lteChild)
 				Pvector(_gtChild)
-				dvec thredshold;
+				dvec threshold;
 			for (size_t i = 0; i < _threshold.size(); i++)
 			{
 				uint val = (uint)_threshold[i];
-				thredshold.push_back(features[_splitFeature[i]].BinMedians[val]);
+				threshold.push_back(features[_splitFeature[i]].BinMedians[val]);
 			}
 			Pvector(_threshold)
-				Pvector(thredshold)
+				Pvector(threshold)
 				Pvector(_leafValue)
 		}
 
