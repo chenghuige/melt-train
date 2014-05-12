@@ -51,13 +51,13 @@ namespace gezi {
 			_args = GetArguments();
 			if (_args->histogramPoolSize < 2)
 			{
-				_args->histogramPoolSize = (_args->numLeaves * 2) / 3;
+			_args->histogramPoolSize = (_args->numLeaves * 2) / 3;
 			}
 			if (_args->histogramPoolSize >(_args->numLeaves - 1))
 			{
-				_args->histogramPoolSize = _args->numLeaves - 1;
+			_args->histogramPoolSize = _args->numLeaves - 1;
 			}
-		}*/
+			}*/
 
 		virtual void CustomizedTrainingIteration()
 		{
@@ -81,7 +81,7 @@ namespace gezi {
 			}
 			while (_ensemble.NumTrees() < numTotalTrees)
 			{
-				LOG(INFO) << "Tree " << _ensemble.NumTrees();
+				VLOG(2) << "Tree " << _ensemble.NumTrees();
 				_optimizationAlgorithm->TrainingIteration();
 				CustomizedTrainingIteration();
 				if (revertRandomStart)
@@ -90,12 +90,13 @@ namespace gezi {
 					VLOG(1) << "Reverting random score assignment";
 					(_optimizationAlgorithm->TrainingScores)->RandomizeScores(_args->randSeed, true);
 				}
-				_ensemble.Back().Print(TrainSet.Features);
+				if (FLAGS_v > 1)
+					_ensemble.Back().Print(TrainSet.Features);
 			}
 			_optimizationAlgorithm->FinalizeLearning(GetBestIteration());
 		}
 
-		void DebugPrint()
+		void FeatureGainPrint()
 		{
 			VLOG(1) << "Per feature gain\n" <<
 				_ensemble.ToGainSummary(TrainSet.Features);
@@ -107,7 +108,7 @@ namespace gezi {
 			ConvertData(instances);
 			Initialize();
 			TrainCore();
-			DebugPrint();
+			FeatureGainPrint();
 		}
 
 		virtual OptimizationAlgorithmPtr ConstructOptimizationAlgorithm()

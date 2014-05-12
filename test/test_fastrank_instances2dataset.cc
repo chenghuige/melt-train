@@ -62,7 +62,8 @@ int main(int argc, char *argv[])
 	int s = google::ParseCommandLineFlags(&argc, &argv, false);
 	if (FLAGS_log_dir.empty())
 		FLAGS_logtostderr = true;
-	FLAGS_minloglevel = FLAGS_level;
+	//FLAGS_minloglevel = FLAGS_level;
+	FLAGS_v = FLAGS_level;
 	//boost::progress_timer timer;
 	
 	return RUN_ALL_TESTS();
