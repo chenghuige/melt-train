@@ -81,6 +81,7 @@ namespace gezi {
 			}
 			while (_ensemble.NumTrees() < numTotalTrees)
 			{
+				LOG(INFO) << "Tree " << _ensemble.NumTrees();
 				_optimizationAlgorithm->TrainingIteration();
 				CustomizedTrainingIteration();
 				if (revertRandomStart)
