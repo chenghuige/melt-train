@@ -60,8 +60,8 @@ namespace gezi {
 				uint val = (uint)_threshold[i];
 				thredshold.push_back(features[_splitFeature[i]].BinMedians[val]);
 			}
-			Pvector(_threshold);
-			Pvector(threshold)
+			Pvector(_threshold)
+				Pvector(threshold)
 				Pvector(_leafValue)
 		}
 
