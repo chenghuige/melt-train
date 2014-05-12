@@ -73,11 +73,11 @@ namespace gezi {
 				{
 					++pb;
 
-				/*	if (i != 154)
+					if (i > 154)
 					{
 						continue;
 					}
-					*/
+					
 
 					Fvec values = valuesVec[i].Values(); //×öÒ»·Ýcopy
 					Pval3(i, values.size(), valuesVec[i].Length());
