@@ -30,7 +30,7 @@ DEFINE_int32(nl, 20, "numLeaves: Number of leaves maximam allowed in each regres
 DEFINE_int32(mil, 10, "minInstancesInLeaf: Minimal instances in leaves allowd");
 namespace gezi {
 
-	virtual void FastRank::ParseArgs()
+	void FastRank::ParseArgs()
 	{
 		_args = GetArguments();
 	
