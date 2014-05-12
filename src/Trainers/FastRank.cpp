@@ -29,16 +29,20 @@ namespace gezi {
 	void FastRank::ParseArgs()
 	{
 		_args = GetArguments();
-	
+
 		if (!are_same(FLAGS_lr, 0.001)) //@TODO double 判断相同 判断是否是0 另外如果用户再输入0.0001不起作用了就 不符合逻辑了
 			_args->learningRate = FLAGS_lr;
-		
+
 		if (FLAGS_iter != 50000)
 			_args->numTrees = FLAGS_iter;
 		else
 			_args->numTrees = FLAGS_ntree;
 
-		_args->numLeaves = FLAGS_nl;
+		if (FLAGS_nl < 2)
+			LOG(WARNING) << "The number of leaves must be >= 2, so use default value instead";
+		else
+			_args->numLeaves = FLAGS_nl;
+
 		_args->minInstancesInLeaf = FLAGS_mil;
 
 		//---- doing more
@@ -50,6 +54,8 @@ namespace gezi {
 		{
 			_args->histogramPoolSize = _args->numLeaves - 1;
 		}
+
+		Pval4(_args->numLeaves, _args->numTrees, _args->minInstancesInLeaf, _args->learningRate);
 	}
 }
 
