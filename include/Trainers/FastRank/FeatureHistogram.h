@@ -66,7 +66,7 @@ namespace gezi {
 			{
 				THROW("length of input arrays is inconsistent");
 			}
-			if (numBins > sumTarget.size())
+			if (numBins > (int)sumTarget.size())
 			{
 				THROW("number of bins is greater than length of input array");
 			}
