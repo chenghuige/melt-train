@@ -58,7 +58,7 @@ namespace gezi {
 			for (size_t i = 0; i < _threshold.size(); i++)
 			{
 				uint val = (uint)_threshold[i];
-				threshold.push_back(features[_splitFeature[i]].BinMedians[val]);
+				threshold.push_back(features[_splitFeature[i]].BinUpperBounds[val]);
 			}
 			Pvector(_threshold)
 				Pvector(threshold)
