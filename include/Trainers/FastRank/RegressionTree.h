@@ -61,7 +61,7 @@ namespace gezi {
 				thredshold.push_back(features[_splitFeature[i]].BinMedians[val]);
 			}
 			Pvector(_threshold)
-				Pvector(threshold)
+				Pvector(thredshold)
 				Pvector(_leafValue)
 		}
 
