@@ -203,7 +203,6 @@ namespace gezi {
 		void SumupRootSparse(IntArray& bins, SumupInputData& input)
 		{
 			double totalOutput = 0.0;
-			int currentPos = 0;
 			bins.ForEachSparse([&, this](int index, int featureBin)
 			{
 				double output = input.Outputs[index];
