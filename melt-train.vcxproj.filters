@@ -27,6 +27,9 @@
     <ClCompile Include="test\test_fastrank_train.cc">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\Trainers\FastRank.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\Trainers\SVM\LinearSVM.h">

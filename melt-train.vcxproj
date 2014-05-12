@@ -92,6 +92,7 @@
     <ClInclude Include="include\Trainers\SVM\LinearSVM.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\Trainers\FastRank.cpp" />
     <ClCompile Include="src\Trainers\LinearSVM.cpp" />
     <ClCompile Include="src\Trainers\TrainerFactory.cpp" />
     <ClCompile Include="test\test_fastrank_instances2dataset.cc" />

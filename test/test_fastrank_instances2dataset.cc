@@ -50,6 +50,8 @@ TEST(fastrank_instances2dataset, func)
 	Pval(dataSet.NumDocs);
 	TreeLearnerPtr learner = make_shared<TreeLearner2>(dataSet, 20);
 	//TreeLearner2 learner(dataSet, 20);
+
+
 }
 
 int main(int argc, char *argv[])
