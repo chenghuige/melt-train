@@ -80,7 +80,15 @@ namespace gezi {
 					{
 						if (is_zero(item))
 						{
+							
 							Pval2(i, item);
+
+							Pval((item == 0.0));
+							Pval((item == 0));
+
+							item = 0;
+							Pval((item == 0.0));
+							Pval((item == 0));
 						}
 					}
 					
