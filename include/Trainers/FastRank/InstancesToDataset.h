@@ -74,7 +74,10 @@ namespace gezi {
 					++pb;
 
 					Fvec values = valuesVec[i].Values();
-					binFinder.FindBins(values, valuesVec[i].Length(), maxBins,
+				/*	binFinder.FindBins(values, valuesVec[i].Length(), maxBins,
+						features[i].BinUpperBounds, features[i].BinMedians);*/
+					values.resize(valuesVec[i].Length(), 0);
+					binFinder.FindBins(values, maxBins,
 						features[i].BinUpperBounds, features[i].BinMedians);
 
 					features[i].Name = instances.FeatureNames()[i];
