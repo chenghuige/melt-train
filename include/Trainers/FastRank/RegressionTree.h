@@ -37,13 +37,13 @@ namespace gezi {
 
 		void Print()
 		{
-			Pvector(_splitFeature);
-			Pvector(_splitGain);
-			Pvector(_gainPValue);
-			Pvector(_lteChild);
-			Pvector(_gtChild);
-			Pvector(_threshold);
-			Pvector(_leafValue);
+			Pvector(_splitFeature)
+			Pvector(_splitGain)
+			Pvector(_gainPValue)
+			Pvector(_lteChild)
+			Pvector(_gtChild)
+			Pvector(_threshold)
+			Pvector(_leafValue)
 		}
 
 		//score“—æ≠resize∫√
