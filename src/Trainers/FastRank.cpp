@@ -20,7 +20,7 @@
 DECLARE_string(calibrator);
 DECLARE_uint64(rs);
 DECLARE_int32(iter);
-DEFINE_int32(nt, 100, "numTrees: Number of trees/iteraiton number");
+DEFINE_int32(ntree, 100, "numTrees: Number of trees/iteraiton number");
 DECLARE_double(lr);
 DEFINE_int32(nl, 20, "numLeaves: Number of leaves maximam allowed in each regression tree");
 DEFINE_int32(mil, 10, "minInstancesInLeaf: Minimal instances in leaves allowd");
@@ -36,7 +36,7 @@ namespace gezi {
 		if (FLAGS_iter != 50000)
 			_args->numTrees = FLAGS_iter;
 		else
-			_args->numTrees = FLAGS_nt;
+			_args->numTrees = FLAGS_ntree;
 
 		_args->numLeaves = FLAGS_nl;
 		_args->minInstancesInLeaf = FLAGS_mil;
