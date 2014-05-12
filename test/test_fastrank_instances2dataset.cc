@@ -20,7 +20,7 @@
 #include "Prediction/Instances/instances_util.h"
 using namespace std;
 using namespace gezi;
-DEFINE_int32(level, 0, "min log level");
+DEFINE_int32(vl, 0, "vlog level");
 DEFINE_string(in, "./data/feature.txt", "input");
 //DEFINE_string(o, "", "output");
 DEFINE_string(type, "simple", "");
@@ -62,9 +62,8 @@ int main(int argc, char *argv[])
 	int s = google::ParseCommandLineFlags(&argc, &argv, false);
 	if (FLAGS_log_dir.empty())
 		FLAGS_logtostderr = true;
-	//FLAGS_minloglevel = FLAGS_level;
-	FLAGS_v = FLAGS_level;
-	//boost::progress_timer timer;
+	if (FLAGS_v == 0)
+		FLAGS_v = FLAGS_vl;
 	
 	return RUN_ALL_TESTS();
 }

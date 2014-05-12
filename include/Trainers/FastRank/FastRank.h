@@ -90,8 +90,10 @@ namespace gezi {
 					VLOG(1) << "Reverting random score assignment";
 					(_optimizationAlgorithm->TrainingScores)->RandomizeScores(_args->randSeed, true);
 				}
-				if (FLAGS_v > 1)
+				if (VLOG_IS_ON(2))
+				{
 					_ensemble.Back().Print(TrainSet.Features);
+				}
 			}
 			_optimizationAlgorithm->FinalizeLearning(GetBestIteration());
 		}
