@@ -37,8 +37,9 @@ namespace gezi {
 		{
 			RegressionTree tree = TreeLearner->FitTargets(AdjustTargetsAndSetWeights());
 			if (AdjustTreeOutputsOverride == nullptr)
-			{
+			{ //如果父类ObjectiveFunction里面没有虚函数 不能使用dynamic_pointer_cast... @TODO
 				(dynamic_pointer_cast<IStepSearch>(ObjectiveFunction))->AdjustTreeOutputs(tree, TreeLearner->Partitioning, *TrainingScores);
+				/*((IStepSearch*)(ObjectiveFunction.get()))->AdjustTreeOutputs(tree, TreeLearner->Partitioning, *TrainingScores);*/ //@TODO 为什么用下面会运行失败？
 			}
 			else
 			{//@TODO
@@ -49,7 +50,7 @@ namespace gezi {
 				SmoothTree(tree, Smoothing);
 				useFastTrainingScoresUpdate = false;
 			}
-			UpdateAllScores(tree);
+			UpdateAllScores(tree); //score traker在这里做什么用? @TODO
 			Ensemble.AddTree(tree);
 			return Ensemble.Tree();
 		}
@@ -57,9 +58,15 @@ namespace gezi {
 		//@TODO
 		virtual dvec& AdjustTargetsAndSetWeights()
 		{
-			return GetGradient();
+			if (_gradientWrapper == nullptr)
+			{
+				return GetGradient();
+			}
+			dvec* targetWeights = NULL;
+			dvec& targets = _gradientWrapper->AdjustTargetAndSetWeights(GetGradient(), *ObjectiveFunction, targetWeights);
+			return targets;
 		}
-
+		
 		virtual dvec& GetGradient()
 		{
 			return ObjectiveFunction->GetGradient(TrainingScores->Scores);

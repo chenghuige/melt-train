@@ -23,6 +23,7 @@
 #include "IGradientAdjuster.h"
 #include "GradientDescent.h"
 #include "TrivialGradientWrapper.h"
+#include "BestStepRegressionGradientWrapper.h"
 #include "LeastSquaresRegressionTreeLearner.h"
 namespace gezi {
 
@@ -79,8 +80,10 @@ namespace gezi {
 				(_optimizationAlgorithm->TrainingScores)->RandomizeScores(_args->randSeed, false);
 				revertRandomStart = true;
 			}
+			ProgressBar pb(numTotalTrees, "Ensemble trainning");
 			while (_ensemble.NumTrees() < numTotalTrees)
 			{
+				++pb;
 				VLOG(2) << "Tree " << _ensemble.NumTrees();
 				_optimizationAlgorithm->TrainingIteration();
 				CustomizedTrainingIteration();
@@ -138,12 +141,14 @@ namespace gezi {
 		}
 
 		bool AreSamplesWeighted()
-		{
+		{ //@TODO weight选项不可用
 			return (AreTrainWeightsUsed() && (!TrainSet.SampleWeights.empty()));
 		}
 
 		bool AreTargetsWeighted()
 		{
+			return false; //@TODO @FIXME bestStepRankingRegressionTrees选项不可用？
+			//即使bestStepRankingRegressionTrees已经设置 结果和tlc仍然不一致
 			if (!AreSamplesWeighted())
 			{
 				return _args->bestStepRankingRegressionTrees;
@@ -162,6 +167,10 @@ namespace gezi {
 
 		virtual IGradientAdjusterPtr MakeGradientWrapper()
 		{
+			if (_args->bestStepRankingRegressionTrees)
+			{
+				return make_shared<BestStepRegressionGradientWrapper>();
+			}
 			return make_shared<TrivialGradientWrapper>();
 		}
 

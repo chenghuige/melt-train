@@ -87,7 +87,8 @@ namespace gezi {
 				{
 					++pb;
 					features[i].Bins = GetBinValues(valuesVec[i], features[i].BinUpperBounds);
-					features[i].Bins.Densify(sparsifyRatio);
+					//features[i].Bins.Densify(sparsifyRatio);
+					features[i].Bins.ToDense();
 				}
 			}
 

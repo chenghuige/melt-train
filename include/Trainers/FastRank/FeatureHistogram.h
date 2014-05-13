@@ -180,6 +180,7 @@ namespace gezi {
 
 		void SumupRoot(IntArray& bins, SumupInputData& input)
 		{
+			//VLOG(2) << "SumupRoot";
 			if (bins.IsDense())
 			{
 				SumupRootDense(bins, input);
@@ -223,6 +224,7 @@ namespace gezi {
 
 		void SumupLeaf(IntArray& bins, SumupInputData& input)
 		{
+			//VLOG(2) << "SumupLeaf";
 			if (bins.IsDense())
 			{
 				SumupLeafDense(bins, input);

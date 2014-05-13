@@ -35,6 +35,7 @@ namespace gezi {
 
 		void Initialize(vector<T>& pool, int maxIndex)
 		{
+			PVAL(maxIndex);
 			_pool.swap(pool);
 			_map.resize(maxIndex, -1);
 			_inverseMap.resize(_pool.size(), -1);
@@ -59,6 +60,27 @@ namespace gezi {
 			_map[index] = stealPosition;
 			_inverseMap[stealPosition] = index;
 			obj = _pool[stealPosition];
+			return false;
+		}
+
+		bool Get(int index, T*& obj)
+		{
+			if (_map[index] >= 0)
+			{
+				int position = _map[index];
+				_lastAccessTime[position] = ++_time;
+				obj = &_pool[position];
+				return true;
+			}
+			int stealPosition = min_index(_lastAccessTime);
+			_lastAccessTime[stealPosition] = ++_time;
+			if (_inverseMap[stealPosition] >= 0)
+			{
+				_map[_inverseMap[stealPosition]] = -1;
+			}
+			_map[index] = stealPosition;
+			_inverseMap[stealPosition] = index;
+			obj = &_pool[stealPosition];
 			return false;
 		}
 

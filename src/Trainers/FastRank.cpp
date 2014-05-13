@@ -24,6 +24,8 @@ DEFINE_int32(ntree, 100, "numTrees: Number of trees/iteraiton number");
 DECLARE_double(lr);
 DEFINE_int32(nl, 20, "numLeaves: Number of leaves maximam allowed in each regression tree");
 DEFINE_int32(mil, 10, "minInstancesInLeaf: Minimal instances in leaves allowd");
+DEFINE_bool(bsr, false, "bestStepRankingRegressionTrees: ");
+DEFINE_double(sp, 0.3, "Sparsity level needed to use sparse feature representation, if 0.3 means be sparsify only if real data less then 30%");
 namespace gezi {
 
 	void FastRank::ParseArgs()
@@ -44,6 +46,9 @@ namespace gezi {
 			_args->numLeaves = FLAGS_nl;
 
 		_args->minInstancesInLeaf = FLAGS_mil;
+
+		_args->bestStepRankingRegressionTrees = FLAGS_bsr;
+		_args->sparsifyRatio = FLAGS_sp;
 
 		//---- doing more
 		if (_args->histogramPoolSize < 2)

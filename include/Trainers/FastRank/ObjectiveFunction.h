@@ -22,6 +22,10 @@ namespace gezi {
 	{
 	public:
 		Dataset& Dataset;
+		dvec& Weights()
+		{
+			return _weights;
+		}
 	protected:
 		bool _bestStepRankingRegressionTrees = false;
 		dvec _gradient;
@@ -49,18 +53,22 @@ namespace gezi {
 			int sampleIndex = _rnd.Next(_gradSamplingRate);
 			//@TODO原代码采用100个分组 每个线程处理100个query
 #pragma omp parallel for
-			for (int q = 0; q < Dataset.NumDocs; q++)
+			for (int query = 0; query < Dataset.NumDocs; query++)
 			{
-				if ((q % _gradSamplingRate) == sampleIndex)
+				if ((query % _gradSamplingRate) == sampleIndex)
 				{ //@TODO 测试一下 inline 普通 虚函数的时间花费 是否改为类似Normalizer使用的function设计性能会好？
-					GetGradientInOneQuery(q, scores);
+					GetGradientInOneQuery(query, scores);
 				}
 			}
+			/*	Pvector(scores)
+				Pvector(_gradient)*/
 			return _gradient;
 		}
 
 	protected:
-		virtual void GetGradientInOneQuery(int query, const dvec& scores) = 0;
+		//virtual void GetGradientInOneQuery(int query, const dvec& scores) = 0;
+		std::function<void(int, const dvec&)> GetGradientInOneQuery;
+		//这个去掉虚函数之后 速度能从6.32726 s ->6.19447 s 考虑虚函数之外的设计 特别对于这种内部嵌入的循环内核心虚函数 尽量采用function替代
 	};
 
 	typedef shared_ptr<ObjectiveFunction> ObjectiveFunctionPtr;

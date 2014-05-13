@@ -92,14 +92,17 @@ public:
 		{
 			if (AdjustTreeOutputsOverride != nullptr)
 			{ //@TODO
+				//VLOG(2) << "AdjustTreeOutputsOverride != nullptr";
 			}
 			else
 			{
+				//VLOG(2) << "t->AddScores(tree, TreeLearner->Partitioning, 1.0)";
 				t->AddScores(tree, TreeLearner->Partitioning, 1.0);
 			}
 		}
 		else
 		{
+			//VLOG(2) << "t->AddScores(tree,1.0)";
 			t->AddScores(tree, 1.0);
 		}
 	}

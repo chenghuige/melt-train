@@ -107,5 +107,8 @@
     <ClInclude Include="include\Trainers\FastRank\TrivialGradientWrapper.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\Trainers\FastRank\BestStepRegressionGradientWrapper.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

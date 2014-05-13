@@ -42,6 +42,24 @@ namespace gezi {
 				throw new Exception("Only one class in training set.");
 				}*/
 			}
+
+			GetGradientInOneQuery = [this](int query, const dvec& scores)
+			{
+				double sigmoidParam = _learningRate;
+				double recip_npos = 1.0;
+				double recip_nneg = 1.0;
+				if (_unbalancedSets)
+				{
+					recip_npos = 1.0 / ((double)_npos);
+					recip_nneg = 1.0 / ((double)_nneg);
+				}
+				int label = Labels[query] ? 1 : -1;
+				double recip = Labels[query] ? recip_npos : recip_nneg;
+				double response = ((2.0 * label) * sigmoidParam) / (1.0 + std::exp(((2.0 * label) * sigmoidParam) * scores[query]));
+				double absResponse = std::abs(response);
+				_gradient[query] = response * recip;
+				_weights[query] = (absResponse * ((2.0 * sigmoidParam) - absResponse)) * recip;
+			};
 		}
 
 		virtual void AdjustTreeOutputs(RegressionTree& tree, DocumentPartitioning& partitioning, ScoreTracker& trainingScores) override
@@ -50,7 +68,7 @@ namespace gezi {
 			{
 				double output = 0.0;
 				if (_bestStepRankingRegressionTrees)
-				{
+				{ //@TODO 即使设置 这里 仍然和tlc不一致
 					output = _learningRate * tree.GetOutput(l);
 				}
 				else
@@ -65,6 +83,9 @@ namespace gezi {
 				{
 					output = -_maxTreeOutput;
 				}
+				//PVAL3(tree.GetOutput(l), (_learningRate * (tree.GetOutput(l) + 1.4E-45)), (partitioning.Mean(_weights, Dataset.SampleWeights, l, false) + 1.4E-45));
+				//PVAL2(l, output);
+				//Pvector(_weights);
 				tree.SetOutput(l, output);
 			}
 		}
@@ -72,7 +93,7 @@ namespace gezi {
 
 
 	protected:
-		virtual void GetGradientInOneQuery(int query, const dvec& scores) override
+	/*	virtual void GetGradientInOneQuery(int query, const dvec& scores) override
 		{
 			double sigmoidParam = _learningRate;
 			double recip_npos = 1.0;
@@ -88,7 +109,7 @@ namespace gezi {
 			double absResponse = std::abs(response);
 			_gradient[query] = response * recip;
 			_weights[query] = (absResponse * ((2.0 * sigmoidParam) - absResponse)) * recip;
-		}
+		}*/
 
 	};
 

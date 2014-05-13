@@ -178,6 +178,7 @@ clean:ccpclean
 	rm -rf ld-linux-x86-64.so.2
 	rm -rf libmelt_trainers.a
 	rm -rf ./output/lib/libmelt_trainers.a
+	rm -rf src/Trainers/melt_trainers_FastRank.o
 	rm -rf src/Trainers/melt_trainers_LinearSVM.o
 	rm -rf src/Trainers/melt_trainers_TrainerFactory.o
 
@@ -202,16 +203,25 @@ love:
 	@echo "[[1;32;40mCOMAKE:BUILD[0m][Target:'[1;32;40m.copy-so[0m']"
 	ln -s ../../../../ps/se/toolchain/x86_64-unknown-linux-gnu-4.8.1-2.9-2.20-2.6.32/x86_64-unknown-linux-gnu/lib//ld-linux-x86-64.so.2 ld-linux-x86-64.so.2
 
-libmelt_trainers.a:src/Trainers/melt_trainers_LinearSVM.o \
+libmelt_trainers.a:src/Trainers/melt_trainers_FastRank.o \
+  src/Trainers/melt_trainers_LinearSVM.o \
   src/Trainers/melt_trainers_TrainerFactory.o
 	@echo "[[1;32;40mCOMAKE:BUILD[0m][Target:'[1;32;40mlibmelt_trainers.a[0m']"
-	ar crs libmelt_trainers.a src/Trainers/melt_trainers_LinearSVM.o \
+	ar crs libmelt_trainers.a src/Trainers/melt_trainers_FastRank.o \
+  src/Trainers/melt_trainers_LinearSVM.o \
   src/Trainers/melt_trainers_TrainerFactory.o
 	mkdir -p ./output/lib
 	cp -f --link libmelt_trainers.a ./output/lib
 
-src/Trainers/melt_trainers_LinearSVM.o:src/Trainers/LinearSVM.cpp \
-  include/Trainers/SVM/LinearSVM.h
+src/Trainers/melt_trainers_FastRank.o:src/Trainers/FastRank.cpp
+	@echo "[[1;32;40mCOMAKE:BUILD[0m][Target:'[1;32;40msrc/Trainers/melt_trainers_FastRank.o[0m']"
+	$(CXX) -c $(INCPATH) $(DEP_INCPATH) -D_GNU_SOURCE \
+  -D__STDC_LIMIT_MACROS \
+  -DVERSION=\"1.9.8.7\" \
+  -O3 \
+  -DNDEBUG $(CXXFLAGS)  -o src/Trainers/melt_trainers_FastRank.o src/Trainers/FastRank.cpp
+
+src/Trainers/melt_trainers_LinearSVM.o:src/Trainers/LinearSVM.cpp
 	@echo "[[1;32;40mCOMAKE:BUILD[0m][Target:'[1;32;40msrc/Trainers/melt_trainers_LinearSVM.o[0m']"
 	$(CXX) -c $(INCPATH) $(DEP_INCPATH) -D_GNU_SOURCE \
   -D__STDC_LIMIT_MACROS \
@@ -219,8 +229,7 @@ src/Trainers/melt_trainers_LinearSVM.o:src/Trainers/LinearSVM.cpp \
   -O3 \
   -DNDEBUG $(CXXFLAGS)  -o src/Trainers/melt_trainers_LinearSVM.o src/Trainers/LinearSVM.cpp
 
-src/Trainers/melt_trainers_TrainerFactory.o:src/Trainers/TrainerFactory.cpp \
-  include/Trainers/SVM/LinearSVM.h
+src/Trainers/melt_trainers_TrainerFactory.o:src/Trainers/TrainerFactory.cpp
 	@echo "[[1;32;40mCOMAKE:BUILD[0m][Target:'[1;32;40msrc/Trainers/melt_trainers_TrainerFactory.o[0m']"
 	$(CXX) -c $(INCPATH) $(DEP_INCPATH) -D_GNU_SOURCE \
   -D__STDC_LIMIT_MACROS \

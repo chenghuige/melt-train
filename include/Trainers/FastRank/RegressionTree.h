@@ -38,31 +38,31 @@ namespace gezi {
 
 		void Print()
 		{
-			Pvector(_splitFeature)
-				Pvector(_splitGain)
-				Pvector(_gainPValue)
-				Pvector(_lteChild)
-				Pvector(_gtChild)
-				Pvector(_threshold)
-				Pvector(_leafValue)
+			Pvector(_splitFeature);
+			Pvector(_splitGain);
+			Pvector(_gainPValue);
+			Pvector(_lteChild);
+			Pvector(_gtChild);
+			Pvector(_threshold);
+			Pvector(_leafValue);
 		}
 
 		void Print(vector<Feature>& features)
 		{
-			Pvector(_splitFeature)
-				Pvector(_splitGain)
-				Pvector(_gainPValue)
-				Pvector(_lteChild)
-				Pvector(_gtChild)
-				dvec threshold;
+			Pvector(_splitFeature);
+			Pvector(_splitGain);
+			Pvector(_gainPValue);
+			Pvector(_lteChild);
+			Pvector(_gtChild);
+			dvec threshold;
 			for (size_t i = 0; i < _threshold.size(); i++)
 			{
 				uint val = (uint)_threshold[i];
 				threshold.push_back(features[_splitFeature[i]].BinUpperBounds[val]);
 			}
-			Pvector(_threshold)
-				Pvector(threshold)
-				Pvector(_leafValue)
+			Pvector(_threshold);
+			Pvector(threshold);
+			Pvector(_leafValue);
 		}
 
 		//scoreÒÑ¾­resizeºÃ
@@ -225,6 +225,11 @@ namespace gezi {
 			{
 				add_value(m, _splitFeature[n], _splitGain[n]);
 			}
+		}
+
+		const int NumNodes() const
+		{
+			return NumLeaves - 1;
 		}
 	};
 

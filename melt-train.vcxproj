@@ -65,6 +65,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="include\Trainers\FastRank\BestStepRegressionGradientWrapper.h" />
     <ClInclude Include="include\Trainers\FastRank\BinaryClassificationFastRank.h" />
     <ClInclude Include="include\Trainers\FastRank\BinaryClassificationFastRankArguments.h" />
     <ClInclude Include="include\Trainers\FastRank\BinaryClassificationObjectiveFunction.h" />
