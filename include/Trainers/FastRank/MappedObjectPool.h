@@ -35,11 +35,11 @@ namespace gezi {
 
 		void Initialize(vector<T>& pool, int maxIndex)
 		{
-			PVAL(maxIndex);
+			//PVAL(maxIndex);
 			_pool.swap(pool);
 			_map.resize(maxIndex, -1);
 			_inverseMap.resize(_pool.size(), -1);
-			_lastAccessTime.resize(_pool.size());
+			_lastAccessTime.resize(_pool.size(), 0);
 		}
 
 		bool Get(int index, T& obj)
@@ -88,14 +88,8 @@ namespace gezi {
 		{
 			zeroset(_lastAccessTime);
 			_time = 0;
-			for (int i = 0; i < _map.size(); i++)
-			{
-				_map[i] = -1;
-			}
-			for (int i = 0; i < _inverseMap.size(); i++)
-			{
-				_inverseMap[i] = -1;
-			}
+			ufo::fill(_map, -1);
+			ufo::fill(_inverseMap, -1);
 		}
 
 		void Steal(int fromIndex, int toIndex)

@@ -36,6 +36,11 @@ namespace gezi {
 		{
 			return "TargetWeightsDataset";
 		}
+
+		bool IsFeatureOk(int index)
+		{
+			return TrainData.Features[index].NumBins() > 1;
+		}
 	protected:
 	private:
 

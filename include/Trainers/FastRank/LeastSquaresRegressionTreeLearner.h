@@ -54,11 +54,11 @@ namespace gezi {
 			vector<SplitInfo> FeatureSplitInfo; // _bestSplitPerFeature; 记录子树中的分裂信息
 			ivec DocIndices;
 			ivec _docIndicesCopy;
-			int LeafIndex;
+			int LeafIndex = -1;
 			int NumDocsInLeaf;
-			double SumSquaredTargets;
-			double SumTargets;
-			double SumWeights;
+			double SumSquaredTargets = 0;
+			double SumTargets = 0;
+			double SumWeights = 0;
 			dvec Targets;
 			dvec Weights;
 			LeafSplitCandidates() = default;
@@ -254,9 +254,7 @@ namespace gezi {
 		vector<FeatureHistogram>* _smallerChildHistogramArray = NULL;
 		//记录综合左右_smallerChildSplitCandidates,_largerChildSplitCandidates数据之后的最佳分裂信息
 		//vector<SplitInfo*> _bestSplitInfoPerLeaf; //或者和LeafSplitCandidates都使用shared_ptr SplitInfoPtr
-
 		vector<SplitInfo> _bestSplitInfoPerLeaf; //或者和LeafSplitCandidates都使用shared_ptr SplitInfoPtr
-
 		LeafSplitCandidates _smallerChildSplitCandidates; //左子树信息
 		LeafSplitCandidates _largerChildSplitCandidates; //右子树信息
 		double _softmaxTemperature;
@@ -288,10 +286,6 @@ namespace gezi {
 				{
 					histogramPool[i][j].Initialize(TrainData.Features[j], HasWeights());
 				}
-				/*	for (int j = 0; j < TrainData.NumFeatures; j++)
-					{
-					histogramPool[i].emplace_back(FeatureHistogram(TrainData.Features[j], HasWeights()));
-					}*/
 			}
 			_histogramArrayPool.Initialize(histogramPool, numLeaves - 1);
 
@@ -367,15 +361,10 @@ namespace gezi {
 			}
 		}
 
-		//SplitInfo newRootSplitInfo; //only for MakeDummyRootSplit 单线程访问
 		void MakeDummyRootSplit(RegressionTree& tree, double rootTarget, dvec& targets)
 		{
-			//VLOG(0) << "MakeDummyRootSplit";
 			int dummyLTEChild;
 			int dummyGTChild;
-			//newRootSplitInfo.LTEOutput = rootTarget;
-			//newRootSplitInfo.GTOutput = rootTarget;
-			//_bestSplitInfoPerLeaf[0] = &newRootSplitInfo;
 			_bestSplitInfoPerLeaf[0].LTEOutput = rootTarget;
 			_bestSplitInfoPerLeaf[0].GTOutput = rootTarget;
 			PerformSplit(tree, 0, targets, dummyLTEChild, dummyGTChild);
@@ -401,6 +390,7 @@ namespace gezi {
 			GTChild = ~tree.GTChild(newInteriorNodeIndex);
 			LTEChild = bestLeaf;
 			Partitioning.Split(bestLeaf, TrainData.Features[bestSplitInfo.Feature].Bins, bestSplitInfo.Threshold, GTChild);
+			bestSplitInfo.Gain = -std::numeric_limits<double>::infinity();
 		}
 		//@TODO 这个地方很奇怪 看原代码 貌似就是引用传递 但是那样后续不对。。 这里按照值复制拷贝
 		void SetBestFeatureForLeaf(LeafSplitCandidates& leafSplitCandidates, int bestFeature)
@@ -409,8 +399,8 @@ namespace gezi {
 			/*		_bestSplitInfoPerLeaf[leaf] = &leafSplitCandidates.FeatureSplitInfo[bestFeature];
 					_bestSplitInfoPerLeaf[leaf]->Feature = bestFeature;*/
 
+			//Pval4(leaf, bestFeature, _bestSplitInfoPerLeaf[leaf].Gain, leafSplitCandidates.FeatureSplitInfo[bestFeature].Gain);
 			_bestSplitInfoPerLeaf[leaf] = leafSplitCandidates.FeatureSplitInfo[bestFeature];
-			_bestSplitInfoPerLeaf[leaf].Feature = bestFeature;
 		}
 
 		double CalculateSplittedLeafOutput(int totalCount, double sumTargets, double sumWeights)
@@ -435,8 +425,8 @@ namespace gezi {
 
 		/*int GetBestFeature(vector<SplitInfo*>& featureSplitInfo)
 		{
-			return 	max_element(featureSplitInfo.begin(), featureSplitInfo.end(),
-				[](SplitInfo* l, SplitInfo* r) {return (!l && r) || (l && r && l->Gain < r->Gain); }) - featureSplitInfo.begin();
+		return 	max_element(featureSplitInfo.begin(), featureSplitInfo.end(),
+		[](SplitInfo* l, SplitInfo* r) {return (!l && r) || (l && r && l->Gain < r->Gain); }) - featureSplitInfo.begin();
 		}*/
 
 		void FindAndSetBestFeatureForLeaf(LeafSplitCandidates& leafSplitCandidates)
@@ -488,7 +478,8 @@ namespace gezi {
 #pragma omp parallel for
 			for (int featureIndex = 0; featureIndex < TrainData.NumFeatures; featureIndex++)
 			{
-				FindBestThresholdForFeature(featureIndex);
+				if (IsFeatureOk(featureIndex))
+					FindBestThresholdForFeature(featureIndex);
 			}
 			FindAndSetBestFeatureForLeaf(_smallerChildSplitCandidates);
 		}
@@ -509,7 +500,6 @@ namespace gezi {
 			{
 				/*_bestSplitInfoPerLeaf[LTEChild]->Gain = -std::numeric_limits<double>::infinity();
 				_bestSplitInfoPerLeaf[GTChild]->Gain = -std::numeric_limits<double>::infinity();*/
-
 				_bestSplitInfoPerLeaf[LTEChild].Gain = -std::numeric_limits<double>::infinity();
 				_bestSplitInfoPerLeaf[GTChild].Gain = -std::numeric_limits<double>::infinity();
 			}
@@ -527,10 +517,10 @@ namespace gezi {
 					}
 					_histogramArrayPool.Steal(LTEChild, GTChild);
 					_histogramArrayPool.Get(LTEChild, _smallerChildHistogramArray);
-				/*	PVECTOR(GetGains(_smallerChildSplitCandidates.FeatureSplitInfo));
-					PVAL(GetGains(_smallerChildSplitCandidates.FeatureSplitInfo)[154]);
-					PVECTOR(GetGains(_largerChildSplitCandidates.FeatureSplitInfo));
-					PVAL(GetGains(_largerChildSplitCandidates.FeatureSplitInfo)[154]);*/
+					/*	PVECTOR(GetGains(_smallerChildSplitCandidates.FeatureSplitInfo));
+						PVAL(GetGains(_smallerChildSplitCandidates.FeatureSplitInfo)[154]);
+						PVECTOR(GetGains(_largerChildSplitCandidates.FeatureSplitInfo));
+						PVAL(GetGains(_largerChildSplitCandidates.FeatureSplitInfo)[154]);*/
 				}
 				else
 				{
@@ -542,25 +532,20 @@ namespace gezi {
 						_parentHistogramArray = _largerChildHistogramArray;
 					}
 					_histogramArrayPool.Get(GTChild, _smallerChildHistogramArray);
-			/*		PVECTOR(GetGains(_smallerChildSplitCandidates.FeatureSplitInfo));
-					PVAL(GetGains(_smallerChildSplitCandidates.FeatureSplitInfo)[154]);
-					PVECTOR(GetGains(_largerChildSplitCandidates.FeatureSplitInfo));
-					PVAL(GetGains(_largerChildSplitCandidates.FeatureSplitInfo)[154]);*/
+					/*		PVECTOR(GetGains(_smallerChildSplitCandidates.FeatureSplitInfo));
+							PVAL(GetGains(_smallerChildSplitCandidates.FeatureSplitInfo)[154]);
+							PVECTOR(GetGains(_largerChildSplitCandidates.FeatureSplitInfo));
+							PVAL(GetGains(_largerChildSplitCandidates.FeatureSplitInfo)[154]);*/
 				}
 				//PVAL(_parentHistogramArray);
 #pragma omp parallel for
 				for (int featureIndex = 0; featureIndex < TrainData.NumFeatures; featureIndex++)
 				{
-					FindBestThresholdForFeature(featureIndex);
+					if (IsFeatureOk(featureIndex))
+						FindBestThresholdForFeature(featureIndex);
 				}
-			/*	PVECTOR(GetGains(_smallerChildSplitCandidates.FeatureSplitInfo));
-				PVAL(GetGains(_smallerChildSplitCandidates.FeatureSplitInfo)[154]);*/
-
 				FindAndSetBestFeatureForLeaf(_smallerChildSplitCandidates);
 				FindAndSetBestFeatureForLeaf(_largerChildSplitCandidates);
-
-				/*PVECTOR(GetGains(_largerChildSplitCandidates.FeatureSplitInfo));
-				PVAL(GetGains(_largerChildSplitCandidates.FeatureSplitInfo)[154]);*/
 			}
 		}
 
@@ -568,22 +553,20 @@ namespace gezi {
 		{
 			if (_parentHistogramArray && !(*_parentHistogramArray)[featureIndex].IsSplittable)
 			{
-				//VLOG(4) << "set smaller is splittable false";
+				//VLOG(0) << "set smaller is splittable false";
 				(*_smallerChildHistogramArray)[featureIndex].IsSplittable = false;
 			}
 			else
 			{
 				//VLOG(4) << "_smaller sumupweighted" << _smallerChildSplitCandidates.DocIndices.size();
 				(*_smallerChildHistogramArray)[featureIndex].SumupWeighted(featureIndex, _smallerChildSplitCandidates.NumDocsInLeaf, _smallerChildSplitCandidates.SumTargets, _smallerChildSplitCandidates.SumWeights, _smallerChildSplitCandidates.Targets, _smallerChildSplitCandidates.Weights, _smallerChildSplitCandidates.DocIndices);
-				//VLOG(4) << "Find from _smaller histogram";
 				FindBestThresholdFromHistogram((*_smallerChildHistogramArray)[featureIndex], _smallerChildSplitCandidates, featureIndex);
-				//PVAL(_largerChildSplitCandidates.LeafIndex);
 				if (_largerChildSplitCandidates.LeafIndex >= 0)
 				{
 					//or affine tree
 					if (!_parentHistogramArray)
 					{
-						//VLOG(4) << "_parentHistogramArray null， larger child set " << _largerChildSplitCandidates.DocIndices.size();
+						//VLOG(0) << "_parentHistogramArray null， larger child set " << _largerChildSplitCandidates.DocIndices.size();
 						(*_largerChildHistogramArray)[featureIndex].SumupWeighted(featureIndex, _largerChildSplitCandidates.NumDocsInLeaf, _largerChildSplitCandidates.SumTargets, _largerChildSplitCandidates.SumWeights, _largerChildSplitCandidates.Targets, _largerChildSplitCandidates.Weights, _largerChildSplitCandidates.DocIndices);
 					}
 					else
@@ -634,6 +617,7 @@ namespace gezi {
 					double sumGTTargets = sumTargets - sumLTETargets;
 					double sumGTWeights = sumWeights - sumLTEWeights;
 					double currentShiftedGain = GetLeafSplitGain(LTECount, sumLTETargets, sumLTEWeights) + GetLeafSplitGain(GTCount, sumGTTargets, sumGTWeights);
+
 					if (currentShiftedGain >= minShiftedGain)
 					{
 						histogram.IsSplittable = true;

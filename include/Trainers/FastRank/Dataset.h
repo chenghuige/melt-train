@@ -16,6 +16,7 @@
 #include "Trainers/FastRank/Feature.h"
 namespace gezi {
 
+	//这个地方是否可以空间换时间 如果数据量不够大 单独一个全量二维数组 @TODO 在Feature增加一个DenseBins
 	struct FeatureBin
 	{
 		vector<Feature>& _features;

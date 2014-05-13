@@ -32,7 +32,7 @@ namespace gezi {
 				int leaf = tree.GetLeaf(dataset.GetFeatureBinRow(d));
 #pragma omp critical
 				{
-					perLeafDocumentLists[leaf].push_back(d);
+					perLeafDocumentLists[leaf].push_back(d); //注意可能并行造成无序 @TODO 需要再排序？
 				}
 			}
 
@@ -55,9 +55,9 @@ namespace gezi {
 
 		DocumentPartitioning(int numDocuments, int maxLeaves)
 		{
-			_leafBegin.resize(maxLeaves);
-			_leafCount.resize(maxLeaves);
-			_documents.resize(numDocuments);
+			_leafBegin.resize(maxLeaves, 0);
+			_leafCount.resize(maxLeaves, 0);
+			_documents.resize(numDocuments, 0);
 		}
 
 		DocumentPartitioning(ivec& documents, int numDocuments, int maxLeaves)

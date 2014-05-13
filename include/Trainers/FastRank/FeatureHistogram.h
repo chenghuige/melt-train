@@ -238,8 +238,7 @@ namespace gezi {
 		void SumupLeafDense(IntArray& bins, SumupInputData& input)
 		{
 			int iDocIndices = 0;
-			bool ok = true;
-			bins.ForEachDenseIf([&, this](int index, int featureBin, bool& isOk)
+			bins.ForEachDenseIf([&, this](int index, int featureBin)
 			{
 				if (index == input.DocIndices[iDocIndices])
 				{
@@ -249,7 +248,7 @@ namespace gezi {
 					iDocIndices++;
 					if (iDocIndices >= input.TotalCount)
 					{
-						isOk = false;
+						return false;
 					}
 				}
 				else if (index > input.DocIndices[iDocIndices])
@@ -257,19 +256,25 @@ namespace gezi {
 					iDocIndices++;
 					if (iDocIndices >= input.TotalCount)
 					{
-						isOk = false;
+						return false;
 					}
 				}
-			}, ok);
+				return true;
+			});
 		}
 		void SumupLeafSparse(IntArray& bins, SumupInputData& input)
 		{
 			int iDocIndices = 0;
 			int totalCount = 0;
 			double totalOutput = 0.0;
-			bool ok = true;
-			bins.ForEachSparseIf([&, this](int index, int featureBin, bool& isOk)
+			bins.ForEachSparseIf([&, this](int index, int featureBin)
 			{
+				while (index > input.DocIndices[iDocIndices])
+				{
+					iDocIndices++;
+					if (iDocIndices >= input.TotalCount)
+						return false;
+				}
 				if (index == input.DocIndices[iDocIndices])
 				{
 					double output = input.Outputs[iDocIndices];
@@ -279,21 +284,12 @@ namespace gezi {
 					totalCount++;
 					iDocIndices++;
 					if (iDocIndices >= input.TotalCount)
-					{
-						isOk = false;
-					}
+						return false;
 				}
-				else if (index > input.DocIndices[iDocIndices])
-				{
-					iDocIndices++;
-					if (iDocIndices >= input.TotalCount)
-					{
-						isOk = false;
-					}
-				}
-			}, ok);
+				return true;
+			});
 			SumTargetsByBin[bins.ZeroValue()] += input.SumTargets - totalOutput;
-			CountByBin[bins.ZeroValue()] += input.TotalCount - bins.Count();
+			CountByBin[bins.ZeroValue()] += input.TotalCount - totalCount;
 		}
 
 		//@TODO

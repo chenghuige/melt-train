@@ -75,6 +75,7 @@ namespace gezi {
 					Fvec values = valuesVec[i].Values(); //×öÒ»·Ýcopy
 					binFinder.FindBins(values, valuesVec[i].Length(), maxBins,
 						features[i].BinUpperBounds, features[i].BinMedians);
+
 					features[i].Name = instances.FeatureNames()[i];
 				}
 			}
@@ -87,8 +88,21 @@ namespace gezi {
 				{
 					++pb;
 					features[i].Bins = GetBinValues(valuesVec[i], features[i].BinUpperBounds);
+
+					IntArray& bins = features[i].Bins;
+					/*for (size_t i = 1; i < bins.indices.size(); i++)
+					{
+						if (bins.indices[i] <= bins.indices[i - 1])
+						{
+							Pval3(i, bins.indices[i - 1], bins.indices[i]);
+							THROW("wahaha");
+						}
+					}*/
+					//PVAL3(i, features[i].Bins.Length(), features[i].BinUpperBounds.size());
+					//PVECTOR(features[i].BinUpperBounds);
+
 					//features[i].Bins.Densify(sparsifyRatio);
-					features[i].Bins.ToDense();
+					//features[i].Bins.ToDense();
 				}
 			}
 
