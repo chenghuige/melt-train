@@ -63,6 +63,13 @@ namespace gezi {
 		{
 			return Features.empty();
 		}
+
+		svec FeatureNames()
+		{
+			return from(Features) 
+				>> select([](const Feature& a) { return a.Name; }) 
+				>> to_vector();
+		}
 	public:
 		int NumDocs = 0;
 		int NumFeatures = 0;

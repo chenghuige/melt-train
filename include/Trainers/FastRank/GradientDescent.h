@@ -27,7 +27,7 @@ namespace gezi {
 		IGradientAdjusterPtr _gradientWrapper; //@TODO
 		dvec _adjustedGradient; //AdjustTargetsAndSetWeights 如果改变了结果 那么返回这个值
 
-		GradientDescent(gezi::Ensemble& ensemble, Dataset& trainData, 
+		GradientDescent(gezi::Ensemble& ensemble, Dataset& trainData,
 			dvec& initTrainScores, IGradientAdjusterPtr gradientWrapper)
 			: OptimizationAlgorithm(ensemble, trainData, initTrainScores), _gradientWrapper(gradientWrapper)
 		{
@@ -50,7 +50,9 @@ namespace gezi {
 				SmoothTree(tree, Smoothing);
 				useFastTrainingScoresUpdate = false;
 			}
-			UpdateAllScores(tree); //score traker在这里做什么用? @TODO
+			{
+				UpdateAllScores(tree); //score traker的作用 感觉多叶子迭代 多树迭代后和tlc不一致可能和这里有关系
+			}
 			Ensemble.AddTree(tree);
 			return Ensemble.Tree();
 		}
@@ -66,7 +68,7 @@ namespace gezi {
 			dvec& targets = _gradientWrapper->AdjustTargetAndSetWeights(GetGradient(), *ObjectiveFunction, targetWeights);
 			return targets;
 		}
-		
+
 		virtual dvec& GetGradient()
 		{
 			return ObjectiveFunction->GetGradient(TrainingScores->Scores);

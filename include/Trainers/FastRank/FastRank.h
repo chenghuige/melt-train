@@ -25,6 +25,8 @@
 #include "TrivialGradientWrapper.h"
 #include "BestStepRegressionGradientWrapper.h"
 #include "LeastSquaresRegressionTreeLearner.h"
+#include "Predictors/FastRankPredictor.h"
+#include "Prediction/Calibrate/CalibratorFactory.h"
 namespace gezi {
 
 	class FastRank : public Trainer
@@ -93,7 +95,7 @@ namespace gezi {
 					VLOG(1) << "Reverting random score assignment";
 					(_optimizationAlgorithm->TrainingScores)->RandomizeScores(_args->randSeed, true);
 				}
-				if (VLOG_IS_ON(2))
+				if (VLOG_IS_ON(3))
 				{
 					_ensemble.Back().Print(TrainSet.Features);
 				}
@@ -103,7 +105,7 @@ namespace gezi {
 
 		void FeatureGainPrint()
 		{
-			VLOG(1) << "Per feature gain\n" <<
+			VLOG(1) << "Per feature gain:\n" <<
 				_ensemble.ToGainSummary(TrainSet.Features);
 		}
 
@@ -245,7 +247,8 @@ namespace gezi {
 				{
 					if (&(st->Dataset) == &set)
 					{
-						return st->Scores;
+						dvec result = move(st->Scores);
+						return result;
 					}
 				}
 			}
@@ -255,7 +258,7 @@ namespace gezi {
 		virtual FastRankArgumentsPtr GetArguments() = 0;
 	protected:
 		FastRankArgumentsPtr _args;
-	private:
+	
 		Ensemble _ensemble;
 		OptimizationAlgorithmPtr _optimizationAlgorithm = nullptr;
 

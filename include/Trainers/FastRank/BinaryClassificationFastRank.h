@@ -24,17 +24,30 @@ class BinaryClassificationFastRank : public FastRank
 public:
 	BitArray TrainSetLabels;
 
-protected:
-	virtual PredictorPtr CreatePredictor()
-	{ 
-		//@TODO
-		PredictorPtr ptr; 
-		return ptr;
+	BinaryClassificationFastRank()
+	{
+	
+	}
+
+	virtual PredictorPtr CreatePredictor() override
+	{
+		vector<OnlineRegressionTree> trees = _ensemble.ToOnline(TrainSet.Features);
+		return make_shared<FastRankPredictor>(trees, _calibrator, TrainSet.FeatureNames());
 	}
 
 	virtual void ParseArgs() override
 	{
 		FastRank::ParseArgs();
+	}
+
+	virtual void Finalize(Instances& instances) override
+	{
+		if (_args->calibrateOutput) //@TODO to trainer
+		{
+			_calibrator = CalibratorFactory::CreateCalibrator(_args->calibratorName);
+		}
+		PVAL((_calibrator == nullptr));
+		_calibrator->Train(ComputeScoresSmart(TrainSet), TrainSetLabels, TrainSet.Weights);
 	}
 
 	virtual void PrepareLabels() override

@@ -25,6 +25,16 @@ namespace gezi {
 		string _firstInputInitializationContent;
 		vector<RegressionTree> _trees;
 	public:
+		vector<OnlineRegressionTree> ToOnline(vector<Feature>& features)
+		{
+			vector<OnlineRegressionTree> trees;
+			for (auto& tree: _trees)
+			{
+				tree.ToOnline(features);
+				trees.emplace_back((OnlineRegressionTree)tree);
+			}
+			return trees;
+		}
 		void AddTree(RegressionTree& tree) //@TODO RegressionTree&& ? python wrapper ok?
 		{
 			_trees.emplace_back(tree);
@@ -143,10 +153,12 @@ namespace gezi {
 			double power = normalize ? 0.5 : 1.0;
 
 			stringstream ss;
+			int id = 0;
 			for (auto item : sortedByGain)
 			{
 				ss << setiosflags(ios::left) << setfill(' ') << setw(40)
-					 << featureList[item.first].Name << "\t" << std::pow(item.second, power) / normalizingFactor << endl;
+					<< STR(id++) + ":" + featureList[item.first].Name 
+					<< " " << std::pow(item.second, power) / normalizingFactor << endl;
 			}
 			return ss.str();
 		}

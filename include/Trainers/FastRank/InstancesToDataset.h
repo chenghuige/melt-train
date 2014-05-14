@@ -46,11 +46,12 @@ namespace gezi {
 			dvec weights;
 			vector<Vector> valuesVec(numFeatures, Vector(instances.size()));
 			{
-				ProgressBar pb(instances.size(), "Converting from row format to column format");
+				//ProgressBar pb(instances.size(), "Converting from row format to column format");
+				AutoTimer timer("Converting from row format to column format");
 				int numInstancesProcessed = 0;
 				for (InstancePtr instance : instances)
 				{
-					++pb;
+					//++pb;
 
 					(instance->features).ForEach([&](int idx, Float val) {
 						valuesVec[idx].Add(numInstancesProcessed, val);
@@ -66,12 +67,14 @@ namespace gezi {
 			//------------- 分桶 获取 bin upperbounds 和 medians
 			vector<Feature> features(numFeatures);
 			{
-				ProgressBar pb(numFeatures, "Binning for bounds and medians");
+				//ProgressBar pb(numFeatures, "Binning for bounds and medians");
+				AutoTimer timer("Binning for bounds and medians");
 				BinFinder binFinder;
-#pragma omp parallel for firstprivate(pb) firstprivate(binFinder)
+//#pragma omp parallel for firstprivate(pb) firstprivate(binFinder)
+#pragma omp parallel for firstprivate(binFinder)
 				for (int i = 0; i < numFeatures; i++)
 				{
-					++pb;
+					//++pb;
 					Fvec values = valuesVec[i].Values(); //做一份copy
 					binFinder.FindBins(values, valuesVec[i].Length(), maxBins,
 						features[i].BinUpperBounds, features[i].BinMedians);
@@ -82,26 +85,18 @@ namespace gezi {
 
 			//------------- 计算各个instance对应各个feature分到的桶号 bin 
 			{
-				ProgressBar pb(numFeatures, "Get bin number for values");
-#pragma omp parallel for firstprivate(pb) 
+				//ProgressBar pb(numFeatures, "Get bin number for values");
+				AutoTimer timer("Get bin number for values");
+//#pragma omp parallel for firstprivate(pb) 
 				for (int i = 0; i < numFeatures; i++)
 				{
-					++pb;
+					//++pb;
 					features[i].Bins = GetBinValues(valuesVec[i], features[i].BinUpperBounds);
 
-					IntArray& bins = features[i].Bins;
-					/*for (size_t i = 1; i < bins.indices.size(); i++)
-					{
-						if (bins.indices[i] <= bins.indices[i - 1])
-						{
-							Pval3(i, bins.indices[i - 1], bins.indices[i]);
-							THROW("wahaha");
-						}
-					}*/
 					//PVAL3(i, features[i].Bins.Length(), features[i].BinUpperBounds.size());
 					//PVECTOR(features[i].BinUpperBounds);
 
-					//features[i].Bins.Densify(sparsifyRatio);
+					features[i].Bins.Densify(sparsifyRatio);
 					//features[i].Bins.ToDense();
 				}
 			}

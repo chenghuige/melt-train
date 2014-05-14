@@ -12,7 +12,7 @@ TrainerPtr TrainerFactory::CreateTrainer(string name)
 		return make_shared<LinearSVM>();
 	}
 	if (name == "fastrankbinaryclassification" ||
-		name == "fastrank" || name == "gbdt")
+		name == "fastrank" || name == "gbdt" || name == "fr")
 	{
 		VLOG(0) << "Creating FastRank/GBDT trainer";
 		return make_shared<BinaryClassificationFastRank>();

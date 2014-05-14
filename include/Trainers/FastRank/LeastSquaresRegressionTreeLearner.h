@@ -301,6 +301,7 @@ namespace gezi {
 
 		virtual RegressionTree FitTargets(dvec& targets) override
 		{
+			AutoTimer timer("TreeLearner->FitTargets");
 			int maxLeaves = NumLeaves;
 			int LTEChild;
 			int GTChild;
@@ -384,6 +385,7 @@ namespace gezi {
 		void PerformSplit(RegressionTree& tree, int bestLeaf, dvec& targets,
 			int& LTEChild, int& GTChild)
 		{
+			//AutoTimer timer("PerformSplit");
 			//SplitInfo& bestSplitInfo = *_bestSplitInfoPerLeaf[bestLeaf];
 			SplitInfo& bestSplitInfo = _bestSplitInfoPerLeaf[bestLeaf];
 			int newInteriorNodeIndex = tree.Split(bestLeaf, bestSplitInfo.Feature, bestSplitInfo.Threshold, bestSplitInfo.LTEOutput, bestSplitInfo.GTOutput, bestSplitInfo.Gain, bestSplitInfo.GainPValue);
@@ -419,6 +421,7 @@ namespace gezi {
 		//@TODO FindBestFeatureFromGains(IEnumerable<double> gains)
 		int GetBestFeature(vector<SplitInfo>& featureSplitInfo)
 		{
+			//AutoTimer timer("GetBestFeature");
 			return 	max_element(featureSplitInfo.begin(), featureSplitInfo.end(),
 				[](SplitInfo& l, SplitInfo& r) {return l.Gain < r.Gain; }) - featureSplitInfo.begin();
 		}
@@ -431,6 +434,7 @@ namespace gezi {
 
 		void FindAndSetBestFeatureForLeaf(LeafSplitCandidates& leafSplitCandidates)
 		{
+			//AutoTimer timer("FindAndSetBestFeatureForLeaf");
 			/*for (size_t i = 0; i < leafSplitCandidates.FeatureSplitInfo.size(); i++)
 			{
 			Pval2(i, leafSplitCandidates.FeatureSplitInfo[i].Gain);
@@ -464,6 +468,7 @@ namespace gezi {
 
 		void FindBestSplitOfRoot(dvec& targets)
 		{
+			AutoTimer("FindBestSplitOfRoot");
 			if (Partitioning.NumDocs() == TrainData.NumDocs)
 			{
 				_smallerChildSplitCandidates.Initialize(targets, GetTargetWeights(), _filterZeros);
@@ -494,6 +499,7 @@ namespace gezi {
 
 		void FindBestSplitOfSiblings(int LTEChild, int GTChild, DocumentPartitioning& partitioning, const dvec& targets)
 		{
+			AutoTimer timer("FindBestSplitOfSiblings");
 			int numDocsInLTEChild = partitioning.NumDocsInLeaf(LTEChild);
 			int numDocsInGTChild = partitioning.NumDocsInLeaf(GTChild);
 			if ((numDocsInGTChild < (_minDocsInLeaf * 2)) && (numDocsInLTEChild < (_minDocsInLeaf * 2)))
@@ -538,11 +544,14 @@ namespace gezi {
 							PVAL(GetGains(_largerChildSplitCandidates.FeatureSplitInfo)[154]);*/
 				}
 				//PVAL(_parentHistogramArray);
-#pragma omp parallel for
-				for (int featureIndex = 0; featureIndex < TrainData.NumFeatures; featureIndex++)
 				{
-					if (IsFeatureOk(featureIndex))
-						FindBestThresholdForFeature(featureIndex);
+					AutoTimer timer("FindBestThresholdForFeature");
+#pragma omp parallel for
+						for (int featureIndex = 0; featureIndex < TrainData.NumFeatures; featureIndex++)
+						{
+							if (IsFeatureOk(featureIndex))
+								FindBestThresholdForFeature(featureIndex);
+						}
 				}
 				FindAndSetBestFeatureForLeaf(_smallerChildSplitCandidates);
 				FindAndSetBestFeatureForLeaf(_largerChildSplitCandidates);
@@ -551,6 +560,7 @@ namespace gezi {
 
 		void FindBestThresholdForFeature(int featureIndex)
 		{
+			//AutoTimer("FindBestThresholdForFeature");
 			if (_parentHistogramArray && !(*_parentHistogramArray)[featureIndex].IsSplittable)
 			{
 				//VLOG(0) << "set smaller is splittable false";
@@ -582,6 +592,7 @@ namespace gezi {
 
 		void FindBestThresholdFromHistogram(FeatureHistogram& histogram, LeafSplitCandidates& leafSplitCandidates, int feature)
 		{
+			//AutoTimer timer("FindBestThresholdFromHistogram");
 			double bestSumLTETargets = std::numeric_limits<double>::quiet_NaN();
 			double bestSumLTEWeights = std::numeric_limits<double>::quiet_NaN();
 			double bestShiftedGain = -std::numeric_limits<double>::infinity();

@@ -1,10 +1,10 @@
 #COMAKE2 edit-mode: -*- Makefile -*-
 ####################64Bit Mode####################
 ifeq ($(shell uname -m),x86_64)
-CC=g++
-CXX=g++
+CC=../../../../ps/se/toolchain/x86_64-unknown-linux-gnu-4.8.1-2.9-2.20-2.6.32/bin/x86_64-unknown-linux-gnu-g++
+CXX=../../../../ps/se/toolchain/x86_64-unknown-linux-gnu-4.8.1-2.9-2.20-2.6.32/bin/x86_64-unknown-linux-gnu-g++
 CXXFLAGS=-g \
-  -O0 \
+  -O5 \
   -pipe \
   -W \
   -Wall \
@@ -19,7 +19,7 @@ CXXFLAGS=-g \
   -Wno-unused-local-typedefs \
   -fopenmp
 CFLAGS=-g \
-  -O0 \
+  -O5 \
   -pipe \
   -W \
   -Wall \
@@ -150,7 +150,7 @@ CCP_FLAGS=
 
 
 #COMAKE UUID
-COMAKE_MD5=b24286e4f4473d79767fedac13d9cf8d  COMAKE
+COMAKE_MD5=25f8fd1ffefa9a38122c923667c2a6c1  COMAKE
 
 
 .PHONY:all

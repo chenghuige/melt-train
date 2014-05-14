@@ -65,6 +65,15 @@ namespace gezi {
 			Pvector(_leafValue);
 		}
 
+		void ToOnline(vector<Feature>& features)
+		{
+			for (size_t i = 0; i < _threshold.size(); i++)
+			{
+				uint val = (uint)_threshold[i];
+				_threshold[i] = features[_splitFeature[i]].BinUpperBounds[val];
+			}
+		}
+
 		//scoreÒÑ¾­resizeºÃ
 		void AddOutputsToScores(Dataset& dataset, dvec& scores)
 		{

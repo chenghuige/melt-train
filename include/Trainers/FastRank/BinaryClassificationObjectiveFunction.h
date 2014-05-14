@@ -64,6 +64,7 @@ namespace gezi {
 
 		virtual void AdjustTreeOutputs(RegressionTree& tree, DocumentPartitioning& partitioning, ScoreTracker& trainingScores) override
 		{
+			AutoTimer timer("dynamic_pointer_cast<IStepSearch>(ObjectiveFunction))->AdjustTreeOutputs");
 			for (int l = 0; l < tree.NumLeaves; l++)
 			{
 				double output = 0.0;

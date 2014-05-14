@@ -130,14 +130,14 @@ namespace gezi {
 			}
 		};
 
-		void Sumup(int featureIndex, int numDocsInLeaf, double sumTargets,
+		inline void Sumup(int featureIndex, int numDocsInLeaf, double sumTargets,
 			dvec& outputs, ivec& docIndices)
 		{
 			dvec weights;
 			SumupWeighted(featureIndex, numDocsInLeaf, sumTargets, 0.0, outputs, weights, docIndices);
 		}
 
-		void SumupWeighted(int featureIndex, int numDocsInLeaf, double sumTargets, double sumWeights,
+		inline void SumupWeighted(int featureIndex, int numDocsInLeaf, double sumTargets, double sumWeights,
 			dvec& outputs, dvec& weights, ivec& docIndices)
 		{
 			SumupInputData input(numDocsInLeaf, sumTargets, sumWeights, outputs, weights, docIndices, Feature->BinMedians);
@@ -152,8 +152,9 @@ namespace gezi {
 		}
 
 	protected:
-		void Sumup(IntArray& bins, SumupInputData& input)
+		inline void Sumup(IntArray& bins, SumupInputData& input)
 		{
+			//AutoTimer timer("Sumup");
 			if (input.DocIndices.empty())
 			{
 				if (SumWeightsByBin.empty())
@@ -178,7 +179,7 @@ namespace gezi {
 			}
 		}
 
-		void SumupRoot(IntArray& bins, SumupInputData& input)
+		inline void SumupRoot(IntArray& bins, SumupInputData& input)
 		{
 			//VLOG(2) << "SumupRoot";
 			if (bins.IsDense())
@@ -191,7 +192,7 @@ namespace gezi {
 			}
 		}
 
-		void SumupRootDense(IntArray& bins, SumupInputData& input)
+		inline void SumupRootDense(IntArray& bins, SumupInputData& input)
 		{
 			bins.ForEachDense([&, this](int index, int featureBin)
 			{
@@ -201,7 +202,7 @@ namespace gezi {
 			});
 		}
 
-		void SumupRootSparse(IntArray& bins, SumupInputData& input)
+		inline void SumupRootSparse(IntArray& bins, SumupInputData& input)
 		{
 			double totalOutput = 0.0;
 			bins.ForEachSparse([&, this](int index, int featureBin)
@@ -222,7 +223,7 @@ namespace gezi {
 
 		}
 
-		void SumupLeaf(IntArray& bins, SumupInputData& input)
+		inline void SumupLeaf(IntArray& bins, SumupInputData& input)
 		{
 			//VLOG(2) << "SumupLeaf";
 			if (bins.IsDense())
@@ -235,59 +236,49 @@ namespace gezi {
 			}
 		}
 
-		void SumupLeafDense(IntArray& bins, SumupInputData& input)
+		//@TODO 貌似还是比tlc慢一些 是因为tlc的IntArray不同设置吗bit4 bit8?
+		inline void SumupLeafDense(IntArray& bins, SumupInputData& input)
 		{
-			int iDocIndices = 0;
-			bins.ForEachDenseIf([&, this](int index, int featureBin)
+			for (int iDocIndices = 0; iDocIndices < input.TotalCount; iDocIndices++)
 			{
-				if (index == input.DocIndices[iDocIndices])
-				{
-					double output = input.Outputs[iDocIndices];
-					SumTargetsByBin[featureBin] += output;
-					CountByBin[featureBin]++;
-					iDocIndices++;
-					if (iDocIndices >= input.TotalCount)
-					{
-						return false;
-					}
-				}
-				else if (index > input.DocIndices[iDocIndices])
-				{
-					iDocIndices++;
-					if (iDocIndices >= input.TotalCount)
-					{
-						return false;
-					}
-				}
-				return true;
-			});
+				double output = input.Outputs[iDocIndices];
+				int index = input.DocIndices[iDocIndices];
+				int featureBin = bins.values[index];
+				SumTargetsByBin[featureBin] += output;
+				CountByBin[featureBin]++;
+			}
 		}
-		void SumupLeafSparse(IntArray& bins, SumupInputData& input)
+
+		inline void SumupLeafSparse(IntArray& bins, SumupInputData& input)
 		{
 			int iDocIndices = 0;
 			int totalCount = 0;
 			double totalOutput = 0.0;
-			bins.ForEachSparseIf([&, this](int index, int featureBin)
+
+			int len = bins.indices.size();
+			for (int i = 0; i < len; i++)
 			{
+				int index = bins.indices[i];
 				while (index > input.DocIndices[iDocIndices])
 				{
 					iDocIndices++;
 					if (iDocIndices >= input.TotalCount)
-						return false;
+						goto end;
 				}
 				if (index == input.DocIndices[iDocIndices])
 				{
 					double output = input.Outputs[iDocIndices];
+					int featureBin = bins.values[i];
 					SumTargetsByBin[featureBin] += output;
 					totalOutput += output;
 					CountByBin[featureBin]++;
 					totalCount++;
 					iDocIndices++;
 					if (iDocIndices >= input.TotalCount)
-						return false;
+						break;
 				}
-				return true;
-			});
+			}
+		end:
 			SumTargetsByBin[bins.ZeroValue()] += input.SumTargets - totalOutput;
 			CountByBin[bins.ZeroValue()] += input.TotalCount - totalCount;
 		}

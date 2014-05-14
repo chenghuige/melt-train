@@ -23,6 +23,9 @@ struct FastRankArguments
 	int minInstancesInLeaf = 10;
 	double learningRate = 0.2;
 
+	bool calibrateOutput = true; //calibrate| use calibrator to gen probability?
+	string calibratorName = "sigmoid"; //calibrator| sigmoid/platt naive pav @TODO 移动到Trainer父类处理
+
 	int maxBins = 255; //mb|Maximum number of distinct values (bins) per feature
 	double sparsifyRatio = 0.3;//sr|if not big data (large instances num, large feature num can set 0 so to be all dense) that will make running faster
 

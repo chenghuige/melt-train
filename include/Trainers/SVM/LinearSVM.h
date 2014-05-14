@@ -32,19 +32,7 @@ namespace gezi {
 	public:
 		LinearSVM()
 		{
-			ParseArgs();
-			PVAL(_args.randSeed);
-			_rand = make_shared<Random>(random_engine(_args.randSeed));
-			if (_args.normalizeFeatures)
-			{
-				_normalizer = NormalizerFactory::CreateNormalizer(_args.normalizerName);
-			}
-			PVAL((_normalizer == nullptr));
-			if (_args.calibrateOutput)
-			{ 
-				_calibrator = CalibratorFactory::CreateCalibrator(_args.calibratorName);
-			}
-			PVAL((_calibrator == nullptr));
+			
 		}
 	
 		struct Arguments
@@ -73,8 +61,23 @@ namespace gezi {
 
 		void ParseArgs();
 
+		void Init()
+		{
+			ParseArgs();
+			PVAL(_args.randSeed);
+			_rand = make_shared<Random>(random_engine(_args.randSeed));
+			if (_args.normalizeFeatures) //@TODO to trainer
+			{
+				_normalizer = NormalizerFactory::CreateNormalizer(_args.normalizerName);
+			}
+			PVAL((_normalizer == nullptr));
+		}
+
 		virtual void Initialize(Instances& instances) override
 		{
+		
+			Init();
+
 			numFeatures = instances.FeatureNum();
 			_randRange = make_shared<RandomRange>(instances.Count(), random_engine(_args.randSeed));
 
@@ -200,8 +203,13 @@ namespace gezi {
 			TrainingComplete();
 		}
 
-		virtual void Finalize(Instances& instances)
+		virtual void Finalize(Instances& instances) override
 		{
+			if (_args.calibrateOutput) //@TODO to trainer
+			{
+				_calibrator = CalibratorFactory::CreateCalibrator(_args.calibratorName);
+			}
+			PVAL((_calibrator == nullptr));
 			_calibrator->Train(instances, [this](InstancePtr instance) {
 				if (_normalizer != nullptr && !instance->normalized)
 				{
@@ -394,7 +402,7 @@ namespace gezi {
 			return _args;
 		}
 
-		virtual PredictorPtr CreatePredictor()
+		virtual PredictorPtr CreatePredictor() override
 		{
 			_weights.MakeDense();
 			return make_shared<LinearPredictor>(_weights, _bias, 
