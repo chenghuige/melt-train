@@ -39,7 +39,7 @@ namespace gezi {
 		}
 
 		virtual RegressionTree& TrainingIteration() = 0;
-		virtual ScoreTrackerPtr ConstructScoreTracker(string name, Dataset set, dvec& InitScores) = 0;
+		virtual ScoreTrackerPtr ConstructScoreTracker(string name, Dataset& set, dvec& InitScores) = 0;
 
 		virtual void FinalizeLearning(int bestIteration)
 		{
@@ -81,7 +81,7 @@ namespace gezi {
 
 		virtual void UpdateAllScores(RegressionTree& tree)
 		{
-			AutoTimer timer("UpdateAllScores");
+			//dynamic_pointer_cast<IStepSearch>(ObjectiveFunction))->AdjustTreeOutputsAutoTimer timer("UpdateAllScores");
 			for (ScoreTrackerPtr t : TrackedScores)
 			{
 				UpdateScores(t, tree);

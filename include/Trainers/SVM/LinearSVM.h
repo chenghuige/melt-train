@@ -210,12 +210,15 @@ namespace gezi {
 				_calibrator = CalibratorFactory::CreateCalibrator(_args.calibratorName);
 			}
 			PVAL((_calibrator == nullptr));
-			_calibrator->Train(instances, [this](InstancePtr instance) {
-				if (_normalizer != nullptr && !instance->normalized)
-				{
-					instance = _normalizer->NormalizeCopy(instance);
-				}
-				return _bias + dot(instance->features, _weights); });
+			if (_calibrator)
+			{
+				_calibrator->Train(instances, [this](InstancePtr instance) {
+					if (_normalizer != nullptr && !instance->normalized)
+					{
+						instance = _normalizer->NormalizeCopy(instance);
+					}
+					return _bias + dot(instance->features, _weights); });
+			}
 		}
 
 		/// Process a given training example.         /// 目前没用到 streaming方式 才用这个

@@ -25,6 +25,12 @@ namespace gezi {
 		RegressionTree(int maxLeaves)
 		{
 			_weight = 1.0;
+			Reset(maxLeaves);
+			NumLeaves = 1;
+		}
+
+		void Reset(int maxLeaves)
+		{
 			_splitFeature.resize(maxLeaves - 1);
 			_splitGain.resize(maxLeaves - 1);
 			_gainPValue.resize(maxLeaves - 1);
@@ -33,7 +39,6 @@ namespace gezi {
 			_lteChild.resize(maxLeaves - 1);
 			_gtChild.resize(maxLeaves - 1);
 			_leafValue.resize(maxLeaves);
-			NumLeaves = 1;
 		}
 
 		void Print()
@@ -45,6 +50,7 @@ namespace gezi {
 			Pvector(_gtChild);
 			Pvector(_threshold);
 			Pvector(_leafValue);
+			Pval(NumLeaves);
 		}
 
 		void Print(vector<Feature>& features)
@@ -54,8 +60,9 @@ namespace gezi {
 			Pvector(_gainPValue);
 			Pvector(_lteChild);
 			Pvector(_gtChild);
+			Pval(NumLeaves);
 			dvec threshold;
-			for (size_t i = 0; i < _threshold.size(); i++)
+			for (size_t i = 0; i < NumLeaves; i++)
 			{
 				uint val = (uint)_threshold[i];
 				threshold.push_back(features[_splitFeature[i]].BinUpperBounds[val]);
@@ -63,6 +70,11 @@ namespace gezi {
 			Pvector(_threshold);
 			Pvector(threshold);
 			Pvector(_leafValue);
+		}
+
+		void Finalize()
+		{
+			Reset(NumLeaves);
 		}
 
 		void ToOnline(vector<Feature>& features)

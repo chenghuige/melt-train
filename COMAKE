@@ -62,6 +62,7 @@ if GCC_HIGH  == 1:
 	GCC_FLAGS += '-std=c++11 -fpermissive -Wno-write-strings -Wno-literal-suffix -Wno-unused-local-typedefs'
 	if GCC_DYNAMIC  == 1:
 		GCC_FLAGS += ' -fopenmp'
+		#GCC_FLAGS += ' -fopenmp -mmmx -msse -msse2 -msse3 -msse4 -msse4.1 -msse4.2'
 		
 #C±‡“Î≤Œ ˝.
 CFLAGS(COMMON_FLAGS, GCC_FLAGS)

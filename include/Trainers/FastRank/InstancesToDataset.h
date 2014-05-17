@@ -47,7 +47,7 @@ namespace gezi {
 			vector<Vector> valuesVec(numFeatures, Vector(instances.size()));
 			{
 				//ProgressBar pb(instances.size(), "Converting from row format to column format");
-				AutoTimer timer("Converting from row format to column format");
+				AutoTimer timer("Converting from row format to column format", 0);
 				int numInstancesProcessed = 0;
 				for (InstancePtr instance : instances)
 				{
@@ -67,27 +67,44 @@ namespace gezi {
 			//------------- 分桶 获取 bin upperbounds 和 medians
 			vector<Feature> features(numFeatures);
 			{
-				//ProgressBar pb(numFeatures, "Binning for bounds and medians");
-				AutoTimer timer("Binning for bounds and medians");
-				BinFinder binFinder;
-//#pragma omp parallel for firstprivate(pb) firstprivate(binFinder)
-#pragma omp parallel for firstprivate(binFinder)
-				for (int i = 0; i < numFeatures; i++)
+				if (numFeatures > 10000)
 				{
-					//++pb;
-					Fvec values = valuesVec[i].Values(); //做一份copy
-					binFinder.FindBins(values, valuesVec[i].Length(), maxBins,
-						features[i].BinUpperBounds, features[i].BinMedians);
+					ProgressBar pb(numFeatures, "Binning for bounds and medians");
+					//AutoTimer timer("Binning for bounds and medians", 0);
+					BinFinder binFinder;
+#pragma omp parallel for firstprivate(pb) firstprivate(binFinder)
+					for (int i = 0; i < numFeatures; i++)
+					{
+						++pb;
+						Fvec values = valuesVec[i].Values(); //做一份copy
+						binFinder.FindBins(values, valuesVec[i].Length(), maxBins,
+							features[i].BinUpperBounds, features[i].BinMedians);
 
-					features[i].Name = instances.FeatureNames()[i];
+						features[i].Name = instances.FeatureNames()[i];
+					}
 				}
+				else
+				{
+					AutoTimer timer("Binning for bounds and medians", 0);
+					BinFinder binFinder;
+#pragma omp parallel for firstprivate(binFinder)
+					for (int i = 0; i < numFeatures; i++)
+					{
+						Fvec values = valuesVec[i].Values(); //做一份copy
+						binFinder.FindBins(values, valuesVec[i].Length(), maxBins,
+							features[i].BinUpperBounds, features[i].BinMedians);
+
+						features[i].Name = instances.FeatureNames()[i];
+					}
+				}
+
 			}
 
 			//------------- 计算各个instance对应各个feature分到的桶号 bin 
 			{
 				//ProgressBar pb(numFeatures, "Get bin number for values");
-				AutoTimer timer("Get bin number for values");
-//#pragma omp parallel for firstprivate(pb) 
+				AutoTimer timer("Get bin number for values", 0);
+				//#pragma omp parallel for firstprivate(pb) 
 				for (int i = 0; i < numFeatures; i++)
 				{
 					//++pb;
