@@ -26,19 +26,21 @@ DEFINE_string(type, "simple", "");
 
 TEST(bit, func)
 {
-
+	Pval((~0));
+	Pval((~1));
+	Pval((~- 1));
 }
 
 int main(int argc, char *argv[])
 {
-  testing::InitGoogleTest(&argc, argv);
-  google::InitGoogleLogging(argv[0]);
-  google::InstallFailureSignalHandler();
-  int s = google::ParseCommandLineFlags(&argc, &argv, false);
-  if (FLAGS_log_dir.empty())
-    FLAGS_logtostderr = true;
-  if (FLAGS_v == 0)
+	testing::InitGoogleTest(&argc, argv);
+	google::InitGoogleLogging(argv[0]);
+	google::InstallFailureSignalHandler();
+	int s = google::ParseCommandLineFlags(&argc, &argv, false);
+	if (FLAGS_log_dir.empty())
+		FLAGS_logtostderr = true;
+	if (FLAGS_v == 0)
 		FLAGS_v = FALGS_vl;
-  
-  return RUN_ALL_TESTS();
+	
+	return RUN_ALL_TESTS();
 }
