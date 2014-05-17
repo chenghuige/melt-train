@@ -110,14 +110,15 @@ namespace gezi {
 		}
 
 	public:
+		Ensemble& Ensemble;
 		IStepSearchPtr AdjustTreeOutputsOverride = nullptr;
 		TreeLearnerPtr TreeLearner = nullptr;
 		ObjectiveFunctionPtr ObjectiveFunction = nullptr;
-		Ensemble& Ensemble;
 		double Smoothing = 0.0;
 		vector<ScoreTrackerPtr> TrackedScores;
 		ScoreTrackerPtr TrainingScores = nullptr;
-		bool useFastTrainingScoresUpdate = true;
+	protected:
+		bool _useFastTrainingScoresUpdate = true;
 	};
 
 	typedef shared_ptr<OptimizationAlgorithm> OptimizationAlgorithmPtr;

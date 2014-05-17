@@ -48,7 +48,7 @@ namespace gezi {
 			if (Smoothing != 0.0)
 			{
 				SmoothTree(tree, Smoothing);
-				useFastTrainingScoresUpdate = false;
+				_useFastTrainingScoresUpdate = false;
 			}
 			{
 				UpdateAllScores(tree); //score traker的作用 感觉多叶子迭代 多树迭代后和tlc不一致可能和这里有关系
