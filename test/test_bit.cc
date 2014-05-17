@@ -40,7 +40,7 @@ int main(int argc, char *argv[])
 	if (FLAGS_log_dir.empty())
 		FLAGS_logtostderr = true;
 	if (FLAGS_v == 0)
-		FLAGS_v = FALGS_vl;
+		FLAGS_v = FLAGS_vl;
 	
 	return RUN_ALL_TESTS();
 }
