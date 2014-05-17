@@ -28,7 +28,9 @@ TEST(bit, func)
 {
 	Pval((~0));
 	Pval((~1));
-	Pval((~- 1));
+	Pval((~-1));
+	Pval((~-2));
+	Pval((~-3));
 }
 
 int main(int argc, char *argv[])
