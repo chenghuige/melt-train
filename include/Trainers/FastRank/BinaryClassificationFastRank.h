@@ -45,9 +45,12 @@ public:
 		if (_args->calibrateOutput) //@TODO to trainer
 		{
 			_calibrator = CalibratorFactory::CreateCalibrator(_args->calibratorName);
+			PVAL((_calibrator == nullptr));
+			if (_calibrator != nullptr)
+			{
+				_calibrator->Train(ComputeScoresSmart(TrainSet), TrainSetLabels, TrainSet.Weights);
+			}
 		}
-		PVAL((_calibrator == nullptr));
-		_calibrator->Train(ComputeScoresSmart(TrainSet), TrainSetLabels, TrainSet.Weights);
 	}
 
 	virtual void PrepareLabels() override
