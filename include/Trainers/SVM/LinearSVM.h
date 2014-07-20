@@ -180,8 +180,8 @@ namespace gezi {
 				{ // rate sampling
 					for (int i = 0; i < instances.Count() * _args.sampleRate; i++)
 					{
-						//currentIdx = _randRange->Next(instances.Count());
-						currentIdx = _randRange->Next();
+						currentIdx = _rand->Next(instances.Count());
+						//currentIdx = _randRange->Next();
 						//@TODO densify() ? before process ? 
 						ProcessDataInstance(instances[currentIdx]);
 					}
@@ -190,8 +190,8 @@ namespace gezi {
 				{ // size sampling  当前走这里
 					for (int i = 0; i < _args.sampleSize; i++)
 					{
-						//currentIdx = _randRange->Next(instances.Count());
-						currentIdx = _randRange->Next();
+						currentIdx = _rand->Next(instances.Count());
+						//currentIdx = _randRange->Next();
 						ProcessDataInstance(instances[currentIdx]);
 					}
 				}
