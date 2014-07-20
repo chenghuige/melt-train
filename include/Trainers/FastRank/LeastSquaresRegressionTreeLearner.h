@@ -238,7 +238,6 @@ namespace gezi {
 		};
 
 	protected:
-		BitArray _activeFeatures;
 		bool _allowDummies;
 		bool _areTargetsWeighted = false;
 
@@ -309,13 +308,13 @@ namespace gezi {
 		}
 
 
-		virtual RegressionTree FitTargets(dvec& targets) override
+		virtual RegressionTree FitTargets(BitArray& activeFeatures, dvec& targets) override
 		{
 			//AutoTimer timer("TreeLearner->FitTargets");
 			int maxLeaves = NumLeaves;
 			int LTEChild;
 			int GTChild;
-			Initialize();
+			Initialize(activeFeatures);
 			RegressionTree tree = NewTree();
 			SetRootModel(tree, targets);
 			FindBestSplitOfRoot(targets);
@@ -371,8 +370,9 @@ namespace gezi {
 				info.Clear();
 			}
 		}
-		void Initialize()
+		void Initialize(BitArray& activeFeatures)
 		{
+			_activeFeatures = &activeFeatures;
 			_histogramArrayPool.Reset();
 			Partitioning.Initialize();
 

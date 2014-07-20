@@ -30,7 +30,7 @@ namespace gezi {
 		{
 		}
 
-		virtual RegressionTree FitTargets(dvec& targets) = 0;
+		virtual RegressionTree FitTargets(BitArray& activeFeatures, dvec& targets) = 0;
 
 		static string TargetWeightsDatasetName()
 		{
@@ -39,11 +39,12 @@ namespace gezi {
 
 		bool IsFeatureOk(int index)
 		{
-			return TrainData.Features[index].NumBins() > 1;
+			//return TrainData.Features[index].NumBins() > 1;
+			return (*_activeFeatures)[index];
 		}
 	protected:
+		BitArray* _activeFeatures;
 	private:
-
 	};
 
 	typedef shared_ptr<TreeLearner> TreeLearnerPtr;

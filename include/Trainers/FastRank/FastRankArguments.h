@@ -54,6 +54,7 @@ struct FastRankArguments
 	double featureReusePenalty = 0;
 	double softmaxTemperature = 0;
 
+	double featureFraction = 1;
 	double splitFraction = 1;
 	bool filterZeroLambdas = false;
 	double gainConfidenceLevel = 0;

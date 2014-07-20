@@ -33,9 +33,9 @@ namespace gezi {
 		{
 		}
 
-		virtual RegressionTree& TrainingIteration() override
+		virtual RegressionTree& TrainingIteration(BitArray& activeFeatures) override
 		{
-			RegressionTree tree = TreeLearner->FitTargets(AdjustTargetsAndSetWeights());
+			RegressionTree tree = TreeLearner->FitTargets(activeFeatures, AdjustTargetsAndSetWeights());
 			if (AdjustTreeOutputsOverride == nullptr)
 			{ //如果父类ObjectiveFunction里面没有虚函数 不能使用dynamic_pointer_cast... @TODO
 				(dynamic_pointer_cast<IStepSearch>(ObjectiveFunction))->AdjustTreeOutputs(tree, TreeLearner->Partitioning, *TrainingScores);

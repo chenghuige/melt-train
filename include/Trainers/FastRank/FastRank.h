@@ -72,6 +72,31 @@ namespace gezi {
 			TrainSet = InstancesToDataset::Convert(instances, _args->maxBins, _args->sparsifyRatio);
 		}
 
+		BitArray* GetActiveFeatures(BitArray& activeFeatures)
+		{
+			BitArray* pactiveFeatures;
+			if (_args->featureFraction == 1)
+			{
+				pactiveFeatures = &_activeFeatures;
+			}
+			else
+			{
+				activeFeatures = _activeFeatures;
+				for (size_t i = 0; i < activeFeatures.size(); i++)
+				{
+					if (activeFeatures[i])
+					{
+						if (_rand->NextDouble() > _args->featureFraction)
+						{
+							activeFeatures[i] = false;
+						}
+					}
+				}
+				pactiveFeatures = &activeFeatures;
+			}
+			return pactiveFeatures;
+		}
+
 		void TrainCore()
 		{
 			int numTotalTrees = _args->numTrees;
@@ -86,7 +111,11 @@ namespace gezi {
 			while (_ensemble.NumTrees() < numTotalTrees)
 			{
 				++pb;
-				_optimizationAlgorithm->TrainingIteration();
+				
+				BitArray activeFeatures;
+				BitArray* pactiveFeatures = GetActiveFeatures(activeFeatures);
+			
+				_optimizationAlgorithm->TrainingIteration(*pactiveFeatures);
 				CustomizedTrainingIteration();
 				if (revertRandomStart)
 				{
@@ -188,6 +217,17 @@ namespace gezi {
 
 		virtual void Initialize()
 		{
+			_rand = make_shared<Random>(random_engine(_args->randSeed));
+
+			_activeFeatures.resize(TrainSet.Features.size(), true);
+			for (size_t i = 0; i < TrainSet.Features.size(); i++)
+			{
+				if (TrainSet.Features[i].NumBins() <= 1)
+				{
+					_activeFeatures[i] = false;
+				}
+			}
+
 			PrepareLabels();
 			_optimizationAlgorithm = ConstructOptimizationAlgorithm();
 			InitializeTests();
@@ -263,7 +303,7 @@ namespace gezi {
 
 		dvec _tempScores;
 
-		RandomPtr _random = nullptr;
+		BitArray _activeFeatures;
 	};
 
 }  //----end of namespace gezi

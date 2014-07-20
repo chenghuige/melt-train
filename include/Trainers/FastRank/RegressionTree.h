@@ -133,7 +133,7 @@ namespace gezi {
 					node = _gtChild[node];
 				}
 			}
-			return ~node;
+			return ~node; //~ means -node - 1 (~-3) --- [2]
 		}
 
 		//@TODO range ? for IEnumerable ?
