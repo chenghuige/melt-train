@@ -39,6 +39,7 @@ namespace gezi {
 			_lteChild.resize(maxLeaves - 1);
 			_gtChild.resize(maxLeaves - 1);
 			_leafValue.resize(maxLeaves);
+			_parent.resize(maxLeaves);
 		}
 
 		void Print()
@@ -187,29 +188,43 @@ namespace gezi {
 
 		int Split(int leaf, int feature, uint threshold, double LTEValue, double GTValue, double gain, double gainPValue)
 		{
-			int indexOfNewNonLeaf = NumLeaves - 1;
-			int parent = find_index(_lteChild, ~leaf);
-			if (parent < _lteChild.size())
-			{
-				_lteChild[parent] = indexOfNewNonLeaf;
-			}
-			else
-			{
+			int indexOfNewInternal = NumLeaves - 1;
+			/*	int parent = find_index(_lteChild, ~leaf);
+				if (parent < _lteChild.size())
+				{
+				_lteChild[parent] = indexOfNewInternal;
+				}
+				else
+				{
 				parent = find_index(_gtChild, ~leaf);
 				if (parent < _gtChild.size())
 				{
-					_gtChild[parent] = indexOfNewNonLeaf;
+				_gtChild[parent] = indexOfNewInternal;
+				}
+				}*/
+			if (NumLeaves > 1)
+			{
+				int parent = _parent[leaf];
+				if (parent >= 0)
+				{
+					_lteChild[parent] = indexOfNewInternal;
+				}
+				else
+				{
+					_gtChild[~parent] = indexOfNewInternal;
 				}
 			}
-			_splitFeature[indexOfNewNonLeaf] = feature;
-			_splitGain[indexOfNewNonLeaf] = gain;
-			_gainPValue[indexOfNewNonLeaf] = gainPValue;
-			_threshold[indexOfNewNonLeaf] = threshold;
-			_lteChild[indexOfNewNonLeaf] = ~leaf;
-			_previousLeafValue[indexOfNewNonLeaf] = _leafValue[leaf];
+			_splitFeature[indexOfNewInternal] = feature;
+			_splitGain[indexOfNewInternal] = gain;
+			_gainPValue[indexOfNewInternal] = gainPValue;
+			_threshold[indexOfNewInternal] = threshold;
+			_lteChild[indexOfNewInternal] = ~leaf;
+			_previousLeafValue[indexOfNewInternal] = _leafValue[leaf];
 			_leafValue[leaf] = LTEValue;
-			_gtChild[indexOfNewNonLeaf] = ~NumLeaves;
+			_parent[leaf] = indexOfNewInternal;
+			_gtChild[indexOfNewInternal] = ~NumLeaves;
 			_leafValue[NumLeaves] = GTValue;
+			_parent[NumLeaves] = ~indexOfNewInternal;
 			if (LTEValue > _maxOutput)
 			{
 				_maxOutput = LTEValue;
@@ -219,7 +234,7 @@ namespace gezi {
 				_maxOutput = GTValue;
 			}
 			NumLeaves++;
-			return indexOfNewNonLeaf;
+			return indexOfNewInternal;
 		}
 
 		int SplitFeature(int node)
@@ -232,17 +247,17 @@ namespace gezi {
 			_leafValue[leaf] = value;
 		}
 
-		map<int, double> GainMap(bool normalize = true)
+		map<int, double> GainMap()
 		{
 			map<int, double> m;
 			GainMap(m);
 			return m;
 		}
 
-		void GainMap(map<int, double>& m, bool normalize = true)
+		void GainMap(map<int, double>& m)
 		{
-			int numNonLeaves = NumLeaves - 1;
-			for (int n = 0; n < numNonLeaves; n++)
+			int numInternals = NumLeaves - 1;
+			for (int n = 0; n < numInternals; n++)
 			{
 				add_value(m, _splitFeature[n], _splitGain[n]);
 			}
@@ -252,6 +267,9 @@ namespace gezi {
 		{
 			return NumLeaves - 1;
 		}
+
+	private:
+		ivec _parent;
 	};
 
 }  //----end of namespace gezi

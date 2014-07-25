@@ -47,6 +47,16 @@ namespace gezi {
 			ConjugateGradientDescent
 			}*/
 
+		virtual string GetParam() override
+		{
+			stringstream ss;
+			ss << "numTrees:" << _args->numTrees << " "
+				<< "numLeaves:" << _args->numLeaves << " "
+				<< "minInstancesInLeaf:" << _args->minInstancesInLeaf << " "
+				<< "learningRate:" << _args->learningRate << " "
+				<< "featureFraction:" << _args->featureFraction;
+			return ss.str();
+		}
 
 		//@TODO 
 		virtual void ParseArgs();
@@ -131,9 +141,9 @@ namespace gezi {
 			_optimizationAlgorithm->FinalizeLearning(GetBestIteration());
 		}
 
-		void FeatureGainPrint()
+		void FeatureGainPrint(int level = 1)
 		{
-			VLOG(1) << "Per feature gain:\n" <<
+			VLOG(level) << "Per feature gain:\n" <<
 				_ensemble.ToGainSummary(TrainSet.Features);
 		}
 

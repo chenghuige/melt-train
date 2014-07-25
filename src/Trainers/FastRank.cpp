@@ -28,6 +28,8 @@ DEFINE_int32(nl, 20, "numLeaves: Number of leaves maximam allowed in each regres
 DEFINE_int32(mil, 10, "minInstancesInLeaf: Minimal instances in leaves allowd");
 DEFINE_bool(bsr, false, "bestStepRankingRegressionTrees: ");
 DEFINE_double(sp, 0.1, "Sparsity level needed to use sparse feature representation, if 0.3 means be sparsify only if real data less then 30%, 0-1 the smaller more dense and faster but use more memeory");
+DEFINE_double(ff, 1, "The fraction of features (chosen randomly) to use on each iteration");
+
 namespace gezi {
 
 	void FastRank::ParseArgs()
@@ -50,22 +52,24 @@ namespace gezi {
 		else
 			_args->numLeaves = FLAGS_nl;
 
+		_args->randSeed = FLAGS_rs;
+
 		_args->minInstancesInLeaf = FLAGS_mil;
 
 		_args->bestStepRankingRegressionTrees = FLAGS_bsr;
 		_args->sparsifyRatio = FLAGS_sp;
+
+		_args->featureFraction = FLAGS_ff;
 
 		//---- doing more
 		if (_args->histogramPoolSize < 2)
 		{
 			_args->histogramPoolSize = (_args->numLeaves * 2) / 3;
 		}
-		if (_args->histogramPoolSize >(_args->numLeaves - 1))
+		if (_args->histogramPoolSize > (_args->numLeaves - 1))
 		{
 			_args->histogramPoolSize = _args->numLeaves - 1;
 		}
-
-		Pval4(_args->numLeaves, _args->numTrees, _args->minInstancesInLeaf, _args->learningRate);
 	}
 }
 

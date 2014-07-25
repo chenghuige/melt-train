@@ -28,7 +28,7 @@ namespace gezi {
 		vector<OnlineRegressionTree> ToOnline(vector<Feature>& features)
 		{
 			vector<OnlineRegressionTree> trees;
-			for (auto& tree: _trees)
+			for (auto& tree : _trees)
 			{
 				tree.ToOnline(features);
 				trees.emplace_back((OnlineRegressionTree)tree);
@@ -118,8 +118,8 @@ namespace gezi {
 			}
 			for (int i = 0; i < prefix; i++)
 			{
-				_trees[i].GainMap(m, normalize);
-			}		
+				_trees[i].GainMap(m);
+			}
 
 			if (normalize)
 			{
@@ -132,6 +132,7 @@ namespace gezi {
 			return m;
 		}
 
+
 		string ToGainSummary(vector<Feature>& featureList, int prefix = -1, bool includeZeroGainFeatures = true, bool normalize = true)
 		{
 			map<int, double> m = GainMap(prefix, normalize);
@@ -142,8 +143,8 @@ namespace gezi {
 					add_value(m, k, 0.0);
 				}
 			}
-			
-			//@TODO
+
+			// @TODO
 			//vector<pair<int, double> > sortedByGain = sort_map_by_value_reverse(m);
 			//auto sortedByGain = sort_map_by_value_reverse(m);
 			vector<pair<int, double> > sortedByGain;
@@ -157,11 +158,12 @@ namespace gezi {
 			for (auto item : sortedByGain)
 			{
 				ss << setiosflags(ios::left) << setfill(' ') << setw(40)
-					<< STR(id++) + ":" + featureList[item.first].Name 
+					<< STR(id++) + ":" + featureList[item.first].Name
 					<< " " << std::pow(item.second, power) / normalizingFactor << endl;
 			}
 			return ss.str();
 		}
+
 	};
 
 }  //----end of namespace gezi
