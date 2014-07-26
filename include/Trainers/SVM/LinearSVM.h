@@ -61,6 +61,14 @@ namespace gezi {
 
 		void ParseArgs();
 
+		virtual GetParam() override
+		{
+			stringstream ss;
+			ss << "numIterations:" << _args.numIterations << " "
+				<< "learningRate:" << _args.lambda;
+			return ss.str();
+		}
+
 		void Init()
 		{
 			ParseArgs();
