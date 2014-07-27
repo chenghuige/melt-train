@@ -63,7 +63,7 @@ namespace gezi {
 			Pvector(_gtChild);
 			Pval(NumLeaves);
 			dvec threshold;
-			for (size_t i = 0; i < NumLeaves; i++)
+			for (size_t i = 0; i < _threshold.size(); i++)
 			{
 				uint val = (uint)_threshold[i];
 				threshold.push_back(features[_splitFeature[i]].BinUpperBounds[val]);
