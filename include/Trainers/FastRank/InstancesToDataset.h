@@ -31,7 +31,7 @@ namespace gezi {
 		static IntArray GetBinValues(Vector& values, Fvec& upperBounds)
 		{
 			int zeroBin = first_ge(upperBounds, 0);
-			IntArray bins(values.Length(), zeroBin);
+			IntArray bins(zeroBin, values.Length());
 			values.ForEach([&](int idx, Float val) {
 				bins.Add(idx, first_ge(upperBounds, val));
 			});
