@@ -69,8 +69,8 @@ namespace gezi {
 					threshold.push_back(features[_splitFeature[i]].BinUpperBounds[val]);
 					}
 					Pvector(_threshold);
-					Pvector(threshold);
-			Pvector(_leafValue);*/
+					Pvector(threshold);*/
+			Pvector(_leafValue);
 		}
 
 		void Finalize()

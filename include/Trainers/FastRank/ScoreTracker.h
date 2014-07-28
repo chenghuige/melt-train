@@ -63,11 +63,6 @@ namespace gezi {
 				}
 				SendScoresUpdatedMessage();
 			}
-
-			if (VLOG_IS_ON(3))
-			{
-				Pvector(Scores);
-			}
 		}
 
 		virtual void InitScores(dvec& initScores)
