@@ -26,18 +26,18 @@ DEFINE_string(in, "./data/feature.txt", "input");
 DEFINE_string(type, "simple", "");
 
 #include "Trainers/FastRank/TreeLearner.h"
-struct TreeLearner2 : public TreeLearner
-{
-	TreeLearner2(Dataset& trainData, int numLeaves)
-		:TreeLearner(trainData, numLeaves)
-	{
-
-	}
-	RegressionTree FitTargets(dvec& targets)
-	{
-		return RegressionTree(20);
-	}
-};
+//struct TreeLearner2 : public TreeLearner
+//{
+//	TreeLearner2(Dataset& trainData, int numLeaves)
+//		:TreeLearner(trainData, numLeaves)
+//	{
+//
+//	}
+//	RegressionTree FitTargets(dvec& targets)
+//	{
+//		return RegressionTree(20);
+//	}
+//};
 
 TEST(fastrank_instances2dataset, func)
 {
@@ -48,7 +48,7 @@ TEST(fastrank_instances2dataset, func)
 	Pvec(dataSet.Features[154].BinMedians);
 	Pvec(dataSet.Features[154].BinUpperBounds);
 	Pval(dataSet.NumDocs);
-	TreeLearnerPtr learner = make_shared<TreeLearner2>(dataSet, 20);
+	//TreeLearnerPtr learner = make_shared<TreeLearner2>(dataSet, 20);
 	//TreeLearner2 learner(dataSet, 20);
 
 
