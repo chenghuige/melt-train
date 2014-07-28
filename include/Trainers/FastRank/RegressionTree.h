@@ -56,7 +56,7 @@ namespace gezi {
 
 		void Print(vector<Feature>& features)
 		{
-			//Pvector(_splitFeature);
+			Pvector(_splitFeature);
 			Pvector(_splitGain);
 			/*		Pvector(_gainPValue);
 					Pvector(_lteChild);
