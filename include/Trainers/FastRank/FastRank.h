@@ -121,7 +121,7 @@ namespace gezi {
 			while (_ensemble.NumTrees() < numTotalTrees)
 			{
 				++pb;
-				
+				PVAL(_ensemble.NumTrees());
 				BitArray activeFeatures;
 				BitArray* pactiveFeatures = GetActiveFeatures(activeFeatures);
 			

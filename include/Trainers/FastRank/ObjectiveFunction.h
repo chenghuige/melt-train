@@ -47,16 +47,16 @@ namespace gezi {
 			_gradient.resize(Dataset.NumDocs);
 			_weights.resize(Dataset.NumDocs);
 		}
-
+		
+		//@TODO原代码采用100个分组 每个线程处理100个query`
 		virtual dvec& GetGradient(const dvec& scores)
 		{
 			int sampleIndex = _rnd.Next(_gradSamplingRate);
-			//@TODO原代码采用100个分组 每个线程处理100个query
 #pragma omp parallel for
 			for (int query = 0; query < Dataset.NumDocs; query++)
 			{
 				if ((query % _gradSamplingRate) == sampleIndex)
-				{ //@TODO 测试一下 inline 普通 虚函数的时间花费 是否改为类似Normalizer使用的function设计性能会好？
+				{ 
 					GetGradientInOneQuery(query, scores);
 				}
 			}
