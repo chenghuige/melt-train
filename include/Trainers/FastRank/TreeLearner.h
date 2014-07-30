@@ -25,6 +25,9 @@ namespace gezi {
 		int NumLeaves;
 		DocumentPartitioning Partitioning;
 		Dataset& TrainData;
+
+		dvec* TargetWeights = NULL;
+
 		TreeLearner(Dataset& trainData, int numLeaves)
 			:TrainData(trainData), NumLeaves(numLeaves), Partitioning(trainData.NumDocs, numLeaves)
 		{

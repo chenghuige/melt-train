@@ -7,7 +7,7 @@
  *
  *          \date   2014-05-07 16:09:21.545812
  *
- *  \Description:
+ *  \Description:  对应TrainingApplicationBase
  *  ==============================================================================
  */
 
@@ -24,6 +24,8 @@
 #include "GradientDescent.h"
 #include "TrivialGradientWrapper.h"
 #include "BestStepRegressionGradientWrapper.h"
+#include "QueryWeightsGradientWrapper.h"
+#include "QueryWeightsBestResressionStepGradientWrapper.h"
 #include "LeastSquaresRegressionTreeLearner.h"
 #include "Predictors/FastRankPredictor.h"
 #include "Prediction/Calibrate/CalibratorFactory.h"
@@ -172,23 +174,23 @@ namespace gezi {
 
 		virtual TreeLearnerPtr ConstructTreeLearner()
 		{
+			PVAL(AreTargetsWeighted());
 			return make_shared<LeastSquaresRegressionTreeLearner>(TrainSet, _args->numLeaves, _args->minInstancesInLeaf, _args->entropyCoefficient, _args->featureFirstUsePenalty, _args->featureReusePenalty, _args->softmaxTemperature, _args->histogramPoolSize, _args->randSeed, _args->splitFraction, _args->filterZeroLambdas, _args->allowDummyRootSplits, _args->gainConfidenceLevel, AreTargetsWeighted(), BsrMaxTreeOutput());
 		}
 
 		bool AreTrainWeightsUsed()
-		{
+		{//只要是有weight数据 就使用 如果不使用 在melt框架部分确保weight数据为空即可
+			//可行的方法是  将weight列视作attr 比如 -weight 3 可以 -attr 3忽略掉即可
 			return true;
 		}
 
 		bool AreSamplesWeighted()
-		{ //@TODO weight选项不可用
+		{ 
 			return (AreTrainWeightsUsed() && (!TrainSet.SampleWeights.empty()));
 		}
 
 		bool AreTargetsWeighted()
 		{
-			return false; //@TODO @FIXME bestStepRankingRegressionTrees选项不可用？
-			//即使bestStepRankingRegressionTrees已经设置 结果和tlc仍然不一致
 			if (!AreSamplesWeighted())
 			{
 				return _args->bestStepRankingRegressionTrees;
@@ -207,9 +209,13 @@ namespace gezi {
 
 		virtual IGradientAdjusterPtr MakeGradientWrapper()
 		{
-			if (_args->bestStepRankingRegressionTrees)
+			if (AreSamplesWeighted())
 			{
-				return make_shared<BestStepRegressionGradientWrapper>();
+				if (_args->bestStepRankingRegressionTrees)
+				{
+					return make_shared<QueryWeightsBestStepRegressionGradientWrapper>();
+				}
+				return make_shared<QueryWeightsGradientWrapper>();
 			}
 			return make_shared<TrivialGradientWrapper>();
 		}

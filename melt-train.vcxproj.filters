@@ -110,5 +110,11 @@
     <ClInclude Include="include\Trainers\FastRank\BestStepRegressionGradientWrapper.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\Trainers\FastRank\QueryWeightsBestResressionStepGradientWrapper.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Trainers\FastRank\QueryWeightsGradientWrapper.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

@@ -48,7 +48,7 @@ public:
 			PVAL((_calibrator == nullptr));
 			if (_calibrator != nullptr)
 			{
-				_calibrator->Train(ComputeScoresSmart(TrainSet), TrainSetLabels, TrainSet.Weights);
+				_calibrator->Train(ComputeScoresSmart(TrainSet), TrainSetLabels, TrainSet.SampleWeights);
 			}
 		}
 	}

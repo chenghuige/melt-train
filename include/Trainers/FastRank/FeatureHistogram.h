@@ -137,6 +137,7 @@ namespace gezi {
 			SumupWeighted(featureIndex, numDocsInLeaf, sumTargets, 0.0, outputs, weights, docIndices);
 		}
 
+		//这里对于当前featureIndex统计了它对应bins的每个bin的累加target值 也就是计算直方图了
 		inline void SumupWeighted(int featureIndex, int numDocsInLeaf, double sumTargets, double sumWeights,
 			dvec& outputs, dvec& weights, ivec& docIndices)
 		{
@@ -217,10 +218,38 @@ namespace gezi {
 			CountByBin[bins.ZeroValue()] += input.TotalCount - bins.Count();
 		}
 
-		//@TODO
 		void SumupRootWeighted(IntArray& bins, SumupInputData& input)
 		{
+			if (bins.IsDense())
+			{
+				bins.ForEachDense([&, this](int index, int featureBin)
+				{
+					double output = input.Outputs[index];
+					SumTargetsByBin[featureBin] += output;
+					double weight = input.Weights[index];
+					SumWeightsByBin[featureBin] += weight;
+					CountByBin[featureBin]++;
+				});
+			}
+			else
+			{
+				double totalOutput = 0.0;
+				double totalWeight = 0.0;
+				bins.ForEachSparse([&, this](int index, int featureBin)
+				{
+					double output = input.Outputs[index];
+					SumTargetsByBin[featureBin] += output;
+					double weight = input.Weights[index];
+					SumWeightsByBin[featureBin] += weight;
+					CountByBin[featureBin]++;
+					totalOutput += output;
+					totalWeight += weight;
+				});
 
+				SumTargetsByBin[bins.ZeroValue()] += input.SumTargets - totalOutput;
+				SumWeightsByBin[bins.ZeroValue()] += input.SumWeights - totalWeight;
+				CountByBin[bins.ZeroValue()] += input.TotalCount - bins.Count();
+			}
 		}
 
 		inline void SumupLeaf(IntArray& bins, SumupInputData& input)
@@ -283,10 +312,59 @@ namespace gezi {
 			CountByBin[bins.ZeroValue()] += input.TotalCount - totalCount;
 		}
 
-		//@TODO
 		void SumupLeafWeighted(IntArray& bins, SumupInputData& input)
 		{
+			if (bins.IsDense())
+			{
+				for (int iDocIndices = 0; iDocIndices < input.TotalCount; iDocIndices++)
+				{
+					double output = input.Outputs[iDocIndices];
+					double weight = input.Weights[iDocIndices];
+					int index = input.DocIndices[iDocIndices];
+					int featureBin = bins.values[index];
+					SumTargetsByBin[featureBin] += output;
+					SumWeightsByBin[featureBin] += weight;
+					CountByBin[featureBin]++;
+				}
+			}
+			else
+			{
+				int iDocIndices = 0;
+				int totalCount = 0;
+				double totalOutput = 0.0;
+				double totalWeight = 0.0;
 
+				int len = bins.indices.size();
+				for (int i = 0; i < len; i++)
+				{
+					int index = bins.indices[i];
+					while (index > input.DocIndices[iDocIndices])
+					{
+						iDocIndices++;
+						if (iDocIndices >= input.TotalCount)
+							goto end;
+					}
+					if (index == input.DocIndices[iDocIndices])
+					{
+						double output = input.Outputs[iDocIndices];
+						double weight = input.Weights[iDocIndices];
+						int featureBin = bins.values[i];
+						SumTargetsByBin[featureBin] += output;
+						SumWeightsByBin[featureBin] += weight;
+						totalOutput += output; 
+						totalWeight += weight;
+						CountByBin[featureBin]++;
+						totalCount++;
+						iDocIndices++;
+						if (iDocIndices >= input.TotalCount)
+							break;
+					}
+				}
+			end:
+				SumTargetsByBin[bins.ZeroValue()] += input.SumTargets - totalOutput;
+				SumWeightsByBin[bins.ZeroValue()] += input.SumWeights - totalWeight;
+				CountByBin[bins.ZeroValue()] += input.TotalCount - totalCount;
+			}
 		}
 	};
 

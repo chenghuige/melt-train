@@ -55,7 +55,7 @@ namespace gezi {
 
 		struct LeafSplitCandidates
 		{
-			vector<SplitInfo> FeatureSplitInfo; // _bestSplitPerFeature; 记录子树中的分裂信息
+			vector<SplitInfo> FeatureSplitInfo; // _bestSplitPerFeature; 记录子树中每个Feature的分裂信息
 			ivec DocIndices;
 			ivec _docIndicesCopy;
 			int LeafIndex = -1;
@@ -139,7 +139,7 @@ namespace gezi {
 					NumDocsInLeaf = nonZeroCount;
 				}
 				else
-				{
+				{ //当前_filterZero=false走的这个路径 DocIndices变成empty,后面计算了对应所有doc的总target之和
 					if (!DocIndices.empty())
 						_docIndicesCopy.swap(DocIndices);
 					for (int i = 0; i < NumDocsInLeaf; i++)
@@ -334,17 +334,15 @@ namespace gezi {
 			}
 			_featureUseCount[rootSplitInfo.Feature]++;
 			PerformSplit(tree, 0, targets, LTEChild, GTChild);
-			//Pval2(LTEChild, GTChild);
 			for (int split = 0; split < (maxLeaves - 2); split++)
 			{
 				FindBestSplitOfSiblings(LTEChild, GTChild, Partitioning, targets);
+				//FindBestSplitOfSiblingsSimple(LTEChild, GTChild, Partitioning, targets);
 				bestLeaf = GetBestFeature(_bestSplitInfoPerLeaf);
-				//ClearBestSplitInfos();
-				//Pval(bestLeaf);
-				//const SplitInfo& bestLeafSplitInfo = *_bestSplitInfoPerLeaf[bestLeaf];
 				const SplitInfo& bestLeafSplitInfo = _bestSplitInfoPerLeaf[bestLeaf];
-				//Pval2(bestLeafSplitInfo.Feature, bestLeafSplitInfo.Gain);
-				if (bestLeafSplitInfo.Gain <= 0.0)
+				PrintVecTopN(_bestSplitInfoPerLeaf, Gain, 10);
+				//if (bestLeafSplitInfo.Gain <= 0.0)
+				if (bestLeafSplitInfo.Gain < std::numeric_limits<double>::epsilon()) // <= 0
 				{
 					VLOG(6) << "We cannot perform more splits with gain = " << bestLeafSplitInfo.Gain;
 					break;
@@ -405,12 +403,15 @@ namespace gezi {
 			return RegressionTree(NumLeaves);
 		}
 
+		//Regression树的叶子节点变成内部节点分裂新的两个叶子, Partitioning记录分裂的doc信息a
+		//doc被重新排列，leaf对应索引记录好起始位置和count
 		void PerformSplit(RegressionTree& tree, int bestLeaf, dvec& targets,
 			int& LTEChild, int& GTChild)
 		{
 			//AutoTimer timer("PerformSplit");
 			//const SplitInfo& bestSplitInfo = *_bestSplitInfoPerLeaf[bestLeaf];
 			const SplitInfo& bestSplitInfo = _bestSplitInfoPerLeaf[bestLeaf];
+			//PVAL(bestSplitInfo.Gain);
 			int newInteriorNodeIndex = tree.Split(bestLeaf, bestSplitInfo.Feature, bestSplitInfo.Threshold, bestSplitInfo.LTEOutput, bestSplitInfo.GTOutput, bestSplitInfo.Gain, bestSplitInfo.GainPValue);
 			GTChild = ~tree.GTChild(newInteriorNodeIndex);
 			LTEChild = bestLeaf;
@@ -424,6 +425,7 @@ namespace gezi {
 			//Pval4(leaf, bestFeature, _bestSplitInfoPerLeaf[leaf].Gain, leafSplitCandidates.FeatureSplitInfo[bestFeature].Gain);
 			/*_bestSplitInfoPerLeaf[leaf] = &leafSplitCandidates.FeatureSplitInfo[bestFeature];
 			_bestSplitInfoPerLeaf[leaf]->Feature = bestFeature;*/
+			//PVAL(leafSplitCandidates.FeatureSplitInfo[bestFeature].Gain);
 			_bestSplitInfoPerLeaf[leaf] = leafSplitCandidates.FeatureSplitInfo[bestFeature];
 		}
 
@@ -466,12 +468,15 @@ namespace gezi {
 			SetBestFeatureForLeaf(leafSplitCandidates, bestFeature);
 		}
 
-		dvec GetTargetWeights()
+		dvec _tempTargetVec;
+		//@TODO 很别扭 
+		dvec& GetTargetWeights()
 		{
-			//@TODO
-			//return TrainData.GetDatasetSkeleton.GetData<double>(TreeLearner.TargetWeightsDatasetName);
-			dvec result;
-			return result;
+			if (TargetWeights)
+			{
+				return *(TargetWeights);
+			}
+			return _tempTargetVec;
 		}
 
 		double GetLeafSplitGain(int count, double starget, double sweight)
@@ -493,16 +498,16 @@ namespace gezi {
 			//AutoTimer("FindBestSplitOfRoot");
 			//ClearBestSplitInfos();
 			if (Partitioning.NumDocs() == TrainData.NumDocs)
-			{
+			{ //当前走这个分支，统计总的target之和,_filterZeros = false
 				_smallerChildSplitCandidates.Initialize(targets, GetTargetWeights(), _filterZeros);
-			}
+			} //对应这个接口 _smallerChildSplitCandidates 对应的LeafIndex = 0
 			else
 			{
 				_smallerChildSplitCandidates.Initialize(0, Partitioning, targets, GetTargetWeights(), _filterZeros);
 			}
 			_parentHistogramArray = NULL;
-			_histogramArrayPool.Get(0, _smallerChildHistogramArray);
-			_largerChildSplitCandidates.Initialize();
+			_histogramArrayPool.Get(0, _smallerChildHistogramArray); //从pool中抽取一个histogram位置
+			_largerChildSplitCandidates.Initialize(); //larger clear也就是不处理 LeafIndex =-1
 #pragma omp parallel for
 			for (int featureIndex = 0; featureIndex < TrainData.NumFeatures; featureIndex++)
 			{
@@ -520,10 +525,43 @@ namespace gezi {
 				>> to_vector();
 		}
 
+		//简单速度慢的发现best split用于对比验证快速实现的正确性
+		void FindBestSplitOfSiblingsSimple(int LTEChild, int GTChild, DocumentPartitioning& partitioning, const dvec& targets)
+		{
+			int numDocsInLTEChild = partitioning.NumDocsInLeaf(LTEChild);
+			int numDocsInGTChild = partitioning.NumDocsInLeaf(GTChild);
+			if ((numDocsInGTChild < (_minDocsInLeaf * 2)) && (numDocsInLTEChild < (_minDocsInLeaf * 2)))
+			{
+				_bestSplitInfoPerLeaf[LTEChild].Gain = -std::numeric_limits<double>::infinity();
+				_bestSplitInfoPerLeaf[GTChild].Gain = -std::numeric_limits<double>::infinity();
+			}
+			else
+			{
+				_parentHistogramArray = NULL;
+				/*	if (numDocsInLTEChild >= numDocsInGTChild)
+					{
+					std::swap(LTEChild, GTChild);
+					}*/ //for debug the same sequece as no simple implemention
+				_smallerChildSplitCandidates.Initialize(LTEChild, partitioning, targets, GetTargetWeights(), _filterZeros);
+				_largerChildSplitCandidates.Initialize(GTChild, partitioning, targets, GetTargetWeights(), _filterZeros);
+				_histogramArrayPool.SimpleGet(LTEChild, _smallerChildHistogramArray);
+				_histogramArrayPool.SimpleGet(GTChild, _largerChildHistogramArray);
+			}
+			{
+#pragma omp parallel for
+				for (int featureIndex = 0; featureIndex < TrainData.NumFeatures; featureIndex++)
+				{
+					if (IsFeatureOk(featureIndex))
+						FindBestThresholdForFeatureSimple(featureIndex);
+				}
+			}
+			FindAndSetBestFeatureForLeaf(_smallerChildSplitCandidates);
+			FindAndSetBestFeatureForLeaf(_largerChildSplitCandidates);
+		}
+
 		void FindBestSplitOfSiblings(int LTEChild, int GTChild, DocumentPartitioning& partitioning, const dvec& targets)
 		{
 			//AutoTimer timer("FindBestSplitOfSiblings");
-
 			int numDocsInLTEChild = partitioning.NumDocsInLeaf(LTEChild);
 			int numDocsInGTChild = partitioning.NumDocsInLeaf(GTChild);
 			if ((numDocsInGTChild < (_minDocsInLeaf * 2)) && (numDocsInLTEChild < (_minDocsInLeaf * 2)))
@@ -582,12 +620,20 @@ namespace gezi {
 			}
 		}
 
+		void FindBestThresholdForFeatureSimple(int featureIndex)
+		{
+			(*_smallerChildHistogramArray)[featureIndex].SumupWeighted(featureIndex, _smallerChildSplitCandidates.NumDocsInLeaf, _smallerChildSplitCandidates.SumTargets, _smallerChildSplitCandidates.SumWeights, _smallerChildSplitCandidates.Targets, _smallerChildSplitCandidates.Weights, _smallerChildSplitCandidates.DocIndices);
+			FindBestThresholdFromHistogram((*_smallerChildHistogramArray)[featureIndex], _smallerChildSplitCandidates, featureIndex);
+			(*_largerChildHistogramArray)[featureIndex].SumupWeighted(featureIndex, _largerChildSplitCandidates.NumDocsInLeaf, _largerChildSplitCandidates.SumTargets, _largerChildSplitCandidates.SumWeights, _largerChildSplitCandidates.Targets, _largerChildSplitCandidates.Weights, _largerChildSplitCandidates.DocIndices);
+			FindBestThresholdFromHistogram((*_largerChildHistogramArray)[featureIndex], _largerChildSplitCandidates, featureIndex);
+		}
+		//计算出这个特征对应的 当前叶子内部的直方图统计,然后根据直方图统计找到最佳分裂阈值
 		void FindBestThresholdForFeature(int featureIndex)
 		{
 			//AutoTimer("FindBestThresholdForFeature");
 			if (_parentHistogramArray && !(*_parentHistogramArray)[featureIndex].IsSplittable)
 			{
-				//VLOG(0) << "set smaller is splittable false";
+				//VLOG(4) << "set smaller is splittable false";
 				(*_smallerChildHistogramArray)[featureIndex].IsSplittable = false;
 			}
 			else
@@ -595,7 +641,7 @@ namespace gezi {
 				//VLOG(4) << "_smaller sumupweighted" << _smallerChildSplitCandidates.DocIndices.size();
 				(*_smallerChildHistogramArray)[featureIndex].SumupWeighted(featureIndex, _smallerChildSplitCandidates.NumDocsInLeaf, _smallerChildSplitCandidates.SumTargets, _smallerChildSplitCandidates.SumWeights, _smallerChildSplitCandidates.Targets, _smallerChildSplitCandidates.Weights, _smallerChildSplitCandidates.DocIndices);
 				FindBestThresholdFromHistogram((*_smallerChildHistogramArray)[featureIndex], _smallerChildSplitCandidates, featureIndex);
-				if (_largerChildSplitCandidates.LeafIndex >= 0)
+				if (_largerChildSplitCandidates.LeafIndex >= 0) //FindBestSplitOfRoot的时候这里是-1,不处理
 				{
 					//or affine tree
 					if (!_parentHistogramArray)
@@ -614,6 +660,8 @@ namespace gezi {
 			}
 		}
 
+		//针对当前叶子节点的直方图统计,使用 LeafSplitCandidates的所有doc总统计，计算当前叶子
+		//对应当前特征，最佳的分裂信息
 		void FindBestThresholdFromHistogram(FeatureHistogram& histogram, LeafSplitCandidates& leafSplitCandidates, int feature)
 		{
 			//AutoTimer timer("FindBestThresholdFromHistogram");
@@ -629,6 +677,9 @@ namespace gezi {
 			int LTECount = 0;
 			int totalCount = leafSplitCandidates.NumDocsInLeaf;
 			double sumTargets = leafSplitCandidates.SumTargets;
+			/*	PVAL2(totalCount, sumTargets);
+				PVECTOR(histogram.SumTargetsByBin);
+				PVECTOR(histogram.CountByBin);*/
 			double sumWeights = leafSplitCandidates.SumWeights + (2.0 * eps);
 			double gainShift = GetLeafSplitGain(totalCount, sumTargets, sumWeights);
 			double minShiftedGain = (_gainConfidenceInSquaredStandardDeviations <= 0.0) ? 0.0 : ((((_gainConfidenceInSquaredStandardDeviations * leafSplitCandidates.VarianceTargets()) * totalCount) / ((double)(totalCount - 1))) + gainShift);
@@ -652,7 +703,8 @@ namespace gezi {
 					double sumGTTargets = sumTargets - sumLTETargets;
 					double sumGTWeights = sumWeights - sumLTEWeights;
 					double currentShiftedGain = GetLeafSplitGain(LTECount, sumLTETargets, sumLTEWeights) + GetLeafSplitGain(GTCount, sumGTTargets, sumGTWeights);
-
+					/*		PVAL4(LTECount, GTCount, sumLTETargets, sumGTTargets);
+							PVAL3(histogram.SumTargetsByBin.size(), sumLTEWeights, sumGTWeights);*/
 					if (currentShiftedGain >= minShiftedGain)
 					{
 						histogram.IsSplittable = true;
@@ -679,6 +731,7 @@ namespace gezi {
 			leafSplitCandidates.FeatureSplitInfo[feature].Gain = ((bestShiftedGain - gainShift) * trust) - usePenalty;
 			double erfcArg = std::sqrt(((bestShiftedGain - gainShift) * (totalCount - 1)) / ((2.0 * leafSplitCandidates.VarianceTargets()) * totalCount));
 			leafSplitCandidates.FeatureSplitInfo[feature].GainPValue = ProbabilityFunctions::Erfc(erfcArg);
+			//PVAL5(bestShiftedGain, gainShift, leafSplitCandidates.FeatureSplitInfo[feature].Gain, trust, usePenalty);
 		}
 
 		void SetRootModel(RegressionTree& tree, dvec& targets)

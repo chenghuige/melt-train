@@ -66,6 +66,7 @@ namespace gezi {
 			}
 			dvec* targetWeights = NULL;
 			dvec& targets = _gradientWrapper->AdjustTargetAndSetWeights(GetGradient(), *ObjectiveFunction, targetWeights);
+			TreeLearner->TargetWeights = targetWeights;
 			return targets;
 		}
 

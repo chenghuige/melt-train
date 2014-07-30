@@ -44,6 +44,7 @@ namespace gezi {
 			int numFeatures = instances.NumFeatures();
 			vector<short> ratings;
 			dvec weights;
+			bool useWeight = false;
 			vector<Vector> valuesVec(numFeatures, Vector(instances.size()));
 			{
 				//ProgressBar pb(instances.size(), "Converting from row format to column format");
@@ -59,6 +60,11 @@ namespace gezi {
 
 					ratings.push_back(instance->label);
 					weights.push_back(instance->weight);
+
+					if (instance->weight != 1.0)
+					{//如果都是比如2.0 还是默认有权重的 
+						useWeight = true;
+					}
 
 					numInstancesProcessed++;
 				}
@@ -118,6 +124,11 @@ namespace gezi {
 				}
 			}
 
+			if (!useWeight)
+			{
+				weights.clear();
+			}
+			PVAL(useWeight);
 			return Dataset(features, ratings, weights);
 		}
 	protected:
