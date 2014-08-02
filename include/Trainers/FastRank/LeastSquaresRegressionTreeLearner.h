@@ -418,7 +418,6 @@ namespace gezi {
 			Partitioning.Split(bestLeaf, TrainData.Features[bestSplitInfo.Feature].Bins, bestSplitInfo.Threshold, GTChild);
 			//bestSplitInfo.Gain = -std::numeric_limits<double>::infinity();
 		}
-		//@TODO 这个地方很奇怪 看原代码 貌似就是引用传递 但是那样后续不对。。 这里按照值复制拷贝
 		void SetBestFeatureForLeaf(LeafSplitCandidates& leafSplitCandidates, int bestFeature)
 		{
 			int leaf = leafSplitCandidates.LeafIndex;
