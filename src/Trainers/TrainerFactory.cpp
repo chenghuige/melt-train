@@ -1,6 +1,7 @@
 #include "MLCore/TrainerFactory.h"
 #include "Trainers/SVM/LinearSVM.h"
 #include "Trainers/FastRank/BinaryClassificationFastRank.h"
+#include "Trainers/RandomTrainer.h"
 namespace gezi {
 
 TrainerPtr TrainerFactory::CreateTrainer(string name)
@@ -33,6 +34,13 @@ TrainerPtr TrainerFactory::CreateTrainer(string name)
 	{
 		VLOG(0) << "Creating BinaryNeuralNetwork trainer";
 	}
+	//just for test
+	if (name == "random")
+	{
+		VLOG(0) << "Creatring random trainer(do nothing will genearate a random predictor to predict 0,1 randomly)";
+		return make_shared<RandomTrainer>();
+	}
+	
 	LOG(WARNING) << name << " is not supported now, return nullptr";
 	return nullptr;
 }
