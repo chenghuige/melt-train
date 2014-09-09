@@ -41,6 +41,7 @@ namespace gezi {
 			_inverseMap.resize(_pool.size(), -1);
 			_lastAccessTime.resize(_pool.size(), 0);
 		}
+
 		bool SimpleGet(int index, T*& obj)
 		{
 			obj = &_pool[index];

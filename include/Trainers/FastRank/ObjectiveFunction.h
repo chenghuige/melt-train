@@ -67,8 +67,8 @@ namespace gezi {
 
 	protected:
 		//virtual void GetGradientInOneQuery(int query, const dvec& scores) = 0;
-		std::function<void(int, const dvec&)> GetGradientInOneQuery;
 		//这个去掉虚函数之后 速度能从6.32726 s ->6.19447 s 考虑虚函数之外的设计 特别对于这种内部嵌入的循环内核心虚函数 尽量采用function替代
+		std::function<void(int, const dvec&)> GetGradientInOneQuery;
 	};
 
 	typedef shared_ptr<ObjectiveFunction> ObjectiveFunctionPtr;

@@ -66,6 +66,7 @@ namespace gezi {
 		_args->maxBins = FLAGS_mb;
 
 		//---- doing more 这里感觉就是对于historygram做了pool存储？ 为什么容量 *2/3？容量大一点不好吗
+		//如果是numLeaves - 1那么所有的非root分裂 都是有parent存储的 可以substract 主要是内存考虑吧？
 		_args->histogramPoolSize = FLAGS_ps;
 		if (_args->histogramPoolSize < 2)
 		{
