@@ -92,6 +92,7 @@
     <ClInclude Include="include\Trainers\FastRank\ScoreTracker.h" />
     <ClInclude Include="include\Trainers\FastRank\TreeLearner.h" />
     <ClInclude Include="include\Trainers\FastRank\TrivialGradientWrapper.h" />
+    <ClInclude Include="include\Trainers\RandomTrainer.h" />
     <ClInclude Include="include\Trainers\SVM\LinearSVM.h" />
   </ItemGroup>
   <ItemGroup>

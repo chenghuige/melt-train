@@ -116,5 +116,8 @@
     <ClInclude Include="include\Trainers\FastRank\QueryWeightsGradientWrapper.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\Trainers\RandomTrainer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
