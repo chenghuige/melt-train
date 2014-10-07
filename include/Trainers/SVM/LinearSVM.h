@@ -177,7 +177,8 @@ namespace gezi {
 		/// Override the default training loop:   we need to pick random instances manually...
 		virtual void InnerTrain(Instances& instances) override
 		{
-			_featureNames = instances.schema.featureNames;
+			_featureNames = instances.schema.featureNames; //copy feature names and only use it in CreatPredictor to move to Predictor
+			//一般向量不会太大 否则没有特征名 因此拷贝代价不大 不过可以考虑featureNames都设计为shared ptr并且验证序列化ok @TODO
 			ProgressBar pb("LinearSVM training", _args.numIterations);
 			for (int iter = 0; iter < _args.numIterations; iter++)
 			{
@@ -418,7 +419,7 @@ namespace gezi {
 			_weights.MakeDense();
 			return make_shared<LinearPredictor>(_weights, _bias, 
 				_normalizer, _calibrator, 
-				_featureNames,
+				_featureNames, 
 				"LinearSVM");
 		}
 
@@ -541,7 +542,7 @@ namespace gezi {
 	private:
 		Arguments _args;
 
-		svec _featureNames;
+		FeatureNamesVector _featureNames; 
 
 		/// <summary> Total number of features </summary>
 		int numFeatures;

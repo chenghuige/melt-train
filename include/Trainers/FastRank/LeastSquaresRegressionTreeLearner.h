@@ -325,7 +325,7 @@ namespace gezi {
 			{
 				if (!_allowDummies)
 				{
-					THROW((format("Learner cannot build a tree with root split gain = %lf, dummy splits disallowed") % rootSplitInfo.Gain).str());
+					THROW(format("Learner cannot build a tree with root split gain = {:lf}, dummy splits disallowed", rootSplitInfo.Gain));
 				}
 				LOG(WARNING) << "Learner cannot build a tree with root split gain = " << rootSplitInfo.Gain << ", so a dummy tree will be used instead";
 				double rootTarget = _smallerChildSplitCandidates.SumTargets / ((double)_smallerChildSplitCandidates.NumDocsInLeaf);
