@@ -83,11 +83,6 @@ GCC_LDFLAGS=''
 if GCC_HIGH  == 1: 
 	if GCC_DYNAMIC  == 1:
 		GCC_LDFLAGS += ' -lgomp -rdynamic -Wl'
-		GCC_LDFLAGS += ' -lgomp'
-		if GCC_LOCAL == 0:
-			GCC_LDFLAGS += ' -Wl,--dynamic-linker=./ld-linux-x86-64.so.2 -L%s'%(LIBS_DIR)
-		TARGET('.copy-so', ShellCommands('ln -s %s/ld-linux-x86-64.so.2 ld-linux-x86-64.so.2'%(LIBS_DIR)), 
-          CleanCommands('rm -rf ld-linux-x86-64.so.2')) 
 	else: 
 		GCC_LDFLAGS  += ' -static-libgcc -static-libstdc++'
 

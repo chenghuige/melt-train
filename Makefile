@@ -150,11 +150,11 @@ CCP_FLAGS=
 
 
 #COMAKE UUID
-COMAKE_MD5=c591c7049850a0e4d99996b861c41ae1  COMAKE
+COMAKE_MD5=e4bceb1640816865d7661ac18a5d17b2  COMAKE
 
 
 .PHONY:all
-all:comake2_makefile_check .copy-so libmelt_trainers.a 
+all:comake2_makefile_check libmelt_trainers.a 
 	@echo "[[1;32;40mCOMAKE:BUILD[0m][Target:'[1;32;40mall[0m']"
 	@echo "make all done"
 
@@ -174,8 +174,6 @@ ccpclean:
 .PHONY:clean
 clean:ccpclean
 	@echo "[[1;32;40mCOMAKE:BUILD[0m][Target:'[1;32;40mclean[0m']"
-	rm -rf .copy-so
-	rm -rf ld-linux-x86-64.so.2
 	rm -rf libmelt_trainers.a
 	rm -rf ./output/lib/libmelt_trainers.a
 	rm -rf src/Trainers/melt_trainers_FastRank.o
@@ -198,10 +196,6 @@ distclean:clean
 love:
 	@echo "[[1;32;40mCOMAKE:BUILD[0m][Target:'[1;32;40mlove[0m']"
 	@echo "make love done"
-
-.copy-so:
-	@echo "[[1;32;40mCOMAKE:BUILD[0m][Target:'[1;32;40m.copy-so[0m']"
-	ln -s ../../../../ps/se/toolchain/x86_64-unknown-linux-gnu-4.8.1-2.9-2.20-2.6.32/x86_64-unknown-linux-gnu/lib//ld-linux-x86-64.so.2 ld-linux-x86-64.so.2
 
 libmelt_trainers.a:src/Trainers/melt_trainers_FastRank.o \
   src/Trainers/melt_trainers_LinearSVM.o \

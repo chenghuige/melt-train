@@ -416,7 +416,7 @@ namespace gezi {
 
 		virtual PredictorPtr CreatePredictor() override
 		{
-			_weights.MakeDense();
+			_weights.MakeDense();  
 			return make_shared<LinearPredictor>(_weights, _bias, 
 				_normalizer, _calibrator, 
 				_featureNames, 
