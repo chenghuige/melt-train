@@ -30,6 +30,12 @@
     <ClCompile Include="src\Trainers\FastRank.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="test\test_bit.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test\test_train.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\Trainers\SVM\LinearSVM.h">
@@ -119,5 +125,22 @@
     <ClInclude Include="include\Trainers\RandomTrainer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="test\data\test.20140115-0304\feature\feature.def">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="test\data\thread.20140319-1444\feature\feature.def">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="test\data\train.20140316.all\feature\feature.def">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="test\data\train.v1\feature\feature.def">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="test\data\train.v1\train\feature.def">
+      <Filter>Source Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

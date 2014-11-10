@@ -22,6 +22,7 @@
 #include "MLCore/IterativeTrainer.h"
 #include "Prediction/Instances/Instances.h"
 #include "Numeric/Vector/Vector.h"
+#include "Numeric/Vector/WeightVector.h"
 #include "Predictors/LinearPredictor.h"
 #include "Prediction/Normalization/NormalizerFactory.h"
 #include "Prediction/Calibrate/CalibratorFactory.h"
@@ -32,9 +33,9 @@ namespace gezi {
 	public:
 		LinearSVM()
 		{
-			
+
 		}
-	
+
 		struct Arguments
 		{
 			int numIterations = 50000; //iter|Number of iterations
@@ -48,12 +49,12 @@ namespace gezi {
 			int featureNumThre = 1000; //fnt|if NumFeatures > featureNumThre use dense format 
 			//暂时不支持streaming 模式
 			bool doStreamingTraining = false; //stream|Streaming instances training
-			
+
 			bool normalizeFeatures = true; //norm|Normalize features
 			string normalizerName = "MinMax"; //normalizer|Which normalizer?
-			
+
 			unsigned randSeed = 0;//rs|controls wether the expermient can reproduce, 0 means not reproduce
-			
+
 			bool calibrateOutput = true; //calibrate| use calibrator to gen probability?
 			string calibratorName = "sigmoid"; //calibrator| sigmoid/platt naive pav
 			//uint64 maxCalibrationExamples = 1000000; //numCali|Number of instances to train the calibrator
@@ -83,7 +84,7 @@ namespace gezi {
 
 		virtual void Initialize(Instances& instances) override
 		{
-		
+
 			Init();
 
 			numFeatures = instances.FeatureNum();
@@ -113,11 +114,15 @@ namespace gezi {
 				// We want a dense vector, to prevent memory creation during training
 				// unless we have a lot of features
 				_weights.SetLength(numFeatures);
-				if (numFeatures <= _args.featureNumThre)
-				{ //使用dense表示
-					_weights.values.resize(numFeatures, 0);
-					_weights.keepDense = true;
-				}
+				//_weights2.SetLength(numFeatures);
+
+
+				//if (numFeatures <= _args.featureNumThre)
+				//{ //使用dense表示
+				//	_weights.values.resize(numFeatures, 0);
+				//	_weights.keepDense = true;
+				//}
+				//_weights.ForceDense();
 				_bias = 0;
 
 				// weights may be set to random numbers distributed uniformly on -1,1
@@ -125,7 +130,8 @@ namespace gezi {
 				{
 					for (int featureIdx = 0; featureIdx < numFeatures; featureIdx++)
 					{
-						_weights[featureIdx] = 2 * _rand->NextFloat() - 1;
+						//_weights[featureIdx] = 2 * _rand->NextFloat() - 1; //@FIXME
+						_weights.values[featureIdx] = 2 * _rand->NextFloat() - 1;
 					}
 					if (!_args.noBias)
 						_bias = 2 * _rand->NextFloat() - 1;
@@ -346,29 +352,29 @@ namespace gezi {
 				if ((output < 0 && instance->IsPositive()) || (output > 0 && instance->IsNegative()))
 				{
 					if (numProcessedExamples < numHoldoutExamples)
-						if (output < 0)
-							numFalseNegTrain++;
-						else
-							numFalsePosTrain++;
+					if (output < 0)
+						numFalseNegTrain++;
 					else
-						if (output < 0)
-							numFalseNegTest++;
-						else
-							numFalsePosTest++;
+						numFalsePosTrain++;
+					else
+					if (output < 0)
+						numFalseNegTest++;
+					else
+						numFalsePosTest++;
 				}
 			}
 
 			// update class distribution statistics
 			if (numProcessedExamples < numHoldoutExamples)
-				if (instance->label > 0)
-					numPosTrain++;
-				else
-					numNegTrain++;
+			if (instance->label > 0)
+				numPosTrain++;
 			else
-				if (instance->label > 0)
-					numClicksTest++;
-				else
-					numNonClicksTest++;
+				numNegTrain++;
+			else
+			if (instance->label > 0)
+				numClicksTest++;
+			else
+				numNonClicksTest++;
 
 			return true;
 		}
@@ -416,11 +422,15 @@ namespace gezi {
 
 		virtual PredictorPtr CreatePredictor() override
 		{
-			_weights.MakeDense();  
-			return make_shared<LinearPredictor>(_weights, _bias, 
-				_normalizer, _calibrator, 
-				_featureNames, 
-				"LinearSVM");
+			return make_shared<LinearPredictor>(_weights.GetVector(), _bias,
+		_normalizer, _calibrator,
+		_featureNames,
+		"LinearSVM");
+			//_weights.MakeDense();
+			//return make_shared<LinearPredictor>(_weights, _bias,
+			//	_normalizer, _calibrator,
+			//	_featureNames,
+			//	"LinearSVM");
 		}
 
 	protected:
@@ -493,19 +503,29 @@ namespace gezi {
 		{
 			// w_{t+1/2} = (1-eta*lambda) w_t + eta/k * totalUpdate
 			Float learningRate = 1 / (_args.lambda * iteration);
-			_weights.ScaleBy(1 - learningRate * _args.lambda);
+			Float scale = 1 - learningRate * _args.lambda;
+
+			if (scale <= 0.0000001)
+			{ //来自sofia-ml
+				LOG(WARNING) << scale;
+				scale = 0.0000001;
+			}
+
+			_weights.ScaleBy(scale);
+
 			if (!weightsUpdate.Empty())
 			{
 				weightsUpdate.ScaleBy(learningRate / numIterExamples);
 				_weights.Add(weightsUpdate);
 			}
 
-			_bias = (1 - learningRate * _args.lambda) * _bias + learningRate / numIterExamples * biasUpdate;
+			_bias = scale * _bias + learningRate / numIterExamples * biasUpdate;
 
+			//@TODO check performProjection
 			// w_{t+1} = min{1, 1/sqrt(lambda)/|w_{t+1/2}|} * w_{t+1/2}
 			if (_args.performProjection)
 			{
-				Float normalizer = 1 / (sqrt(_args.lambda) * _weights.Norm());
+				Float normalizer = 1 / (sqrt(_args.lambda) * _weights.Norm()); //@FIXME WeightVector::Norm() like sofia
 				if (normalizer < 1)
 				{
 					_weights.ScaleBy(normalizer);
@@ -542,12 +562,14 @@ namespace gezi {
 	private:
 		Arguments _args;
 
-		FeatureNamesVector _featureNames; 
+		FeatureNamesVector _featureNames;
 
 		/// <summary> Total number of features </summary>
 		int numFeatures;
 		/// <summary> Feature weights: weights for the last-seen training example </summary>
-		Vector _weights;
+		//Vector _weights;
+		WeightVector _weights;
+
 		/// <summary> Prediction bias </summary>
 		/// TODO: Note, I changed this also to mean the averaged bias. Should probably have two functions to
 		///  make explicit whether you want the averaged or last bias. Same for weights.
@@ -557,7 +579,7 @@ namespace gezi {
 		/// </summary>
 		Float lastMargin = 0;
 		InstancePtr lastMarginInstance = nullptr;
-	
+
 		// number of processed examples and actual weight updates
 		uint64 numProcessedExamples = 0;
 		uint64 numIterExamples = 0;

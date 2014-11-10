@@ -99,8 +99,17 @@
     <ClCompile Include="src\Trainers\FastRank.cpp" />
     <ClCompile Include="src\Trainers\LinearSVM.cpp" />
     <ClCompile Include="src\Trainers\TrainerFactory.cpp" />
+    <ClCompile Include="test\test_bit.cc" />
     <ClCompile Include="test\test_fastrank_instances2dataset.cc" />
     <ClCompile Include="test\test_fastrank_train.cc" />
+    <ClCompile Include="test\test_train.cc" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="test\data\test.20140115-0304\feature\feature.def" />
+    <None Include="test\data\thread.20140319-1444\feature\feature.def" />
+    <None Include="test\data\train.20140316.all\feature\feature.def" />
+    <None Include="test\data\train.v1\feature\feature.def" />
+    <None Include="test\data\train.v1\train\feature.def" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -12,39 +12,37 @@
  *  ==============================================================================
  */
 
+#define _DEBUG
 #define private public
 #define protected public
 #include "common_util.h"
-
+//#include "Trainers/FastRank/BinaryClassificationFastRank.h"
+#include "MLCore/TrainerFactory.h"
+#include "Prediction/Instances/instances_util.h"
 using namespace std;
 using namespace gezi;
-
 DEFINE_int32(vl, 0, "vlog level");
-DEFINE_int32(level, 0, "min log level");
-DEFINE_string(type, "simple", "");
-DEFINE_bool(perf,false, "");
-DEFINE_int32(num, 1, "");
-DEFINE_string(i, "", "input file");
-DEFINE_string(o, "", "output file");
+DEFINE_string(in, "./data/feature.normed.libsvm", "input file");
+DECLARE_string(cl);
 
-void run()
+TEST(fastrank_train, func)
 {
-
+	auto trainer = TrainerFactory::CreateTrainer(FLAGS_cl);
+	CHECK_NE((trainer == nullptr), true);
+	auto instances = create_instances(FLAGS_in);
+	trainer->Train(instances);
 }
 
 int main(int argc, char *argv[])
 {
-  google::InitGoogleLogging(argv[0]);
-  google::InstallFailureSignalHandler();
-  int s = google::ParseCommandLineFlags(&argc, &argv, false);
-  if (FLAGS_log_dir.empty())
-    FLAGS_logtostderr = true;
-  FLAGS_minloglevel = FLAGS_level;
-	LogHelper::set_level(FLAGS_level);
-  if (FLAGS_v == 0)
-    FLAGS_v = FLAGS_vl;
+	testing::InitGoogleTest(&argc, argv);
+	google::InitGoogleLogging(argv[0]);
+	google::InstallFailureSignalHandler();
+	int s = google::ParseCommandLineFlags(&argc, &argv, false);
+	if (FLAGS_log_dir.empty())
+		FLAGS_logtostderr = true;
+	if (FLAGS_v == 0)
+		FLAGS_v = FLAGS_vl;
 
-  run();
-
-  return 0;
+	return RUN_ALL_TESTS();
 }
