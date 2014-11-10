@@ -19,26 +19,26 @@ namespace gezi {
 	class ProbabilityFunctions
 	{
 	private:
-		static const double _ProbA[8] = { 3.3871328727963665, 133.14166789178438, 1971.5909503065513, 13731.693765509461, 45921.95393154987, 67265.7709270087, 33430.575583588128, 2509.0809287301227 };
-		static const double _ProbB[7] = { 42.313330701600911, 687.18700749205789, 5394.1960214247511, 21213.794301586597, 39307.895800092709, 28729.085735721943, 5226.4952788528544 };
-		static const double _ProbC[8] = { 1.4234371107496835, 4.6303378461565456, 5.769497221460691, 3.6478483247632045, 1.2704582524523684, 0.24178072517745061, 0.022723844989269184, 0.00077454501427834139 };
-		static const double _ProbD[8] = { 2.053191626637759, 1.6763848301838038, 0.6897673349851, 0.14810397642748008, 0.015198666563616457, 0.00054759380849953455, 1.0507500716444169E-09 };
-		static const double _ProbE[8] = { 6.6579046435011033, 5.4637849111641144, 1.7848265399172913, 0.29656057182850487, 0.026532189526576124, 0.0012426609473880784, 2.7115555687434876E-05, 2.0103343992922881E-07 };
-		static const double _ProbF[7] = { 0.599832206555888, 0.13692988092273581, 0.014875361290850615, 0.00078686913114561329, 1.8463183175100548E-05, 1.4215117583164459E-07, 2.0442631033899397E-15 };
+		static const Float _ProbA[8] = { 3.3871328727963665, 133.14166789178438, 1971.5909503065513, 13731.693765509461, 45921.95393154987, 67265.7709270087, 33430.575583588128, 2509.0809287301227 };
+		static const Float _ProbB[7] = { 42.313330701600911, 687.18700749205789, 5394.1960214247511, 21213.794301586597, 39307.895800092709, 28729.085735721943, 5226.4952788528544 };
+		static const Float _ProbC[8] = { 1.4234371107496835, 4.6303378461565456, 5.769497221460691, 3.6478483247632045, 1.2704582524523684, 0.24178072517745061, 0.022723844989269184, 0.00077454501427834139 };
+		static const Float _ProbD[8] = { 2.053191626637759, 1.6763848301838038, 0.6897673349851, 0.14810397642748008, 0.015198666563616457, 0.00054759380849953455, 1.0507500716444169E-09 };
+		static const Float _ProbE[8] = { 6.6579046435011033, 5.4637849111641144, 1.7848265399172913, 0.29656057182850487, 0.026532189526576124, 0.0012426609473880784, 2.7115555687434876E-05, 2.0103343992922881E-07 };
+		static const Float _ProbF[7] = { 0.599832206555888, 0.13692988092273581, 0.014875361290850615, 0.00078686913114561329, 1.8463183175100548E-05, 1.4215117583164459E-07, 2.0442631033899397E-15 };
 
 	public:
-		static double Erf(double x)
+		static Float Erf(Float x)
 		{
 			if (std::isinf(x))
 			{
-				if (x != std::numeric_limits<double>::infinity())
+				if (x != std::numeric_limits<Float>::infinity())
 				{
 					return -1.0;
 				}
 				return 1.0;
 			}
-			double t = 1.0 / (1.0 + (0.3275911 * std::abs(x)));
-			double ev = 1.0 - ((((((((((1.061405429 * t) + -1.453152027) * t) + 1.421413741) * t) + -0.284496736) * t) + 0.254829592) * t) * std::exp(-(x * x)));
+			Float t = 1.0 / (1.0 + (0.3275911 * std::abs(x)));
+			Float ev = 1.0 - ((((((((((1.061405429 * t) + -1.453152027) * t) + 1.421413741) * t) + -0.284496736) * t) + 0.254829592) * t) * std::exp(-(x * x)));
 			if (x < 0.0)
 			{
 				return -ev;
@@ -46,18 +46,18 @@ namespace gezi {
 			return ev;
 		}
 
-		static double Erfc(double x)
+		static Float Erfc(Float x)
 		{
 			if (std::isinf(x))
 			{
-				if (x != std::numeric_limits<double>::infinity())
+				if (x != std::numeric_limits<Float>::infinity())
 				{
 					return -1.0;
 				}
 				return 1.0;
 			}
-			double t = 1.0 / (1.0 + (0.3275911 * std::abs(x)));
-			double ev = (((((((((1.061405429 * t) + -1.453152027) * t) + 1.421413741) * t) + -0.284496736) * t) + 0.254829592) * t) * std::exp(-(x * x));
+			Float t = 1.0 / (1.0 + (0.3275911 * std::abs(x)));
+			Float ev = (((((((((1.061405429 * t) + -1.453152027) * t) + 1.421413741) * t) + -0.284496736) * t) + 0.254829592) * t) * std::exp(-(x * x));
 			if (x < 0.0)
 			{
 				return (2.0 - ev);
@@ -65,43 +65,43 @@ namespace gezi {
 			return ev;
 		}
 
-		static double Erfinv(double x)
+		static Float Erfinv(Float x)
 		{
 			if (x == 1.0)
 			{
-				return std::numeric_limits<double>::infinity();
+				return std::numeric_limits<Float>::infinity();
 			}
 			if (x == -1.0)
 			{
-				return -std::numeric_limits<double>::infinity();
+				return -std::numeric_limits<Float>::infinity();
 			}
-			dvec c(0x3e8);
+			Fvec c(0x3e8);
 			c[0] = 1.0;
 			for (size_t k = 1; k < c.size(); k++)
 			{
 				for (int m = 0; m < k; m++)
 				{
-					c[k] += ((c[m] * c[(k - 1) - m]) / ((double)(m + 1))) / ((double)((m + m) + 1));
+					c[k] += ((c[m] * c[(k - 1) - m]) / ((Float)(m + 1))) / ((Float)((m + m) + 1));
 				}
 			}
-			double cc = std::sqrt(3.1415926535897931) / 2.0;
-			double ccinc = 0.78539816339744828;
-			double zz = x;
-			double zzinc = x * x;
-			double ans = 0.0;
+			Float cc = std::sqrt(3.1415926535897931) / 2.0;
+			Float ccinc = 0.78539816339744828;
+			Float zz = x;
+			Float zzinc = x * x;
+			Float ans = 0.0;
 			for (size_t k = 0; k < c.size(); k++)
 			{
-				ans += ((c[k] * cc) * zz) / ((double)((2 * k) + 1));
+				ans += ((c[k] * cc) * zz) / ((Float)((2 * k) + 1));
 				cc *= ccinc;
 				zz *= zzinc;
 			}
 			return ans;
 		}
 
-		static double Probit(double p)
+		static Float Probit(Float p)
 		{
-			double q = p - 0.5;
-			double r = 0.0;
+			Float q = p - 0.5;
+			Float r = 0.0;
 			if (std::abs(q) <= 0.425)
 			{
 				r = 0.180625 - (q * q);
@@ -120,7 +120,7 @@ namespace gezi {
 				THROW("Illegal input value");
 			}
 			r = std::sqrt(-std::log(r));
-			double retval = 0.0;
+			Float retval = 0.0;
 			if (r < 5.0)
 			{
 				r -= 1.6;

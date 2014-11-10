@@ -21,11 +21,11 @@ namespace gezi {
 	public:
 		ivec CountByBin;
 		bool IsSplittable = true;
-		double SumMedians = std::numeric_limits<double>::quiet_NaN();
-		double SumMedianTargetProducts = std::numeric_limits<double>::quiet_NaN();
-		double SumSquaredMedians = std::numeric_limits<double>::quiet_NaN();
-		dvec SumTargetsByBin;
-		dvec SumWeightsByBin;
+		Float SumMedians = std::numeric_limits<Float>::quiet_NaN();
+		Float SumMedianTargetProducts = std::numeric_limits<Float>::quiet_NaN();
+		Float SumSquaredMedians = std::numeric_limits<Float>::quiet_NaN();
+		Fvec SumTargetsByBin;
+		Fvec SumWeightsByBin;
 		int NumFeatureValues = 0;
 		Feature* Feature = NULL;
 
@@ -59,7 +59,7 @@ namespace gezi {
 		}
 
 		//并行处理@TODO 可能用到 注意swap是否ok 还是需要用shared_ptr
-		FeatureHistogram(int numBins, dvec& sumTarget, ivec& binCount)
+		FeatureHistogram(int numBins, Fvec& sumTarget, ivec& binCount)
 			:NumFeatureValues(numBins)
 		{
 			if (sumTarget.size() != binCount.size())
@@ -116,30 +116,30 @@ namespace gezi {
 
 		struct SumupInputData
 		{
-			dvec& BinMedians;
+			Fvec& BinMedians;
 			ivec& DocIndices;
-			dvec& Outputs;
-			dvec& Weights;
-			double SumTargets;
-			double SumWeights;
+			Fvec& Outputs;
+			Fvec& Weights;
+			Float SumTargets;
+			Float SumWeights;
 			int TotalCount;
-			SumupInputData(int totalCount, double sumTargets, double sumWeights, dvec& outputs,
-				dvec& weights, ivec& docIndices, dvec& binMedians)
+			SumupInputData(int totalCount, Float sumTargets, Float sumWeights, Fvec& outputs,
+				Fvec& weights, ivec& docIndices, Fvec& binMedians)
 				:TotalCount(totalCount), SumTargets(sumTargets), SumWeights(sumWeights), Outputs(outputs), Weights(weights), DocIndices(docIndices), BinMedians(binMedians)
 			{
 			}
 		};
 
-		inline void Sumup(int featureIndex, int numDocsInLeaf, double sumTargets,
-			dvec& outputs, ivec& docIndices)
+		inline void Sumup(int featureIndex, int numDocsInLeaf, Float sumTargets,
+			Fvec& outputs, ivec& docIndices)
 		{
-			dvec weights;
+			Fvec weights;
 			SumupWeighted(featureIndex, numDocsInLeaf, sumTargets, 0.0, outputs, weights, docIndices);
 		}
 
 		//这里对于当前featureIndex统计了它对应bins的每个bin的累加target值 也就是计算直方图了
-		inline void SumupWeighted(int featureIndex, int numDocsInLeaf, double sumTargets, double sumWeights,
-			dvec& outputs, dvec& weights, ivec& docIndices)
+		inline void SumupWeighted(int featureIndex, int numDocsInLeaf, Float sumTargets, Float sumWeights,
+			Fvec& outputs, Fvec& weights, ivec& docIndices)
 		{
 			SumupInputData input(numDocsInLeaf, sumTargets, sumWeights, outputs, weights, docIndices, Feature->BinMedians);
 			zeroset(SumTargetsByBin);
@@ -148,7 +148,7 @@ namespace gezi {
 				zeroset(SumWeightsByBin);
 			}
 			zeroset(CountByBin);
-			SumMedians = SumSquaredMedians = SumMedianTargetProducts = std::numeric_limits<double>::quiet_NaN();
+			SumMedians = SumSquaredMedians = SumMedianTargetProducts = std::numeric_limits<Float>::quiet_NaN();
 			Sumup(Feature->Bins, input);
 		}
 
@@ -197,7 +197,7 @@ namespace gezi {
 		{
 			bins.ForEachDense([&, this](int index, int featureBin)
 			{
-				double output = input.Outputs[index];
+				Float output = input.Outputs[index];
 				SumTargetsByBin[featureBin] += output;
 				CountByBin[featureBin]++;
 			});
@@ -205,10 +205,10 @@ namespace gezi {
 
 		inline void SumupRootSparse(IntArray& bins, SumupInputData& input)
 		{
-			double totalOutput = 0.0;
+			Float totalOutput = 0.0;
 			bins.ForEachSparse([&, this](int index, int featureBin)
 			{
-				double output = input.Outputs[index];
+				Float output = input.Outputs[index];
 				SumTargetsByBin[featureBin] += output;
 				CountByBin[featureBin]++;
 				totalOutput += output;
@@ -224,22 +224,22 @@ namespace gezi {
 			{
 				bins.ForEachDense([&, this](int index, int featureBin)
 				{
-					double output = input.Outputs[index];
+					Float output = input.Outputs[index];
 					SumTargetsByBin[featureBin] += output;
-					double weight = input.Weights[index];
+					Float weight = input.Weights[index];
 					SumWeightsByBin[featureBin] += weight;
 					CountByBin[featureBin]++;
 				});
 			}
 			else
 			{
-				double totalOutput = 0.0;
-				double totalWeight = 0.0;
+				Float totalOutput = 0.0;
+				Float totalWeight = 0.0;
 				bins.ForEachSparse([&, this](int index, int featureBin)
 				{
-					double output = input.Outputs[index];
+					Float output = input.Outputs[index];
 					SumTargetsByBin[featureBin] += output;
-					double weight = input.Weights[index];
+					Float weight = input.Weights[index];
 					SumWeightsByBin[featureBin] += weight;
 					CountByBin[featureBin]++;
 					totalOutput += output;
@@ -270,7 +270,7 @@ namespace gezi {
 		{
 			for (int iDocIndices = 0; iDocIndices < input.TotalCount; iDocIndices++)
 			{
-				double output = input.Outputs[iDocIndices];
+				Float output = input.Outputs[iDocIndices];
 				int index = input.DocIndices[iDocIndices];
 				int featureBin = bins.values[index];
 				SumTargetsByBin[featureBin] += output;
@@ -282,7 +282,7 @@ namespace gezi {
 		{
 			int iDocIndices = 0;
 			int totalCount = 0;
-			double totalOutput = 0.0;
+			Float totalOutput = 0.0;
 
 			int len = bins.indices.size();
 			for (int i = 0; i < len; i++)
@@ -296,7 +296,7 @@ namespace gezi {
 				}
 				if (index == input.DocIndices[iDocIndices])
 				{
-					double output = input.Outputs[iDocIndices];
+					Float output = input.Outputs[iDocIndices];
 					int featureBin = bins.values[i];
 					SumTargetsByBin[featureBin] += output;
 					totalOutput += output;
@@ -318,8 +318,8 @@ namespace gezi {
 			{
 				for (int iDocIndices = 0; iDocIndices < input.TotalCount; iDocIndices++)
 				{
-					double output = input.Outputs[iDocIndices];
-					double weight = input.Weights[iDocIndices];
+					Float output = input.Outputs[iDocIndices];
+					Float weight = input.Weights[iDocIndices];
 					int index = input.DocIndices[iDocIndices];
 					int featureBin = bins.values[index];
 					SumTargetsByBin[featureBin] += output;
@@ -331,8 +331,8 @@ namespace gezi {
 			{
 				int iDocIndices = 0;
 				int totalCount = 0;
-				double totalOutput = 0.0;
-				double totalWeight = 0.0;
+				Float totalOutput = 0.0;
+				Float totalWeight = 0.0;
 
 				int len = bins.indices.size();
 				for (int i = 0; i < len; i++)
@@ -346,8 +346,8 @@ namespace gezi {
 					}
 					if (index == input.DocIndices[iDocIndices])
 					{
-						double output = input.Outputs[iDocIndices];
-						double weight = input.Weights[iDocIndices];
+						Float output = input.Outputs[iDocIndices];
+						Float weight = input.Weights[iDocIndices];
 						int featureBin = bins.values[i];
 						SumTargetsByBin[featureBin] += output;
 						SumWeightsByBin[featureBin] += weight;

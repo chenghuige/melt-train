@@ -129,9 +129,9 @@ namespace gezi {
 			_leafCount[gtChildIndex] = gtCount;
 		}
 
-		double Mean(dvec& weights, int leaf, bool filterZeros)
+		Float Mean(Fvec& weights, int leaf, bool filterZeros)
 		{
-			double mean = 0.0;
+			Float mean = 0.0;
 			int end = _leafBegin[leaf] + _leafCount[leaf];
 			int count = filterZeros ? 0 : _leafCount[leaf];
 			//PVAL3(_leafCount.size(), leaf, _leafCount[leaf]);
@@ -140,7 +140,7 @@ namespace gezi {
 			{
 				for (int i = _leafBegin[leaf]; i < end; i++)
 				{
-					double value = weights[_documents[i]];
+					Float value = weights[_documents[i]];
 					if (value != 0.0)
 					{
 						mean += value;
@@ -156,26 +156,26 @@ namespace gezi {
 				}
 			}
 			//PVAL2(mean, count);
-			return (mean / ((double)count));
+			return (mean / ((Float)count));
 		}
 
-		double Mean(dvec& weights, dvec& sampleWeights, int leaf, bool filterZeros)
+		Float Mean(Fvec& weights, Fvec& sampleWeights, int leaf, bool filterZeros)
 		{
 			if (sampleWeights.empty())
 			{
 				return Mean(weights, leaf, filterZeros);
 			}
-			double mean = 0.0;
+			Float mean = 0.0;
 			int end = _leafBegin[leaf] + _leafCount[leaf];
-			double sumWeight = 0.0;
+			Float sumWeight = 0.0;
 			if (filterZeros)
 			{
 				for (int i = _leafBegin[leaf]; i < end; i++)
 				{
-					double value = weights[_documents[i]];
+					Float value = weights[_documents[i]];
 					if (value != 0.0)
 					{
-						double weight = sampleWeights[_documents[i]];
+						Float weight = sampleWeights[_documents[i]];
 						mean += value * weight;
 						sumWeight += weight;
 					}
@@ -185,7 +185,7 @@ namespace gezi {
 			{
 				for (int i = _leafBegin[leaf]; i < end; i++)
 				{
-					double weight = sampleWeights[_documents[i]];
+					Float weight = sampleWeights[_documents[i]];
 					mean += weights[_documents[i]] * weight;
 					sumWeight += weight;
 				}

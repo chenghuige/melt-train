@@ -1,22 +1,18 @@
 /**
  *  ==============================================================================
  *
- *          \file   Trainers/SVM/LinearSVM.h
+ *          \file   Trainers/SVM/BaseLineLinearSVM.h
  *
  *        \author   chenghuige
  *
- *          \date   2014-04-06 21:41:18.444778
+ *          \date   2014-11-10 16:56:37.196697
  *
  *  \Description:
- SVM (Pegasos-Linear)	/cl:LinearSVM	Fast primal-space stochastic gradient descent solver (with an optional projection step).
- S. Shalev-Shwartz, Y. Singer, and N. Srebro.  Pegasos:
- Primal Estimated sub-GrAdient SOlver for SVM. ICML-2007.	Projection step is off by default (resulting in a 1.5-2x speedup).
- It is advisable to pre-normalize or turn off normalization for sparse data. (or pre-normalize via /c CreateInstances if normalization does help)
  *  ==============================================================================
  */
 
-#ifndef TRAINERS__S_V_M__LINEAR_S_V_M_H_
-#define TRAINERS__S_V_M__LINEAR_S_V_M_H_
+#ifndef TRAINERS__S_V_M__BASE_LINE_LINEAR_S_V_M_H_
+#define TRAINERS__S_V_M__BASE_LINE_LINEAR_S_V_M_H_
 
 #include "ProgressBar.h"
 #include "MLCore/IterativeTrainer.h"
@@ -28,10 +24,10 @@
 #include "Prediction/Calibrate/CalibratorFactory.h"
 namespace gezi {
 
-	class LinearSVM : public IterativeTrainer
+	class BaseLineLinearSVM : public IterativeTrainer
 	{
 	public:
-		LinearSVM()
+		BaseLineLinearSVM()
 		{
 
 		}
@@ -80,15 +76,12 @@ namespace gezi {
 				_normalizer = NormalizerFactory::CreateNormalizer(_args.normalizerName);
 			}
 			PVAL((_normalizer == nullptr));
-
 		}
 
 		virtual void Initialize(Instances& instances) override
 		{
 
 			Init();
-
-			_sampleSize = _args.sampleSize == 0 ? instances.Count() * _args.sampleRate : _args.sampleSize;
 
 			numFeatures = instances.FeatureNum();
 			_randRange = make_shared<RandomRange>(instances.Count(), random_engine(_args.randSeed));
@@ -117,6 +110,12 @@ namespace gezi {
 				// We want a dense vector, to prevent memory creation during training
 				// unless we have a lot of features
 				_weights.SetLength(numFeatures);
+
+				if (numFeatures <= _args.featureNumThre)
+				{ //使用dense表示
+					_weights.values.resize(numFeatures, 0);
+					_weights.keepDense = true;
+				}
 				_bias = 0;
 
 				// weights may be set to random numbers distributed uniformly on -1,1
@@ -185,12 +184,24 @@ namespace gezi {
 				++pb;
 				BeginTrainingIteration();
 
-
-				for (int i = 0; i < _sampleSize; i++)
-				{
-					currentIdx = _rand->Next(instances.Count());
-					//currentIdx = _randRange->Next();
-					ProcessDataInstance(instances[currentIdx]);
+				if (_args.sampleSize == 0)
+				{ // rate sampling
+					for (int i = 0; i < instances.Count() * _args.sampleRate; i++)
+					{
+						currentIdx = _rand->Next(instances.Count());
+						//currentIdx = _randRange->Next();
+						//@TODO densify() ? before process ? 
+						ProcessDataInstance(instances[currentIdx]);
+					}
+				}
+				else
+				{ // size sampling  当前走这里
+					for (int i = 0; i < _args.sampleSize; i++)
+					{
+						currentIdx = _rand->Next(instances.Count());
+						//currentIdx = _randRange->Next();
+						ProcessDataInstance(instances[currentIdx]);
+					}
 				}
 
 				bool wantMore;
@@ -285,7 +296,7 @@ namespace gezi {
 			}
 
 			/*	InstancePtr instance = make_shared<Instance>(*instance_);
-				instance->features.Densify();*/
+			instance->features.Densify();*/
 
 			// compute the update and update if needed     
 			Float output = Margin(instance);
@@ -404,10 +415,11 @@ namespace gezi {
 
 		virtual PredictorPtr CreatePredictor() override
 		{
-			return make_shared<LinearPredictor>(_weights.ToVector(), _bias,
+			_weights.MakeDense();
+			return make_shared<LinearPredictor>(_weights, _bias,
 				_normalizer, _calibrator,
 				_featureNames,
-				"LinearSVM");
+				"BaseLineLinearSVM");
 		}
 
 	protected:
@@ -417,14 +429,25 @@ namespace gezi {
 		/// </summary>		
 		Float Margin(InstancePtr instance)
 		{
+			//@TODo 如果instance是 normalize copy 新生成的 不会走这一步
+			//if (instance == lastMarginInstance)
+			//{
+			//	return lastMargin;
+			//}
+			//else
+			//{
+			//	//@TODO normalize and try to dense as TLC?
+			//	lastMargin = _bias + dot(_weights, instance->features);
+			//	lastMarginInstance = instance;
+			//	return lastMargin;
+			//}
 			if (currentIdx == lastIdx)
 			{
 				return lastMargin;
 			}
 			else
 			{
-				//lastMargin = _bias + dot(_weights, instance->features);
-				lastMargin = _bias + _weights.dot(instance->features);
+				lastMargin = _bias + dot(_weights, instance->features);
 				lastIdx = currentIdx;
 				return lastMargin;
 			}
@@ -441,10 +464,7 @@ namespace gezi {
 
 			// scale regret by weight
 			trueOutput *= instance->weight;
-			if (_sampleSize > 1)
-			{
-				gradient.ScaleBy(trueOutput);
-			}
+			gradient.ScaleBy(trueOutput);
 			biasUpdate = _args.noBias ? 0 : trueOutput;
 		}
 
@@ -474,27 +494,15 @@ namespace gezi {
 			Float learningRate = 1 / (_args.lambda * iteration);
 			Float scale = 1 - learningRate * _args.lambda;
 
-			if (scale <= 0.0000001)
-			{ //来自sofia-ml
-				LOG(WARNING) << scale;
-				scale = 0.0000001;
-			}
-
 			_weights.ScaleBy(scale);
 
 			if (!weightsUpdate.empty())
 			{
-				if (_sampleSize == 1)
-				{
-					_weights.AddScale(weightsUpdate, biasUpdate * learningRate / numIterExamples);
-				}
-				else
-				{
-					_weights.AddScale(weightsUpdate, learningRate / numIterExamples);
-				}
+				weightsUpdate.ScaleBy(learningRate / numIterExamples);
+				_weights.Add(weightsUpdate);
 			}
 
-			_bias = scale * _bias + biasUpdate * learningRate / numIterExamples; //sofia liblinear等用1做为index的好处是bias放到0位置，统一处理
+			_bias = scale * _bias + learningRate / numIterExamples * biasUpdate;
 
 			//@TODO check performProjection
 			// w_{t+1} = min{1, 1/sqrt(lambda)/|w_{t+1/2}|} * w_{t+1/2}
@@ -542,16 +550,12 @@ namespace gezi {
 		/// <summary> Total number of features </summary>
 		int numFeatures;
 		/// <summary> Feature weights: weights for the last-seen training example </summary>
-		//Vector _weights;
-		WeightVector _weights;
+		Vector _weights;
 
 		/// <summary> Prediction bias </summary>
 		/// TODO: Note, I changed this also to mean the averaged bias. Should probably have two functions to
 		///  make explicit whether you want the averaged or last bias. Same for weights.
 		Float _bias;
-
-		int _sampleSize = 1;
-
 		/// <summary>
 		/// Cache last instance on which we computed margin so that we don't recompute
 		/// </summary>
@@ -595,4 +599,5 @@ namespace gezi {
 
 }  //----end of namespace gezi
 
-#endif  //----end of TRAINERS__S_V_M__LINEAR_S_V_M_H_
+
+#endif  //----end of TRAINERS__S_V_M__BASE_LINE_LINEAR_S_V_M_H_

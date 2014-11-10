@@ -1,4 +1,5 @@
 #include "MLCore/TrainerFactory.h"
+#include "Trainers/SVM/BaseLineLinearSVM.h"
 #include "Trainers/SVM/LinearSVM.h"
 #include "Trainers/FastRank/BinaryClassificationFastRank.h"
 #include "Trainers/RandomTrainer.h"
@@ -7,6 +8,11 @@ namespace gezi {
 TrainerPtr TrainerFactory::CreateTrainer(string name)
 {
 	boost::to_lower(name);
+	if (name == "baselinelinearsvm" || name == "baselinesvm")
+	{
+		VLOG(0) << "Creating BaselineLinearSVM trainer";
+		return make_shared<BaseLineLinearSVM>();
+	}
 	if (name == "linearsvm" || name == "svm")
 	{
 		VLOG(0) << "Creating LinearSVM trainer";

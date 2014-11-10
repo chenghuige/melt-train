@@ -27,7 +27,7 @@ namespace gezi {
 
 		}
 
-		const double operator [] (int featureIdx) const
+		const Float operator [] (int featureIdx) const
 		{
 			return _features[featureIdx].Bins[_doc];
 		}
@@ -43,7 +43,7 @@ namespace gezi {
 		Dataset(const Dataset&) = default;
 		Dataset& operator = (const Dataset&) = default;
 
-		Dataset(vector<Feature>& features, vector<short>& ratings, dvec& weights)
+		Dataset(vector<Feature>& features, vector<short>& ratings, Fvec& weights)
 			:Features(features), Ratings(ratings), SampleWeights(weights)
 		{
 			for (auto feature : Features)
@@ -76,7 +76,7 @@ namespace gezi {
 		vector<Fvec*> FeatureBinMedians;
 		vector<Feature> Features;
 		vector<short> Ratings; //∂˛∑÷¿‡ 0,1 ≈≈–Ú ndcg 0,1,2,3,4 ?
-		dvec SampleWeights;
+		Fvec SampleWeights;
 	protected:
 	private:
 		

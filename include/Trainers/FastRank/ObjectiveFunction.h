@@ -22,22 +22,22 @@ namespace gezi {
 	{
 	public:
 		Dataset& Dataset;
-		dvec& Weights()
+		Fvec& Weights()
 		{
 			return _weights;
 		}
 	protected:
 		bool _bestStepRankingRegressionTrees = false;
-		dvec _gradient;
+		Fvec _gradient;
 		int _gradSamplingRate;
-		double _learningRate;
-		double _maxTreeOutput = std::numeric_limits<double>::max();
+		Float _learningRate;
+		Float _maxTreeOutput = std::numeric_limits<Float>::max();
 		static const int _queryThreadChunkSize = 100;
 		Random _rnd;
-		dvec _weights;
+		Fvec _weights;
 
 	public:
-		ObjectiveFunction(gezi::Dataset& dataset, double learningRate, double maxTreeOutput, int gradSamplingRate, bool useBestStepRankingRegressionTree, int randomNumberGeneratorSeed)
+		ObjectiveFunction(gezi::Dataset& dataset, Float learningRate, Float maxTreeOutput, int gradSamplingRate, bool useBestStepRankingRegressionTree, int randomNumberGeneratorSeed)
 			:Dataset(dataset), _rnd(randomNumberGeneratorSeed)
 		{
 			_learningRate = learningRate;
@@ -49,7 +49,7 @@ namespace gezi {
 		}
 		
 		//@TODO原代码采用100个分组 每个线程处理100个query`
-		virtual dvec& GetGradient(const dvec& scores)
+		virtual Fvec& GetGradient(const Fvec& scores)
 		{
 			int sampleIndex = _rnd.Next(_gradSamplingRate);
 #pragma omp parallel for
@@ -66,9 +66,9 @@ namespace gezi {
 		}
 
 	protected:
-		//virtual void GetGradientInOneQuery(int query, const dvec& scores) = 0;
+		//virtual void GetGradientInOneQuery(int query, const Fvec& scores) = 0;
 		//这个去掉虚函数之后 速度能从6.32726 s ->6.19447 s 考虑虚函数之外的设计 特别对于这种内部嵌入的循环内核心虚函数 尽量采用function替代
-		std::function<void(int, const dvec&)> GetGradientInOneQuery;
+		std::function<void(int, const Fvec&)> GetGradientInOneQuery;
 	};
 
 	typedef shared_ptr<ObjectiveFunction> ObjectiveFunctionPtr;

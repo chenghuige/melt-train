@@ -50,7 +50,7 @@ namespace gezi {
 		Fvec BinUpperBounds;
 		Fvec BinMedians;
 		IntArray Bins;
-		double Trust = 1;
+		Float Trust = 1;
 	};
 
 }  //----end of namespace gezi

@@ -26,14 +26,14 @@ namespace gezi {
 		DocumentPartitioning Partitioning;
 		Dataset& TrainData;
 
-		dvec* TargetWeights = NULL;
+		Fvec* TargetWeights = NULL;
 
 		TreeLearner(Dataset& trainData, int numLeaves)
 			:TrainData(trainData), NumLeaves(numLeaves), Partitioning(trainData.NumDocs, numLeaves)
 		{
 		}
 
-		virtual RegressionTree FitTargets(BitArray& activeFeatures, dvec& targets) = 0;
+		virtual RegressionTree FitTargets(BitArray& activeFeatures, Fvec& targets) = 0;
 
 		static string TargetWeightsDatasetName()
 		{

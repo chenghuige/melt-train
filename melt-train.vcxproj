@@ -93,6 +93,7 @@
     <ClInclude Include="include\Trainers\FastRank\TreeLearner.h" />
     <ClInclude Include="include\Trainers\FastRank\TrivialGradientWrapper.h" />
     <ClInclude Include="include\Trainers\RandomTrainer.h" />
+    <ClInclude Include="include\Trainers\SVM\BaseLineLinearSVM.h" />
     <ClInclude Include="include\Trainers\SVM\LinearSVM.h" />
   </ItemGroup>
   <ItemGroup>
@@ -103,6 +104,7 @@
     <ClCompile Include="test\test_fastrank_instances2dataset.cc" />
     <ClCompile Include="test\test_fastrank_train.cc" />
     <ClCompile Include="test\test_train.cc" />
+    <ClCompile Include="test\test_train_test.cc" />
   </ItemGroup>
   <ItemGroup>
     <None Include="test\data\test.20140115-0304\feature\feature.def" />

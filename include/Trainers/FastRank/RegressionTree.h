@@ -35,7 +35,7 @@ namespace gezi {
 			_splitGain.resize(maxLeaves - 1);
 			_gainPValue.resize(maxLeaves - 1);
 			_previousLeafValue.resize(maxLeaves - 1);
-			_threshold.resize(maxLeaves - 1); //online是double离线训练其实是uint 
+			_threshold.resize(maxLeaves - 1); //online是Float离线训练其实是uint 
 			_lteChild.resize(maxLeaves - 1);
 			_gtChild.resize(maxLeaves - 1);
 			_leafValue.resize(maxLeaves);
@@ -62,7 +62,7 @@ namespace gezi {
 			Pvector(_lteChild);
 			Pvector(_gtChild);
 			//	Pval(NumLeaves);
-			dvec threshold;
+			Fvec threshold;
 			for (size_t i = 0; i < _threshold.size(); i++)
 			{
 				uint val = (uint)_threshold[i];
@@ -90,7 +90,7 @@ namespace gezi {
 		}
 
 		//score已经resize好
-		void AddOutputsToScores(Dataset& dataset, dvec& scores)
+		void AddOutputsToScores(Dataset& dataset, Fvec& scores)
 		{
 #pragma omp parallel for
 			for (int d = 0; d < dataset.NumDocs; d++)
@@ -99,7 +99,7 @@ namespace gezi {
 			}
 		}
 
-		void AddOutputsToScores(Dataset& dataset, dvec& scores, double multiplier)
+		void AddOutputsToScores(Dataset& dataset, Fvec& scores, Float multiplier)
 		{
 			for (int d = 0; d < dataset.NumDocs; d++)
 			{
@@ -107,7 +107,7 @@ namespace gezi {
 			}
 		}
 
-		double GetOutput(const FeatureBin& featureBin)
+		Float GetOutput(const FeatureBin& featureBin)
 		{
 			if (_lteChild[0] == 0)
 			{
@@ -158,14 +158,14 @@ namespace gezi {
 			return left;
 		}
 
-		double GetOutput(int leaf)
+		Float GetOutput(int leaf)
 		{
 			return _leafValue[leaf];
 		}
 
-		dvec GetOutputs(Dataset& dataset)
+		Fvec GetOutputs(Dataset& dataset)
 		{
-			dvec outputs(dataset.NumDocs);
+			Fvec outputs(dataset.NumDocs);
 			for (int d = 0; d < dataset.NumDocs; d++)
 			{
 				outputs[d] = GetOutput(dataset.GetFeatureBinRow(d));
@@ -178,7 +178,7 @@ namespace gezi {
 			return _gtChild[node];
 		}
 
-		double LeafValue(int leaf)
+		Float LeafValue(int leaf)
 		{
 			return _leafValue[leaf];
 		}
@@ -188,7 +188,7 @@ namespace gezi {
 			return _lteChild[node];
 		}
 
-		int Split(int leaf, int feature, uint threshold, double LTEValue, double GTValue, double gain, double gainPValue)
+		int Split(int leaf, int feature, uint threshold, Float LTEValue, Float GTValue, Float gain, Float gainPValue)
 		{
 			int indexOfNewInternal = NumLeaves - 1;
 			/*	int parent = find_index(_lteChild, ~leaf);
@@ -244,19 +244,19 @@ namespace gezi {
 			return _splitFeature[node];
 		}
 
-		void SetOutput(int leaf, double value)
+		void SetOutput(int leaf, Float value)
 		{
 			_leafValue[leaf] = value;
 		}
 
-		map<int, double> GainMap()
+		map<int, Float> GainMap()
 		{
-			map<int, double> m;
+			map<int, Float> m;
 			GainMap(m);
 			return m;
 		}
 
-		void GainMap(map<int, double>& m)
+		void GainMap(map<int, Float>& m)
 		{
 			int numInternals = NumLeaves - 1;
 			for (int n = 0; n < numInternals; n++)

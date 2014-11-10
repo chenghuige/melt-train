@@ -25,21 +25,21 @@ namespace gezi {
 	class OptimizationAlgorithm
 	{
 	public:
-		OptimizationAlgorithm(gezi::Ensemble& ensemble, Dataset& trainData, dvec& initTrainScores)
+		OptimizationAlgorithm(gezi::Ensemble& ensemble, Dataset& trainData, Fvec& initTrainScores)
 			:Ensemble(ensemble)
 		{
 
 		}
 
 		//因为c++的构造函数中不能有虚函数 ConstructScoreTracker 单独提出 和c#不一样
-		virtual void Initialize(Dataset& trainData, dvec& initTrainScores)
+		virtual void Initialize(Dataset& trainData, Fvec& initTrainScores)
 		{
 			TrainingScores = ConstructScoreTracker("train", trainData, initTrainScores);
 			TrackedScores.push_back(TrainingScores);
 		}
 
 		virtual RegressionTree& TrainingIteration(BitArray& activeFeatures) = 0;
-		virtual ScoreTrackerPtr ConstructScoreTracker(string name, Dataset& set, dvec& InitScores) = 0;
+		virtual ScoreTrackerPtr ConstructScoreTracker(string name, Dataset& set, Fvec& InitScores) = 0;
 
 		virtual void FinalizeLearning(int bestIteration)
 		{
@@ -50,7 +50,7 @@ namespace gezi {
 			}
 		}
 
-		ScoreTrackerPtr GetScoreTracker(string name, Dataset& set, dvec& InitScores)
+		ScoreTrackerPtr GetScoreTracker(string name, Dataset& set, Fvec& InitScores)
 		{
 			for (ScoreTrackerPtr st : TrackedScores)
 			{
@@ -64,13 +64,13 @@ namespace gezi {
 			return newTracker;
 		}
 
-		void SetTrainingData(Dataset& trainData, dvec& initTrainScores)
+		void SetTrainingData(Dataset& trainData, Fvec& initTrainScores)
 		{
 			TrainingScores = ConstructScoreTracker("train", trainData, initTrainScores);
 			TrackedScores[0] = TrainingScores;
 		}
 
-		virtual void SmoothTree(RegressionTree& tree, double smoothing)
+		virtual void SmoothTree(RegressionTree& tree, Float smoothing)
 		{
 			AutoTimer timer("SmoothTree");
 			//if (smoothing != 0.0)
@@ -114,7 +114,7 @@ namespace gezi {
 		IStepSearchPtr AdjustTreeOutputsOverride = nullptr;
 		TreeLearnerPtr TreeLearner = nullptr;
 		ObjectiveFunctionPtr ObjectiveFunction = nullptr;
-		double Smoothing = 0.0;
+		Float Smoothing = 0.0;
 		vector<ScoreTrackerPtr> TrackedScores;
 		ScoreTrackerPtr TrainingScores = nullptr;
 	protected:

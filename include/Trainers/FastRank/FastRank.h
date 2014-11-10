@@ -38,9 +38,9 @@ namespace gezi {
 		vector<Dataset> TestSets;
 		Dataset ValidSet;
 
-		dmat InitTestScores;
-		dvec InitTrainScores;
-		dvec InitValidScores;
+		Fmat InitTestScores;
+		Fvec InitTrainScores;
+		Fvec InitValidScores;
 
 		/*	enum class OptimizationAlgorithm
 			{
@@ -198,7 +198,7 @@ namespace gezi {
 			return true;
 		}
 
-		double BsrMaxTreeOutput()
+		Float BsrMaxTreeOutput()
 		{
 			if (_args->bestStepRankingRegressionTrees)
 			{
@@ -251,7 +251,7 @@ namespace gezi {
 
 		virtual void PrepareLabels() = 0;
 
-		dvec& GetInitScores(Dataset& set)
+		Fvec& GetInitScores(Dataset& set)
 		{
 			if (&set == &TrainSet)
 			{
@@ -275,11 +275,11 @@ namespace gezi {
 			throw new Exception("Queried for unknown set");
 		}
 
-		dvec ComputeScoresSlow(Dataset& set)
+		Fvec ComputeScoresSlow(Dataset& set)
 		{
-			dvec scores(set.NumDocs);
+			Fvec scores(set.NumDocs);
 			_ensemble.GetOutputs(set, scores);
-			dvec& initScores = GetInitScores(set);
+			Fvec& initScores = GetInitScores(set);
 			if (!initScores.empty())
 			{
 				if (scores.size() != initScores.size())
@@ -294,7 +294,7 @@ namespace gezi {
 			return scores;
 		}
 
-		dvec ComputeScoresSmart(Dataset& set)
+		Fvec ComputeScoresSmart(Dataset& set)
 		{
 			if (!_args->compressEnsemble)
 			{
@@ -302,7 +302,7 @@ namespace gezi {
 				{
 					if (&(st->Dataset) == &set)
 					{
-						dvec result = move(st->Scores);
+						Fvec result = move(st->Scores);
 						return result;
 					}
 				}
@@ -317,7 +317,7 @@ namespace gezi {
 		Ensemble _ensemble;
 		OptimizationAlgorithmPtr _optimizationAlgorithm = nullptr;
 
-		dvec _tempScores;
+		Fvec _tempScores;
 
 		BitArray _activeFeatures;
 	};

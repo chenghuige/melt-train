@@ -20,15 +20,15 @@ namespace gezi {
 	class QueryWeightsBestStepRegressionGradientWrapper : public IGradientAdjuster
 	{
 	public:
-		virtual dvec& AdjustTargetAndSetWeights(dvec& gradient, ObjectiveFunction& objFunction, dvec*& targetWeights)
+		virtual Fvec& AdjustTargetAndSetWeights(Fvec& gradient, ObjectiveFunction& objFunction, Fvec*& targetWeights)
 		{
-			dvec& sampleWeights = objFunction.Dataset.SampleWeights;
-			//@TODO 检查正确性 或者 干脆 在 这个类加一个变量 dvec weights呢？
-			shared_ptr<dvec> pweights = make_shared<dvec>(gradient.size());
-			dvec& weights = *pweights;
+			Fvec& sampleWeights = objFunction.Dataset.SampleWeights;
+			//@TODO 检查正确性 或者 干脆 在 这个类加一个变量 Fvec weights呢？
+			shared_ptr<Fvec> pweights = make_shared<Fvec>(gradient.size());
+			Fvec& weights = *pweights;
 			for (size_t i = 0; i < gradient.size(); i++)
 			{
-				double queryWeight = sampleWeights[i];
+				Float queryWeight = sampleWeights[i];
 				gradient[i] = gradient[i] * queryWeight;
 				weights[i] = objFunction.Weights()[i] * queryWeight;
 			}

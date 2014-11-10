@@ -25,10 +25,10 @@ namespace gezi {
 	{
 	public:
 		IGradientAdjusterPtr _gradientWrapper; //@TODO
-		dvec _adjustedGradient; //AdjustTargetsAndSetWeights 如果改变了结果 那么返回这个值
+		Fvec _adjustedGradient; //AdjustTargetsAndSetWeights 如果改变了结果 那么返回这个值
 
 		GradientDescent(gezi::Ensemble& ensemble, Dataset& trainData,
-			dvec& initTrainScores, IGradientAdjusterPtr gradientWrapper)
+			Fvec& initTrainScores, IGradientAdjusterPtr gradientWrapper)
 			: OptimizationAlgorithm(ensemble, trainData, initTrainScores), _gradientWrapper(gradientWrapper)
 		{
 		}
@@ -58,24 +58,24 @@ namespace gezi {
 		}
 
 		//@TODO
-		virtual dvec& AdjustTargetsAndSetWeights()
+		virtual Fvec& AdjustTargetsAndSetWeights()
 		{
 			if (_gradientWrapper == nullptr)
 			{
 				return GetGradient();
 			}
-			dvec* targetWeights = NULL;
-			dvec& targets = _gradientWrapper->AdjustTargetAndSetWeights(GetGradient(), *ObjectiveFunction, targetWeights);
+			Fvec* targetWeights = NULL;
+			Fvec& targets = _gradientWrapper->AdjustTargetAndSetWeights(GetGradient(), *ObjectiveFunction, targetWeights);
 			TreeLearner->TargetWeights = targetWeights;
 			return targets;
 		}
 
-		virtual dvec& GetGradient()
+		virtual Fvec& GetGradient()
 		{
 			return ObjectiveFunction->GetGradient(TrainingScores->Scores);
 		}
 
-		virtual ScoreTrackerPtr ConstructScoreTracker(string name, Dataset& set, dvec& initScores) override
+		virtual ScoreTrackerPtr ConstructScoreTracker(string name, Dataset& set, Fvec& initScores) override
 		{
 			return make_shared<ScoreTracker>(name, set, initScores);
 		}

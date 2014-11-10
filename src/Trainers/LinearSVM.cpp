@@ -15,6 +15,7 @@
 #define LINEAR_S_V_M_CPP_
 #include "common_util.h"
 #include "Trainers/SVM/LinearSVM.h"
+#include "Trainers/SVM/BaseLineLinearSVM.h"
 
 DECLARE_bool(calibrate);
 DECLARE_string(calibrator);
@@ -42,6 +43,22 @@ namespace gezi {
 		_args.numIterations = FLAGS_iter;
 		_args.lambda = FLAGS_lr;
 	}
+
+	void BaseLineLinearSVM::ParseArgs()
+	{
+		_args.calibrateOutput = FLAGS_calibrate;
+		_args.calibratorName = FLAGS_calibrator;
+
+		_args.normalizeFeatures = FLAGS_norm;
+
+		_args.normalizerName = FLAGS_normalizer;
+
+		_args.randSeed = FLAGS_rs;
+
+		_args.numIterations = FLAGS_iter;
+		_args.lambda = FLAGS_lr;
+	}
+
 
 }  //----end of namespace gezi
 

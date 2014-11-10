@@ -33,7 +33,7 @@ DEFINE_string(type, "simple", "");
 //	{
 //
 //	}
-//	RegressionTree FitTargets(dvec& targets)
+//	RegressionTree FitTargets(Fvec& targets)
 //	{
 //		return RegressionTree(20);
 //	}

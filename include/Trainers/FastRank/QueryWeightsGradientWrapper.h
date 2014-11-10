@@ -20,9 +20,9 @@ namespace gezi {
 	class QueryWeightsGradientWrapper : public IGradientAdjuster
 	{
 	public:
-		virtual dvec& AdjustTargetAndSetWeights(dvec& gradient, ObjectiveFunction& objFunction, dvec*& targetWeights)
+		virtual Fvec& AdjustTargetAndSetWeights(Fvec& gradient, ObjectiveFunction& objFunction, Fvec*& targetWeights)
 		{
-			dvec& sampleWeights = objFunction.Dataset.SampleWeights;
+			Fvec& sampleWeights = objFunction.Dataset.SampleWeights;
 			for (size_t i = 0; i < gradient.size(); i++)
 			{ //@TODO 修改了gradient并返回 修改会有其它影响吗
 				gradient[i] = gradient[i] * sampleWeights[i];

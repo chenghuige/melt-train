@@ -43,20 +43,20 @@ namespace gezi {
 				}*/
 			}
 
-			GetGradientInOneQuery = [this](int query, const dvec& scores)
+			GetGradientInOneQuery = [this](int query, const Fvec& scores)
 			{
-				double sigmoidParam = _learningRate;
-				double recip_npos = 1.0;
-				double recip_nneg = 1.0;
+				Float sigmoidParam = _learningRate;
+				Float recip_npos = 1.0;
+				Float recip_nneg = 1.0;
 				if (_unbalancedSets)
 				{
-					recip_npos = 1.0 / ((double)_npos);
-					recip_nneg = 1.0 / ((double)_nneg);
+					recip_npos = 1.0 / ((Float)_npos);
+					recip_nneg = 1.0 / ((Float)_nneg);
 				}
 				int label = Labels[query] ? 1 : -1;
-				double recip = Labels[query] ? recip_npos : recip_nneg;
-				double response = ((2.0 * label) * sigmoidParam) / (1.0 + std::exp(((2.0 * label) * sigmoidParam) * scores[query]));
-				double absResponse = std::abs(response);
+				Float recip = Labels[query] ? recip_npos : recip_nneg;
+				Float response = ((2.0 * label) * sigmoidParam) / (1.0 + std::exp(((2.0 * label) * sigmoidParam) * scores[query]));
+				Float absResponse = std::abs(response);
 				_gradient[query] = response * recip;
 				_weights[query] = (absResponse * ((2.0 * sigmoidParam) - absResponse)) * recip;
 			};
@@ -67,7 +67,7 @@ namespace gezi {
 			//AutoTimer timer("dynamic_pointer_cast<IStepSearch>(ObjectiveFunction))->AdjustTreeOutputs");
 			for (int l = 0; l < tree.NumLeaves; l++)
 			{
-				double output = 0.0;
+				Float output = 0.0;
 				if (_bestStepRankingRegressionTrees)
 				{ //@TODO 即使设置 这里 仍然和tlc不一致
 					output = _learningRate * tree.GetOutput(l);
@@ -94,20 +94,20 @@ namespace gezi {
 
 
 	protected:
-	/*	virtual void GetGradientInOneQuery(int query, const dvec& scores) override
+	/*	virtual void GetGradientInOneQuery(int query, const Fvec& scores) override
 		{
-			double sigmoidParam = _learningRate;
-			double recip_npos = 1.0;
-			double recip_nneg = 1.0;
+			Float sigmoidParam = _learningRate;
+			Float recip_npos = 1.0;
+			Float recip_nneg = 1.0;
 			if (_unbalancedSets)
 			{
-				recip_npos = 1.0 / ((double)_npos);
-				recip_nneg = 1.0 / ((double)_nneg);
+				recip_npos = 1.0 / ((Float)_npos);
+				recip_nneg = 1.0 / ((Float)_nneg);
 			}
 			int label = Labels[query] ? 1 : -1;
-			double recip = Labels[query] ? recip_npos : recip_nneg;
-			double response = ((2.0 * label) * sigmoidParam) / (1.0 + std::exp(((2.0 * label) * sigmoidParam) * scores[query]));
-			double absResponse = std::abs(response);
+			Float recip = Labels[query] ? recip_npos : recip_nneg;
+			Float response = ((2.0 * label) * sigmoidParam) / (1.0 + std::exp(((2.0 * label) * sigmoidParam) * scores[query]));
+			Float absResponse = std::abs(response);
 			_gradient[query] = response * recip;
 			_weights[query] = (absResponse * ((2.0 * sigmoidParam) - absResponse)) * recip;
 		}*/

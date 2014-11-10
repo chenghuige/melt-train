@@ -36,6 +36,9 @@
     <ClCompile Include="test\test_train.cc">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="test\test_train_test.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\Trainers\SVM\LinearSVM.h">
@@ -123,6 +126,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\Trainers\RandomTrainer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Trainers\SVM\BaseLineLinearSVM.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

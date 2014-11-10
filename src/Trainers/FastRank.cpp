@@ -41,7 +41,7 @@ namespace gezi {
 		_args->calibrateOutput = FLAGS_calibrate; //@TODO to Trainer deal
 		_args->calibratorName = FLAGS_calibrator;
 
-		if (!are_same(FLAGS_lr, 0.001)) //@TODO double 判断相同 判断是否是0 另外如果用户再输入0.0001不起作用了就 不符合逻辑了
+		if (!are_same(FLAGS_lr, 0.001)) //@TODO Float 判断相同 判断是否是0 另外如果用户再输入0.0001不起作用了就 不符合逻辑了
 			_args->learningRate = FLAGS_lr;
 
 		if (FLAGS_iter != 50000)

@@ -38,12 +38,12 @@ namespace gezi {
 			return bins;
 		}
 
-		static Dataset Convert(Instances& instances, int maxBins = 255, double sparsifyRatio = 0.3)
+		static Dataset Convert(Instances& instances, int maxBins = 255, Float sparsifyRatio = 0.3)
 		{
 			//-------------- 行转换为列
 			int numFeatures = instances.NumFeatures();
 			vector<short> ratings;
-			dvec weights;
+			Fvec weights;
 			bool useWeight = false;
 			vector<Vector> valuesVec(numFeatures, Vector(instances.size()));
 			{

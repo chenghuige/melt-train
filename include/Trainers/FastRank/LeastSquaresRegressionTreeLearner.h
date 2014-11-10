@@ -29,12 +29,12 @@ namespace gezi {
 		{
 			int Feature = 0;
 			uint Threshold = 0;
-			double LTEOutput = 0;
-			double GTOutput = 0;
-			double Gain = -std::numeric_limits<double>::infinity();
-			double GainPValue = -std::numeric_limits<double>::infinity();
-			/*double Gain = 0;
-			double GainPValue = 0;*/
+			Float LTEOutput = 0;
+			Float GTOutput = 0;
+			Float Gain = -std::numeric_limits<Float>::infinity();
+			Float GainPValue = -std::numeric_limits<Float>::infinity();
+			/*Float Gain = 0;
+			Float GainPValue = 0;*/
 			int LTECount = 0;
 			int GTCount = 0;
 
@@ -44,8 +44,8 @@ namespace gezi {
 				Threshold = 0;
 				LTEOutput = 0;
 				GTOutput = 0;
-				Gain = -std::numeric_limits<double>::infinity();
-				GainPValue = -std::numeric_limits<double>::infinity();
+				Gain = -std::numeric_limits<Float>::infinity();
+				GainPValue = -std::numeric_limits<Float>::infinity();
 				/*Gain = 0;
 				GainPValue = 0;*/
 				LTECount = 0;
@@ -60,11 +60,11 @@ namespace gezi {
 			ivec _docIndicesCopy;
 			int LeafIndex = -1;
 			int NumDocsInLeaf;
-			double SumSquaredTargets = 0;
-			double SumTargets = 0;
-			double SumWeights = 0;
-			dvec Targets;
-			dvec Weights;
+			Float SumSquaredTargets = 0;
+			Float SumTargets = 0;
+			Float SumWeights = 0;
+			Fvec Targets;
+			Fvec Weights;
 			LeafSplitCandidates() = default;
 			LeafSplitCandidates(int numFeatures, int numDocs, bool bHasWeights)
 			{
@@ -89,7 +89,7 @@ namespace gezi {
 				for (size_t f = 0; f < FeatureSplitInfo.size(); f++)
 				{
 					FeatureSplitInfo[f].Feature = f;
-					FeatureSplitInfo[f].Gain = -std::numeric_limits<double>::infinity();
+					FeatureSplitInfo[f].Gain = -std::numeric_limits<Float>::infinity();
 				}
 			}
 
@@ -98,7 +98,7 @@ namespace gezi {
 				Clear();
 			}
 
-			void Initialize(const dvec& targets, const dvec& weights, bool filterZeros)
+			void Initialize(const Fvec& targets, const Fvec& weights, bool filterZeros)
 			{
 				Clear();
 				SumTargets = 0.0;
@@ -113,7 +113,7 @@ namespace gezi {
 					int nonZeroCount = 0;
 					for (int i = 0; i < NumDocsInLeaf; i++)
 					{
-						double target = targets[i];
+						Float target = targets[i];
 						if (target != 0.0)
 						{
 							Targets[nonZeroCount] = target;
@@ -122,7 +122,7 @@ namespace gezi {
 							nonZeroCount++;
 							if (!Weights.empty())
 							{
-								double weight = weights[i];
+								Float weight = weights[i];
 								Weights[nonZeroCount] = weight;
 								SumWeights += weight;
 								if (weight != 0.0)
@@ -144,12 +144,12 @@ namespace gezi {
 						_docIndicesCopy.swap(DocIndices);
 					for (int i = 0; i < NumDocsInLeaf; i++)
 					{
-						double target = targets[i];
+						Float target = targets[i];
 						Targets[i] = target;
 						SumTargets += target;
 						if (!Weights.empty())
 						{
-							double weight = weights[i];
+							Float weight = weights[i];
 							Weights[i] = weight;
 							SumWeights += weight;
 							if (weight != 0.0)
@@ -165,7 +165,7 @@ namespace gezi {
 				}
 			}
 
-			void Initialize(int leafIndex, DocumentPartitioning& partitioning, const dvec& targets, const dvec& weights, bool filterZeros)
+			void Initialize(int leafIndex, DocumentPartitioning& partitioning, const Fvec& targets, const Fvec& weights, bool filterZeros)
 			{
 				Clear();
 				SumTargets = 0.0;
@@ -179,7 +179,7 @@ namespace gezi {
 				for (int i = 0; i < NumDocsInLeaf; i++)
 				{
 					int docIndex = DocIndices[i];
-					double target = targets[docIndex];
+					Float target = targets[docIndex];
 					if ((target != 0.0) || !filterZeros)
 					{
 						Targets[nonZeroCount] = target;
@@ -187,7 +187,7 @@ namespace gezi {
 						DocIndices[nonZeroCount] = docIndex;
 						if (!Weights.empty())
 						{
-							double weight = weights[docIndex];
+							Float weight = weights[docIndex];
 							Weights[nonZeroCount] = weight;
 							SumWeights += weight;
 							if (weight != 0.0)
@@ -205,7 +205,7 @@ namespace gezi {
 				NumDocsInLeaf = nonZeroCount;
 			}
 
-			void Initialize(int leafIndex, const ivec& docIndices, int begin, int length, const dvec& targets, bool filterZeros)
+			void Initialize(int leafIndex, const ivec& docIndices, int begin, int length, const Fvec& targets, bool filterZeros)
 			{
 				Clear();
 				SumTargets = 0.0;
@@ -217,7 +217,7 @@ namespace gezi {
 				int nonZeroCount = 0;
 				for (int i = 0; i < NumDocsInLeaf; i++)
 				{
-					double target = targets[DocIndices[i]];
+					Float target = targets[DocIndices[i]];
 					if ((target != 0.0) || !filterZeros)
 					{
 						Targets[nonZeroCount] = target;
@@ -229,9 +229,9 @@ namespace gezi {
 				NumDocsInLeaf = nonZeroCount;
 			}
 
-			double VarianceTargets()
+			Float VarianceTargets()
 			{
-				double denom = (Weights.empty()) ? ((double)NumDocsInLeaf) : SumWeights;
+				Float denom = (Weights.empty()) ? ((Float)NumDocsInLeaf) : SumWeights;
 				return ((SumSquaredTargets - (SumTargets / denom)) / (denom - 1.0));
 			}
 
@@ -241,13 +241,13 @@ namespace gezi {
 		bool _allowDummies;
 		bool _areTargetsWeighted = false;
 
-		double _bsrMaxTreeOutput;
-		double _entropyCoefficient;
-		double _featureFirstUsePenalty;
-		double _featureReusePenalty;
+		Float _bsrMaxTreeOutput;
+		Float _entropyCoefficient;
+		Float _featureFirstUsePenalty;
+		Float _featureReusePenalty;
 		ivec _featureUseCount;
 		bool _filterZeros;
-		double _gainConfidenceInSquaredStandardDeviations;
+		Float _gainConfidenceInSquaredStandardDeviations;
 		int _minDocsInLeaf;
 		int _numLeaves;
 		Random _rand;
@@ -261,15 +261,15 @@ namespace gezi {
 		vector<SplitInfo> _bestSplitInfoPerLeaf; //或者和LeafSplitCandidates都使用shared_ptr SplitInfoPtr
 		LeafSplitCandidates _smallerChildSplitCandidates; //左子树信息
 		LeafSplitCandidates _largerChildSplitCandidates; //右子树信息
-		double _softmaxTemperature;
-		double _splitFraction;
+		Float _softmaxTemperature;
+		Float _splitFraction;
 	public:
-		LeastSquaresRegressionTreeLearner(Dataset& trainData, int numLeaves, int minDocsInLeaf, double entropyCoefficient, double featureFirstUsePenalty, double featureReusePenalty, double softmaxTemperature, int histogramPoolSize, int randomSeed, double splitFraction, bool filterZeros)
+		LeastSquaresRegressionTreeLearner(Dataset& trainData, int numLeaves, int minDocsInLeaf, Float entropyCoefficient, Float featureFirstUsePenalty, Float featureReusePenalty, Float softmaxTemperature, int histogramPoolSize, int randomSeed, Float splitFraction, bool filterZeros)
 			: LeastSquaresRegressionTreeLearner(trainData, numLeaves, minDocsInLeaf, entropyCoefficient, featureFirstUsePenalty, featureReusePenalty, softmaxTemperature, histogramPoolSize, randomSeed, splitFraction, filterZeros, false, 0.0, false, -1.0)
 		{
 		}
 
-		LeastSquaresRegressionTreeLearner(Dataset& trainData, int numLeaves, int minDocsInLeaf, double entropyCoefficient, double featureFirstUsePenalty, double featureReusePenalty, double softmaxTemperature, int histogramPoolSize, int randomSeed, double splitFraction, bool filterZeros, bool allowDummies, double gainConfidenceLevel, bool areTargetsWeighted, double bsrMaxTreeOutput)
+		LeastSquaresRegressionTreeLearner(Dataset& trainData, int numLeaves, int minDocsInLeaf, Float entropyCoefficient, Float featureFirstUsePenalty, Float featureReusePenalty, Float softmaxTemperature, int histogramPoolSize, int randomSeed, Float splitFraction, bool filterZeros, bool allowDummies, Float gainConfidenceLevel, bool areTargetsWeighted, Float bsrMaxTreeOutput)
 			: TreeLearner(trainData, numLeaves), _rand(randomSeed)
 		{
 			_minDocsInLeaf = minDocsInLeaf;
@@ -308,7 +308,7 @@ namespace gezi {
 		}
 
 
-		virtual RegressionTree FitTargets(BitArray& activeFeatures, dvec& targets) override
+		virtual RegressionTree FitTargets(BitArray& activeFeatures, Fvec& targets) override
 		{
 			//AutoTimer timer("TreeLearner->FitTargets");
 			int maxLeaves = NumLeaves;
@@ -321,14 +321,14 @@ namespace gezi {
 			int bestLeaf = 0;
 			//const SplitInfo& rootSplitInfo = *_bestSplitInfoPerLeaf[0];
 			const SplitInfo& rootSplitInfo = _bestSplitInfoPerLeaf[0];
-			if (rootSplitInfo.Gain == -std::numeric_limits<double>::infinity())
+			if (rootSplitInfo.Gain == -std::numeric_limits<Float>::infinity())
 			{
 				if (!_allowDummies)
 				{
 					THROW(format("Learner cannot build a tree with root split gain = {:lf}, dummy splits disallowed", rootSplitInfo.Gain));
 				}
 				LOG(WARNING) << "Learner cannot build a tree with root split gain = " << rootSplitInfo.Gain << ", so a dummy tree will be used instead";
-				double rootTarget = _smallerChildSplitCandidates.SumTargets / ((double)_smallerChildSplitCandidates.NumDocsInLeaf);
+				Float rootTarget = _smallerChildSplitCandidates.SumTargets / ((Float)_smallerChildSplitCandidates.NumDocsInLeaf);
 				MakeDummyRootSplit(tree, rootTarget, targets);
 				return tree;
 			}
@@ -342,7 +342,7 @@ namespace gezi {
 				const SplitInfo& bestLeafSplitInfo = _bestSplitInfoPerLeaf[bestLeaf];
 				PrintVecTopN(_bestSplitInfoPerLeaf, Gain, 10);
 				//if (bestLeafSplitInfo.Gain <= 0.0)
-				if (bestLeafSplitInfo.Gain < std::numeric_limits<double>::epsilon()) // <= 0
+				if (bestLeafSplitInfo.Gain < std::numeric_limits<Float>::epsilon()) // <= 0
 				{
 					VLOG(6) << "We cannot perform more splits with gain = " << bestLeafSplitInfo.Gain;
 					break;
@@ -377,7 +377,7 @@ namespace gezi {
 			ClearBestSplitInfos();
 		}
 
-		void MakeDummyRootSplit(RegressionTree& tree, double rootTarget, dvec& targets)
+		void MakeDummyRootSplit(RegressionTree& tree, Float rootTarget, Fvec& targets)
 		{
 			int dummyLTEChild;
 			int dummyGTChild;
@@ -405,7 +405,7 @@ namespace gezi {
 
 		//Regression树的叶子节点变成内部节点分裂新的两个叶子, Partitioning记录分裂的doc信息a
 		//doc被重新排列，leaf对应索引记录好起始位置和count
-		void PerformSplit(RegressionTree& tree, int bestLeaf, dvec& targets,
+		void PerformSplit(RegressionTree& tree, int bestLeaf, Fvec& targets,
 			int& LTEChild, int& GTChild)
 		{
 			//AutoTimer timer("PerformSplit");
@@ -416,7 +416,7 @@ namespace gezi {
 			GTChild = ~tree.GTChild(newInteriorNodeIndex);
 			LTEChild = bestLeaf;
 			Partitioning.Split(bestLeaf, TrainData.Features[bestSplitInfo.Feature].Bins, bestSplitInfo.Threshold, GTChild);
-			//bestSplitInfo.Gain = -std::numeric_limits<double>::infinity();
+			//bestSplitInfo.Gain = -std::numeric_limits<Float>::infinity();
 		}
 		void SetBestFeatureForLeaf(LeafSplitCandidates& leafSplitCandidates, int bestFeature)
 		{
@@ -428,11 +428,11 @@ namespace gezi {
 			_bestSplitInfoPerLeaf[leaf] = leafSplitCandidates.FeatureSplitInfo[bestFeature];
 		}
 
-		double CalculateSplittedLeafOutput(int totalCount, double sumTargets, double sumWeights)
+		Float CalculateSplittedLeafOutput(int totalCount, Float sumTargets, Float sumWeights)
 		{
 			if (!HasWeights())
 			{
-				return (sumTargets / ((double)totalCount));
+				return (sumTargets / ((Float)totalCount));
 			}
 			if (_bsrMaxTreeOutput < 0.0)
 			{
@@ -441,7 +441,7 @@ namespace gezi {
 			return (sumTargets / (2.0 * sumWeights));
 		}
 
-		//@TODO FindBestFeatureFromGains(IEnumerable<double> gains)
+		//@TODO FindBestFeatureFromGains(IEnumerable<Float> gains)
 		int GetBestFeature(vector<SplitInfo>& featureSplitInfo)
 		{
 			//AutoTimer timer("GetBestFeature");
@@ -467,9 +467,9 @@ namespace gezi {
 			SetBestFeatureForLeaf(leafSplitCandidates, bestFeature);
 		}
 
-		dvec _tempTargetVec;
+		Fvec _tempTargetVec;
 		//@TODO 很别扭 
-		dvec& GetTargetWeights()
+		Fvec& GetTargetWeights()
 		{
 			if (TargetWeights)
 			{
@@ -478,13 +478,13 @@ namespace gezi {
 			return _tempTargetVec;
 		}
 
-		double GetLeafSplitGain(int count, double starget, double sweight)
+		Float GetLeafSplitGain(int count, Float starget, Float sweight)
 		{
 			if (!HasWeights())
 			{
-				return ((starget * starget) / ((double)count));
+				return ((starget * starget) / ((Float)count));
 			}
-			double astarget = std::abs(starget);
+			Float astarget = std::abs(starget);
 			if ((_bsrMaxTreeOutput > 0.0) && (astarget >= ((2.0 * sweight) * _bsrMaxTreeOutput)))
 			{
 				return ((4.0 * _bsrMaxTreeOutput) * (astarget - (_bsrMaxTreeOutput * sweight)));
@@ -492,7 +492,7 @@ namespace gezi {
 			return ((starget * starget) / sweight);
 		}
 
-		void FindBestSplitOfRoot(dvec& targets)
+		void FindBestSplitOfRoot(Fvec& targets)
 		{
 			//AutoTimer("FindBestSplitOfRoot");
 			//ClearBestSplitInfos();
@@ -517,7 +517,7 @@ namespace gezi {
 		}
 
 		//@TODO 都需要const  why?
-		vector<double> GetGains(const vector<SplitInfo>& infos)
+		vector<Float> GetGains(const vector<SplitInfo>& infos)
 		{
 			return from(infos)
 				>> select([](const SplitInfo& a) { return a.Gain; })
@@ -525,14 +525,14 @@ namespace gezi {
 		}
 
 		//简单速度慢的发现best split用于对比验证快速实现的正确性
-		void FindBestSplitOfSiblingsSimple(int LTEChild, int GTChild, DocumentPartitioning& partitioning, const dvec& targets)
+		void FindBestSplitOfSiblingsSimple(int LTEChild, int GTChild, DocumentPartitioning& partitioning, const Fvec& targets)
 		{
 			int numDocsInLTEChild = partitioning.NumDocsInLeaf(LTEChild);
 			int numDocsInGTChild = partitioning.NumDocsInLeaf(GTChild);
 			if ((numDocsInGTChild < (_minDocsInLeaf * 2)) && (numDocsInLTEChild < (_minDocsInLeaf * 2)))
 			{
-				_bestSplitInfoPerLeaf[LTEChild].Gain = -std::numeric_limits<double>::infinity();
-				_bestSplitInfoPerLeaf[GTChild].Gain = -std::numeric_limits<double>::infinity();
+				_bestSplitInfoPerLeaf[LTEChild].Gain = -std::numeric_limits<Float>::infinity();
+				_bestSplitInfoPerLeaf[GTChild].Gain = -std::numeric_limits<Float>::infinity();
 			}
 			else
 			{
@@ -558,17 +558,17 @@ namespace gezi {
 			FindAndSetBestFeatureForLeaf(_largerChildSplitCandidates);
 		}
 
-		void FindBestSplitOfSiblings(int LTEChild, int GTChild, DocumentPartitioning& partitioning, const dvec& targets)
+		void FindBestSplitOfSiblings(int LTEChild, int GTChild, DocumentPartitioning& partitioning, const Fvec& targets)
 		{
 			//AutoTimer timer("FindBestSplitOfSiblings");
 			int numDocsInLTEChild = partitioning.NumDocsInLeaf(LTEChild);
 			int numDocsInGTChild = partitioning.NumDocsInLeaf(GTChild);
 			if ((numDocsInGTChild < (_minDocsInLeaf * 2)) && (numDocsInLTEChild < (_minDocsInLeaf * 2)))
 			{
-				/*	_bestSplitInfoPerLeaf[LTEChild]->Gain = -std::numeric_limits<double>::infinity();
-				_bestSplitInfoPerLeaf[GTChild]->Gain = -std::numeric_limits<double>::infinity();*/
-				_bestSplitInfoPerLeaf[LTEChild].Gain = -std::numeric_limits<double>::infinity();
-				_bestSplitInfoPerLeaf[GTChild].Gain = -std::numeric_limits<double>::infinity();
+				/*	_bestSplitInfoPerLeaf[LTEChild]->Gain = -std::numeric_limits<Float>::infinity();
+				_bestSplitInfoPerLeaf[GTChild]->Gain = -std::numeric_limits<Float>::infinity();*/
+				_bestSplitInfoPerLeaf[LTEChild].Gain = -std::numeric_limits<Float>::infinity();
+				_bestSplitInfoPerLeaf[GTChild].Gain = -std::numeric_limits<Float>::infinity();
 			}
 			else
 			{
@@ -664,26 +664,26 @@ namespace gezi {
 		void FindBestThresholdFromHistogram(FeatureHistogram& histogram, LeafSplitCandidates& leafSplitCandidates, int feature)
 		{
 			//AutoTimer timer("FindBestThresholdFromHistogram");
-			double bestSumLTETargets = std::numeric_limits<double>::quiet_NaN();
-			double bestSumLTEWeights = std::numeric_limits<double>::quiet_NaN();
-			double bestShiftedGain = -std::numeric_limits<double>::infinity();
-			double trust = TrainData.Features[feature].Trust;
+			Float bestSumLTETargets = std::numeric_limits<Float>::quiet_NaN();
+			Float bestSumLTEWeights = std::numeric_limits<Float>::quiet_NaN();
+			Float bestShiftedGain = -std::numeric_limits<Float>::infinity();
+			Float trust = TrainData.Features[feature].Trust;
 			int bestLTECount = -1;
 			uint bestThreshold = (uint)histogram.NumFeatureValues;
-			double eps = 1E-10;
-			double sumLTETargets = 0.0;
-			double sumLTEWeights = eps;
+			Float eps = 1E-10;
+			Float sumLTETargets = 0.0;
+			Float sumLTEWeights = eps;
 			int LTECount = 0;
 			int totalCount = leafSplitCandidates.NumDocsInLeaf;
-			double sumTargets = leafSplitCandidates.SumTargets;
+			Float sumTargets = leafSplitCandidates.SumTargets;
 			/*	PVAL2(totalCount, sumTargets);
 				PVECTOR(histogram.SumTargetsByBin);
 				PVECTOR(histogram.CountByBin);*/
-			double sumWeights = leafSplitCandidates.SumWeights + (2.0 * eps);
-			double gainShift = GetLeafSplitGain(totalCount, sumTargets, sumWeights);
-			double minShiftedGain = (_gainConfidenceInSquaredStandardDeviations <= 0.0) ? 0.0 : ((((_gainConfidenceInSquaredStandardDeviations * leafSplitCandidates.VarianceTargets()) * totalCount) / ((double)(totalCount - 1))) + gainShift);
+			Float sumWeights = leafSplitCandidates.SumWeights + (2.0 * eps);
+			Float gainShift = GetLeafSplitGain(totalCount, sumTargets, sumWeights);
+			Float minShiftedGain = (_gainConfidenceInSquaredStandardDeviations <= 0.0) ? 0.0 : ((((_gainConfidenceInSquaredStandardDeviations * leafSplitCandidates.VarianceTargets()) * totalCount) / ((Float)(totalCount - 1))) + gainShift);
 			histogram.IsSplittable = false;
-			double minDocsForThis = ((double)_minDocsInLeaf) / trust;
+			Float minDocsForThis = ((Float)_minDocsInLeaf) / trust;
 			for (int t = 0; t < (histogram.NumFeatureValues - 1); t += 1)
 			{
 				sumLTETargets += histogram.SumTargetsByBin[t];
@@ -699,9 +699,9 @@ namespace gezi {
 					{
 						break;
 					}
-					double sumGTTargets = sumTargets - sumLTETargets;
-					double sumGTWeights = sumWeights - sumLTEWeights;
-					double currentShiftedGain = GetLeafSplitGain(LTECount, sumLTETargets, sumLTEWeights) + GetLeafSplitGain(GTCount, sumGTTargets, sumGTWeights);
+					Float sumGTTargets = sumTargets - sumLTETargets;
+					Float sumGTWeights = sumWeights - sumLTEWeights;
+					Float currentShiftedGain = GetLeafSplitGain(LTECount, sumLTETargets, sumLTEWeights) + GetLeafSplitGain(GTCount, sumGTTargets, sumGTWeights);
 					/*		PVAL4(LTECount, GTCount, sumLTETargets, sumGTTargets);
 							PVAL3(histogram.SumTargetsByBin.size(), sumLTEWeights, sumGTWeights);*/
 					if (currentShiftedGain >= minShiftedGain)
@@ -709,7 +709,7 @@ namespace gezi {
 						histogram.IsSplittable = true;
 						if (_entropyCoefficient > 0.0)
 						{
-							double entropyGain = ((totalCount * std::log((double)totalCount)) - (LTECount * std::log((double)LTECount))) - (GTCount * std::log((double)GTCount));
+							Float entropyGain = ((totalCount * std::log((Float)totalCount)) - (LTECount * std::log((Float)LTECount))) - (GTCount * std::log((Float)GTCount));
 							currentShiftedGain += _entropyCoefficient * entropyGain;
 						}
 						if (currentShiftedGain > bestShiftedGain)
@@ -726,14 +726,14 @@ namespace gezi {
 			leafSplitCandidates.FeatureSplitInfo[feature].Threshold = bestThreshold;
 			leafSplitCandidates.FeatureSplitInfo[feature].LTEOutput = CalculateSplittedLeafOutput(bestLTECount, bestSumLTETargets, bestSumLTEWeights);
 			leafSplitCandidates.FeatureSplitInfo[feature].GTOutput = CalculateSplittedLeafOutput(totalCount - bestLTECount, sumTargets - bestSumLTETargets, sumWeights - bestSumLTEWeights);
-			double usePenalty = (_featureUseCount[feature] == 0) ? _featureFirstUsePenalty : (_featureReusePenalty * std::log((double)(_featureUseCount[feature] + 1)));
+			Float usePenalty = (_featureUseCount[feature] == 0) ? _featureFirstUsePenalty : (_featureReusePenalty * std::log((Float)(_featureUseCount[feature] + 1)));
 			leafSplitCandidates.FeatureSplitInfo[feature].Gain = ((bestShiftedGain - gainShift) * trust) - usePenalty;
-			double erfcArg = std::sqrt(((bestShiftedGain - gainShift) * (totalCount - 1)) / ((2.0 * leafSplitCandidates.VarianceTargets()) * totalCount));
+			Float erfcArg = std::sqrt(((bestShiftedGain - gainShift) * (totalCount - 1)) / ((2.0 * leafSplitCandidates.VarianceTargets()) * totalCount));
 			leafSplitCandidates.FeatureSplitInfo[feature].GainPValue = ProbabilityFunctions::Erfc(erfcArg);
 			//PVAL5(bestShiftedGain, gainShift, leafSplitCandidates.FeatureSplitInfo[feature].Gain, trust, usePenalty);
 		}
 
-		void SetRootModel(RegressionTree& tree, dvec& targets)
+		void SetRootModel(RegressionTree& tree, Fvec& targets)
 		{
 		}
 	protected:

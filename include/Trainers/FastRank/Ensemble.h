@@ -21,7 +21,7 @@ namespace gezi {
 	class Ensemble
 	{
 	private:
-		double _bias = 0.0;
+		Float _bias = 0.0;
 		string _firstInputInitializationContent;
 		vector<RegressionTree> _trees;
 	public:
@@ -45,9 +45,9 @@ namespace gezi {
 			_trees.emplace(_trees.begin() + index, tree);
 		}
 
-		double GetOutput(const FeatureBin& featureBins, int prefix)
+		Float GetOutput(const FeatureBin& featureBins, int prefix)
 		{
-			double output = 0.0;
+			Float output = 0.0;
 #pragma omp parallel for reduction(+: output)
 			for (int h = 0; h < prefix; h++)
 			{
@@ -56,12 +56,12 @@ namespace gezi {
 			return output;
 		}
 
-		void GetOutputs(Dataset& dataset, dvec& outputs)
+		void GetOutputs(Dataset& dataset, Fvec& outputs)
 		{
 			GetOutputs(dataset, outputs, -1);
 		}
 
-		void GetOutputs(Dataset& dataset, dvec& outputs, int prefix)
+		void GetOutputs(Dataset& dataset, Fvec& outputs, int prefix)
 		{
 			if ((prefix > _trees.size()) || (prefix < 0))
 			{
@@ -105,9 +105,9 @@ namespace gezi {
 		}
 
 		//统计前prefix棵数目一般用所有的树
-		map<int, double> GainMap(int prefix, bool normalize)
+		map<int, Float> GainMap(int prefix, bool normalize)
 		{
-			map<int, double> m;
+			map<int, Float> m;
 			if (_trees.empty())
 			{
 				return m;
@@ -125,7 +125,7 @@ namespace gezi {
 			{
 				for (auto item : m)
 				{
-					item.second /= (double)NumTrees();
+					item.second /= (Float)NumTrees();
 				}
 			}
 
@@ -135,7 +135,7 @@ namespace gezi {
 
 		string ToGainSummary(vector<Feature>& featureList, int prefix = -1, bool includeZeroGainFeatures = true, bool normalize = true)
 		{
-			map<int, double> m = GainMap(prefix, normalize);
+			map<int, Float> m = GainMap(prefix, normalize);
 			if (includeZeroGainFeatures)
 			{
 				for (size_t k = 0; k < featureList.size(); k++)
@@ -145,13 +145,13 @@ namespace gezi {
 			}
 
 			// @TODO
-			//vector<pair<int, double> > sortedByGain = sort_map_by_value_reverse(m);
+			//vector<pair<int, Float> > sortedByGain = sort_map_by_value_reverse(m);
 			//auto sortedByGain = sort_map_by_value_reverse(m);
-			vector<pair<int, double> > sortedByGain;
+			vector<pair<int, Float> > sortedByGain;
 			sort_map_by_value_reverse(m, sortedByGain);
-			double maxValue = sortedByGain[0].second;
-			double normalizingFactor = (normalize && (maxValue != 0.0)) ? std::sqrt(maxValue) : 1.0;
-			double power = normalize ? 0.5 : 1.0;
+			Float maxValue = sortedByGain[0].second;
+			Float normalizingFactor = (normalize && (maxValue != 0.0)) ? std::sqrt(maxValue) : 1.0;
+			Float power = normalize ? 0.5 : 1.0;
 
 			stringstream ss;
 			int id = 0;

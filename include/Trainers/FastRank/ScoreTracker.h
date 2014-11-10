@@ -24,9 +24,9 @@ namespace gezi {
 	public:
 		Dataset& Dataset;
 		string DatasetName;
-		dvec Scores;
+		Fvec Scores;
 	protected:
-		dvec& _initScores;
+		Fvec& _initScores;
 
 	public: 
 		ScoreTracker(ScoreTracker&&) = default;
@@ -34,27 +34,27 @@ namespace gezi {
 		ScoreTracker(const ScoreTracker&) = default;
 		ScoreTracker& operator = (const ScoreTracker&) = default;
 
-		ScoreTracker(string datasetName, gezi::Dataset& set, dvec& initScores)
+		ScoreTracker(string datasetName, gezi::Dataset& set, Fvec& initScores)
 			:Dataset(set), DatasetName(datasetName), _initScores(initScores)
 		{
 			InitScores(initScores);
 		}
 
 
-		virtual void AddScores(RegressionTree& tree, double multiplier)
+		virtual void AddScores(RegressionTree& tree, Float multiplier)
 		{
 			tree.AddOutputsToScores(Dataset, Scores, multiplier);
 			SendScoresUpdatedMessage();
 		}
 
-		virtual void AddScores(RegressionTree& tree, DocumentPartitioning& partitioning, double multiplier)
+		virtual void AddScores(RegressionTree& tree, DocumentPartitioning& partitioning, Float multiplier)
 		{
 			for (int l = 0; l < tree.NumLeaves; l++)
 			{
 				int begin;
 				int count;
 				ivec& documents = partitioning.ReferenceLeafDocuments(l, begin, count);
-				double output = tree.LeafValue(l) * multiplier;
+				Float output = tree.LeafValue(l) * multiplier;
 				int end = begin + count;
 #pragma  omp parallel for
 				for (int i = begin; i < end; i++)
@@ -65,7 +65,7 @@ namespace gezi {
 			}
 		}
 
-		virtual void InitScores(dvec& initScores)
+		virtual void InitScores(Fvec& initScores)
 		{
 			if (initScores.empty())
 			{
@@ -106,7 +106,7 @@ namespace gezi {
 
 		}
 
-		virtual void SetScores(dvec& scores)
+		virtual void SetScores(Fvec& scores)
 		{
 			Scores.swap(scores);
 			SendScoresUpdatedMessage();
