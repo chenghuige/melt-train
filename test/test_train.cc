@@ -34,6 +34,7 @@ TEST(train, func)
 	auto trainer = TrainerFactory::CreateTrainer(FLAGS_cl);
 	CHECK_NE((trainer == nullptr), true);
 	auto instances = create_instances(FLAGS_in);
+	AutoTimer timer("Train");
 	trainer->Train(instances);
 }
 
