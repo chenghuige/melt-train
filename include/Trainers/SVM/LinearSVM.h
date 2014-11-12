@@ -178,9 +178,7 @@ namespace gezi {
 					_currentIdx = _rand->Next(instances.Count());
 					//_currentIdx = _randRange->Next();
 					//_currentIdx = static_cast<int>(rand()) % instances.Count();
-
-					_currentInstance = instances[_currentIdx];
-					ProcessDataInstance(_currentInstance);
+					ProcessDataInstance(instances[_currentIdx]);
 				}
 
 				FinishDataIteration();
@@ -203,7 +201,7 @@ namespace gezi {
 					{
 						instance = _normalizer->NormalizeCopy(instance);
 					}
-					return _bias + dot(instance->features, _weights); });
+					return Margin(instance->features); });
 			}
 		}
 
@@ -217,8 +215,10 @@ namespace gezi {
 				instance = _normalizer->NormalizeCopy(instance);
 			}
 
+			_currentInstance = instance;
+
 			// compute the update and update if needed     
-			Float output = Margin(instance);
+			Float output = Margin(instance->features);
 			Float trueOutput = (instance->IsPositive() ? 1 : -1);
 			_loss = 1 - output * trueOutput;
 
@@ -300,9 +300,9 @@ namespace gezi {
 		/// <summary>
 		/// Return the raw margin from the decision hyperplane
 		/// </summary>		
-		Float Margin(InstancePtr instance)
+		Float Margin(const Vector& features)
 		{
-			return _bias + _weights.dot(instance->features);
+			return _bias + _weights.dot(features);
 		}
 
 		// <summary>
