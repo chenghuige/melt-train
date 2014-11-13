@@ -19,6 +19,7 @@
 //#include "Trainers/FastRank/BinaryClassificationFastRank.h"
 #include "MLCore/TrainerFactory.h"
 #include "Prediction/Instances/instances_util.h"
+#include "Utils/PredictorUtils.h"
 #include "Run/Melt.h"
 using namespace std;
 using namespace gezi;
@@ -42,8 +43,10 @@ TEST(train_test, func)
 	auto predictor = trainer->CreatePredictor();
 
 	auto testInstances = create_instances(FLAGS_out);
-	Melt melt;
-	melt.Test(testInstances, predictor, FLAGS_result);
+	//Melt melt;
+	//melt.Test(testInstances, predictor, FLAGS_result);
+	auto tester = PredictorUtils::GetTester(predictor);
+	tester->Test(testInstances, predictor, FLAGS_result);
 }
 
 int main(int argc, char *argv[])
