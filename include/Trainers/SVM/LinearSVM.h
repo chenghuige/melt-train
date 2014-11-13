@@ -374,11 +374,11 @@ namespace gezi {
 			// w_{t+1} = min{1, 1/sqrt(lambda)/|w_{t+1/2}|} * w_{t+1/2}
 			if (_args.performProjection)
 			{
-				Float normalizer = 1 / (sqrt(_args.lambda) * _weights.Norm()); //@FIXME WeightVector::Norm() like sofia
+				Float normalizer = 1 / sqrt(_args.lambda * _weights.squaredNorm); //@FIXME WeightVector::Norm() like sofia
 				if (normalizer < 1)
 				{
 					_weights.ScaleBy(normalizer);
-					//bias = bias * normalizer;
+					//_bias = _bias * normalizer; //@TODO tlc注释了这个？ sofia用统一向量 貌似都有*吧 需要看论文确认
 				}
 			}
 		}

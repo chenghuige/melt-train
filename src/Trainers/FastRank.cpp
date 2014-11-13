@@ -44,7 +44,7 @@ namespace gezi {
 		if (!are_same(FLAGS_lr, 0.001)) //@TODO Float 判断相同 判断是否是0 另外如果用户再输入0.0001不起作用了就 不符合逻辑了
 			_args->learningRate = FLAGS_lr;
 
-		if (FLAGS_iter != 50000)
+		if (FLAGS_iter != 50000) //复用LinearSVM部分定义的参数iter,其默认值是50000
 			_args->numTrees = FLAGS_iter;
 		else
 			_args->numTrees = FLAGS_ntree;
