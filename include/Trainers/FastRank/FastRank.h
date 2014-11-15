@@ -41,7 +41,56 @@ namespace gezi {
 		Fmat InitTestScores;
 		Fvec InitTrainScores;
 		Fvec InitValidScores;
+	public:
+		FastRank()
+		{
+			//ParseArgs(); //这里就不行了 所以放置虚函数在构造函数有风险 pure virtual method called  因为ParseArgs里又调用了虚函数 	_args = GetArguments();
+			//也就是说尽量不要再构造函数有虚函数 如果必须 只放置在最底层的derived class构造函数中
+		}
 
+		virtual void ShowHelp()
+		{
+			fmt::print_line("DECLARE_bool(calibrate);");
+			fmt::print_line("DECLARE_string(calibrator);");
+			fmt::print_line("DECLARE_uint64(rs);");
+			fmt::print_line("DECLARE_int32(iter);");
+			fmt::print_line("DEFINE_int32(ntree, 100, \"numTrees: Number of trees/iteraiton number\");");
+			fmt::print_line("DECLARE_double(lr);");
+			fmt::print_line("DEFINE_int32(nl, 20, \"numLeaves: Number of leaves maximam allowed in each regression tree\");");
+			fmt::print_line("DEFINE_int32(mil, 10, \"minInstancesInLeaf: Minimal instances in leaves allowd\");");
+			fmt::print_line("DEFINE_bool(bsr, false, \"bestStepRankingRegressionTrees: \");");
+			fmt::print_line("DEFINE_double(sp, 0.1, \"Sparsity level needed to use sparse feature representation, if 0.3 means be sparsify only if real data less then 30%, 0-1 the smaller more dense and faster but use more memeory\");");
+			fmt::print_line("DEFINE_double(ff, 1, \"The fraction of features (chosen randomly) to use on each iteration\");");
+			fmt::print_line("DEFINE_int32(mb, 255, \"Maximum number of distinct values (bins) per feature\");");
+
+			fmt::print_line("int numTrees = 100;");
+			fmt::print_line("int numLeaves = 20;");
+			fmt::print_line("int minInstancesInLeaf = 10;");
+			fmt::print_line("Float learningRate = 0.2;");
+			fmt::print_line("bool calibrateOutput = true; //calibrate| use calibrator to gen probability?");
+			fmt::print_line("string calibratorName = \"sigmoid\"; //calibrator| sigmoid/platt naive pav @TODO 移动到Trainer父类处理");
+			fmt::print_line("int maxBins = 255; //mb|Maximum number of distinct values (bins) per feature");
+			fmt::print_line("Float sparsifyRatio = 0.3;//sr|if not big data (large instances num, large feature num can set 0 so to be all dense) that will make running faster");
+			fmt::print_line("unsigned randSeed = 0x7b; //rs|controls wether the expermient can reproduce, 0 means not reproduce rngSeed");
+			fmt::print_line("bool randomStart = false; //rst|Training starts from random ordering (determined by /r1)");
+			fmt::print_line("int histogramPoolSize = -1; //|[2, numLeaves - 1]");
+			fmt::print_line("int maxTreeOutput = 100; //mo|Upper bound on absolute value of single tree output");
+			fmt::print_line("bool affineRegressionTrees = false; //art|Use affine regression trees");
+			fmt::print_line("bool allowDummyRootSplits = true; //dummies|When a root split is impossible, construct a dummy empty tree rather than fail");
+			fmt::print_line("Float baggingTrainFraction = 0.7;//bagfrac|Percentage of training queries used in each bag");
+			fmt::print_line("bool bestStepRankingRegressionTrees = false; //bsr|Use best ranking step trees");
+			fmt::print_line("Float entropyCoefficient = 0; //e|The entropy (regularization) coefficient between 0 and 1");
+			fmt::print_line("int derivativesSampleRate = 1; //dsr|same each query 1 in k times in the GetDerivatives function");
+			fmt::print_line("Float smoothing = 0.0; //s|Smoothing paramter for tree regularization");
+			fmt::print_line("bool compressEnsemble = false; //cmp|Compress the tree Ensemble");
+			fmt::print_line("Float featureFirstUsePenalty = 0;");
+			fmt::print_line("Float featureReusePenalty = 0;");
+			fmt::print_line("Float softmaxTemperature = 0;");
+			fmt::print_line("Float featureFraction = 1;");
+			fmt::print_line("Float splitFraction = 1;");
+			fmt::print_line("bool filterZeroLambdas = false;");
+			fmt::print_line("Float gainConfidenceLevel = 0;");
+		}
 		/*	enum class OptimizationAlgorithm
 			{
 			GradientDescent,
@@ -61,7 +110,7 @@ namespace gezi {
 		}
 
 		//@TODO 
-		virtual void ParseArgs();
+		virtual void ParseArgs() override;
 		/*{
 			_args = GetArguments();
 			if (_args->histogramPoolSize < 2)
@@ -126,7 +175,7 @@ namespace gezi {
 				PVAL(_ensemble.NumTrees());
 				BitArray activeFeatures;
 				BitArray* pactiveFeatures = GetActiveFeatures(activeFeatures);
-			
+
 				_optimizationAlgorithm->TrainingIteration(*pactiveFeatures);
 				CustomizedTrainingIteration();
 				if (revertRandomStart)
@@ -185,7 +234,7 @@ namespace gezi {
 		}
 
 		bool AreSamplesWeighted()
-		{ 
+		{
 			return (AreTrainWeightsUsed() && (!TrainSet.SampleWeights.empty()));
 		}
 
@@ -313,7 +362,7 @@ namespace gezi {
 		virtual FastRankArgumentsPtr GetArguments() = 0;
 	protected:
 		FastRankArgumentsPtr _args;
-	
+
 		Ensemble _ensemble;
 		OptimizationAlgorithmPtr _optimizationAlgorithm = nullptr;
 

@@ -16,46 +16,74 @@ namespace gezi {
 		VLOG(0) << "The default trainer is LinearSVM, if use other trainers use -cl, eg. <./melt feature.txt -c train -cl gbdt> will train feature.txt using gbdt trainer";
 	}
 
+	enum class TrainerType
+	{
+		Unknown,
+		Random,
+		LinearSVM,
+		BaseLineLinearSVM,
+		BinaryClassificationFastRank,
+		LogisticRegression,
+		RandomForest,
+		DecisionTree,
+		KernalSVM,
+		BinaryNeuralNetwork
+	};
+
+	map<string, TrainerType> _trainerTypes
+	{
+		{ "random", TrainerType::Random },
+		{ "baselinelinearsvm", TrainerType::BaseLineLinearSVM },
+		{ "baselinesvm", TrainerType::BaseLineLinearSVM },
+		{ "linearsvm", TrainerType::LinearSVM },
+		{ "svm", TrainerType::LinearSVM },
+		{ "fastrank", TrainerType::BinaryClassificationFastRank },
+		{ "gbdt", TrainerType::BinaryClassificationFastRank },
+		{ "fr", TrainerType::BinaryClassificationFastRank },
+	};
+
 	TrainerPtr TrainerFactory::CreateTrainer(string name)
 	{
 		boost::to_lower(name);
-		if (name == "baselinelinearsvm" || name == "baselinesvm")
+		TrainerType trainerType = _trainerTypes[name];
+	
+		switch (trainerType)
 		{
-			VLOG(0) << "Creating BaselineLinearSVM trainer";
+		case TrainerType::Random:
+			VLOG(0) << "Creating Random trainer, just for test auc will be around 0.5";
+			return make_shared<RandomTrainer>();
+			break;
+		case TrainerType::BaseLineLinearSVM:
+			VLOG(0) << "Creating BaselineLinearSVM trainer, this one is slow, try use LinearSVM";
 			return make_shared<BaseLineLinearSVM>();
-		}
-		if (name == "linearsvm" || name == "svm")
-		{
+			break;
+		case TrainerType::LinearSVM:
 			VLOG(0) << "Creating LinearSVM trainer";
 			return make_shared<LinearSVM>();
-		}
-		if (name == "fastrankbinaryclassification" ||
-			name == "fastrank" || name == "gbdt" || name == "fr")
-		{
+			break;
+		case TrainerType::BinaryClassificationFastRank:
 			VLOG(0) << "Creating FastRank/GBDT trainer";
 			return make_shared<BinaryClassificationFastRank>();
-		}
-		if (name == "kernalsvm" || name == "libsvm")
-		{
+			break;
+		case TrainerType::KernalSVM:
 			VLOG(0) << "Creating KernalSVM trainer";
-		}
-		if (name == "randomforest")
-		{
+			break;
+		case  TrainerType::DecisionTree:
+			VLOG(0) << "Creating DecisionTree trainer";
+			break;
+		case TrainerType::RandomForest:
 			VLOG(0) << "Creating RandomForest trainer";
-		}
-		if (name == "logisticregression" || name == "logistic")
-		{
+			break;
+		case  TrainerType::LogisticRegression:
 			VLOG(0) << "Creating LogisticRegression trainer";
-		}
-		if (name == "binaryneuralnetwork" || name == "neural" || name == "neuralnetwork")
-		{
+			break;
+		case  TrainerType::BinaryNeuralNetwork:
 			VLOG(0) << "Creating BinaryNeuralNetwork trainer";
-		}
-		//just for test
-		if (name == "random")
-		{
-			VLOG(0) << "Creatring random trainer(do nothing will genearate a random predictor to predict 0,1 randomly)";
-			return make_shared<RandomTrainer>();
+			break;
+		case  TrainerType::Unknown:
+			break;
+		default:
+			break;
 		}
 
 		LOG(WARNING) << name << " is not supported now, return nullptr";

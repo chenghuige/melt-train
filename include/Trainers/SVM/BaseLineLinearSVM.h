@@ -29,7 +29,7 @@ namespace gezi {
 	public:
 		BaseLineLinearSVM()
 		{
-
+			ParseArgs();
 		}
 
 		struct Arguments
@@ -56,7 +56,7 @@ namespace gezi {
 			//uint64 maxCalibrationExamples = 1000000; //numCali|Number of instances to train the calibrator
 		};
 
-		void ParseArgs();
+		virtual void ParseArgs() override;
 
 		virtual string GetParam() override
 		{
@@ -68,7 +68,6 @@ namespace gezi {
 
 		void Init()
 		{
-			ParseArgs();
 			PVAL(_args.randSeed);
 			_rand = make_shared<Random>(random_engine(_args.randSeed));
 			if (_args.normalizeFeatures) //@TODO to trainer

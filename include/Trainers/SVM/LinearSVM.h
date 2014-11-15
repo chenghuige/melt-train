@@ -26,6 +26,7 @@ It is advisable to pre-normalize or turn off normalization for sparse data. (or 
 #include "Predictors/LinearPredictor.h"
 #include "Prediction/Normalization/NormalizerFactory.h"
 #include "Prediction/Calibrate/CalibratorFactory.h"
+#include "Prediction/Instances/instances_util.h"
 namespace gezi {
 
 	class LinearSVM : public IterativeTrainer
@@ -33,13 +34,52 @@ namespace gezi {
 	public:
 		LinearSVM()
 		{
-
+			ParseArgs();
 		}
+
+		enum class LoopType
+		{
+			Stochastic,
+			BalancedStochastic,
+			Roc
+		};
+
+		enum class TrainerType
+		{
+			Pegasos,
+			PassiveAggressive,
+			MarginPerceptron,
+			Romma,
+			SgdSVM,
+			LeastMeanSquares,
+			Logreg,
+			LogregPegasos
+		};
+
+		//@TODO 自动根据LoopType生成下面代码。。
+		map<string, LoopType> _loopTypes = {
+			{ "stochastic", LoopType::Stochastic },
+			{ "balance", LoopType::BalancedStochastic },
+			{ "balanced", LoopType::BalancedStochastic },
+			{ "balanced_stochastic", LoopType::BalancedStochastic },
+			{ "roc", LoopType::Roc }
+		};
+
+		map<string, TrainerType> _trainerTypes = {
+			{ "pegasos", TrainerType::Pegasos },
+			{ "passive_aggressive", TrainerType::PassiveAggressive },
+			{ "margin_perceptron", TrainerType::MarginPerceptron },
+			{ "romma", TrainerType::Romma },
+			{ "sgdsvm", TrainerType::SgdSVM },
+			{ "least_mean_squares", TrainerType::LeastMeanSquares },
+			{ "logreg", TrainerType::Logreg },
+			{ "logreg_pegasos", TrainerType::LogregPegasos }
+		};
 
 		struct Arguments
 		{
 			int numIterations = 50000; //iter|Number of iterations
-			Float lambda = 0.001; //lr|
+			Float lambda = 0.001; //lr| learning rate
 			Float sampleRate = 0.001; //sr|Sampling rate
 			int sampleSize = 1; //ss|Sampling size
 			bool performProjection = false; //project|Perform projection to unit-ball
@@ -58,21 +98,57 @@ namespace gezi {
 			bool calibrateOutput = true; //calibrate| use calibrator to gen probability?
 			string calibratorName = "sigmoid"; //calibrator| sigmoid/platt naive pav
 			//uint64 maxCalibrationExamples = 1000000; //numCali|Number of instances to train the calibrator
+
+			string loopType = "stochastic"; //lt| now support [stochastic, balancedStochastic, roc] like sofia-ml will support [stochastic, balancedStochastic, roc, rank, queryNormRank, combinedRanking, combinedRoc]
+			string trainerType = "pegasos"; //trt| now support [pegasos] like sofia-ml will support [pegasos, passiveAggressive, marginPerceptron, romma, sgdSvm, leastMeanSquares, logreg, and logregPegasos]
 		};
 
-		void ParseArgs();
+		virtual void ShowHelp() override
+		{
+			fmt::print_line("DECLARE_bool(calibrate);");
+			fmt::print_line("DECLARE_string(calibrator);");
+			fmt::print_line("DECLARE_uint64(rs);");
+			fmt::print_line("DECLARE_bool(norm); //will speed up a if pre normalize and then --norm=0 for cross validation");
+			fmt::print_line("DECLARE_string(normalizer);");
+			fmt::print_line("DEFINE_int32(iter, 50000, \"numIterExamples: Number of iterations\");");
+			fmt::print_line("DEFINE_double(lr, 0.001, \"lambda: learning rate\");");
+			fmt::print_line("DEFINE_string(lt, \"stochastic\", \"loopType: try roc or balanced\");");
+			fmt::print_line("DEFINE_string(trt, \"peagsos\", \"trainerType: now only support peagsos\");");
+
+			fmt::print_line("int numIterations = 50000; //iter|Number of iterations");
+			fmt::print_line("Float lambda = 0.001; //lr|");
+			fmt::print_line("Float sampleRate = 0.001; //sr|Sampling rate");
+			fmt::print_line("int sampleSize = 1; //ss|Sampling size");
+			fmt::print_line("bool performProjection = false; //project|Perform projection to unit-ball");
+			fmt::print_line("bool noBias = false;");
+			fmt::print_line("string initialWeightsString = \"\"; //initweights|Initial weights and bias, comma-separated");
+			fmt::print_line("bool randomInitialWeights = false; //randweights|Randomize initial weights");
+			fmt::print_line("int featureNumThre = 1000; //fnt|if NumFeatures > featureNumThre use dense format");
+			fmt::print_line("bool doStreamingTraining = false; //stream|Streaming instances training");
+			fmt::print_line("bool normalizeFeatures = true; //norm|Normalize features");
+			fmt::print_line("string normalizerName = \"MinMax\"; //normalizer|Which normalizer?");
+			fmt::print_line("unsigned randSeed = 0;//rs|controls wether the expermient can reproduce, 0 means not reproduce");
+			fmt::print_line("bool calibrateOutput = true; //calibrate| use calibrator to gen probability?");
+			fmt::print_line("string calibratorName = \"sigmoid\"; //calibrator| sigmoid/platt naive pav");
+			fmt::print_line("sstring loopType = \"stochastic\"; //lt| now support [stochastic, balancedStochastic, roc] like sofia-ml will support [stochastic, balancedStochastic, roc, rank, queryNormRank, combinedRanking, combinedRoc]");
+			fmt::print_line("string trainerType = \"pegasos\"; //trt| now support [pegasos] like sofia-ml will support [pegasos, passiveAggressive, marginPerceptron, romma, sgdSvm, leastMeanSquares, logreg, and logregPegasos]");
+		}
 
 		virtual string GetParam() override
 		{
 			stringstream ss;
 			ss << "numIterations:" << _args.numIterations << " "
-				<< "learningRate:" << _args.lambda;
+				<< "learningRate:" << _args.lambda << " "
+				<< "trainerTyper:" << _args.trainerType << " "
+				<< "loopType:" << _args.loopType << " "
+				<< "sampleSize:" << _args.sampleSize << " "
+				<< "performProjection:" << _args.performProjection;
 			return ss.str();
 		}
 
+		virtual void ParseArgs() override;
 		void Init()
 		{
-			ParseArgs();
 			PVAL(_args.randSeed);
 			_rand = make_shared<Random>(random_engine(_args.randSeed));
 			if (_args.normalizeFeatures) //@TODO to trainer
@@ -155,36 +231,77 @@ namespace gezi {
 		{
 			_numProcessedExamples = 0;
 			_numIterExamples = 0;
-			_biasUpdate = 0;
+			_gradientUpdate = 0;
 
 			_weightsUpdate.clear();
 			_weightUpdates.clear();
 			_biasUpdates.clear();
 		}
 
+		//@TODO move
+
+
 		/// Override the default training loop:   we need to pick random instances manually...
 		virtual void InnerTrain(Instances& instances) override
 		{
 			_featureNames = instances.schema.featureNames;
+			//ProgressBar pb(format("LinearSVM training with trainerType {}, loopType {}", _args.trainerType, _args.loopType), _args.numIterations);
 			ProgressBar pb("LinearSVM training", _args.numIterations);
 			//AutoTimer timer("LinearSVM training", 0);
+			LoopType loopType = _loopTypes[_args.loopType];
+			TrainerType trainerType = _trainerTypes[_args.trainerType];
+			Instances posInstances, negInstances;
+			if (loopType == LoopType::BalancedStochastic || loopType == LoopType::Roc)
+			{
+				InstancesUtil::SplitInstancesByLabel(instances, posInstances, negInstances);
+			}
 			for (int iter = 0; iter < _args.numIterations; iter++)
 			{
 				++pb;
+				++_iteration;
 				BeginTrainingIteration();
-
-				for (int i = 0; i < _sampleSize; i++)
+				if (loopType == LoopType::Stochastic || loopType == LoopType::BalancedStochastic)
 				{
-					_currentIdx = _rand->Next(instances.Count());
-					//_currentIdx = _randRange->Next();
-					//_currentIdx = static_cast<int>(rand()) % instances.Count();
-					ProcessDataInstance(instances[_currentIdx]);
+					for (int i = 0; i < _sampleSize; i++)
+					{
+						if (loopType == LoopType::Stochastic)
+						{
+							_currentIdx = _rand->Next(instances.Count());
+							_currentInstance = instances[_currentIdx];
+							ProcessDataInstance(_currentInstance);
+						}
+						else if (loopType == LoopType::BalancedStochastic)
+						{
+							if ((iter * _sampleSize + i) % 2 == 0)
+							{
+								_currentIdx = _rand->Next(posInstances.Count());
+								_currentInstance = posInstances[_currentIdx];
+							}
+							else
+							{
+								_currentIdx = _rand->Next(negInstances.Count());
+								_currentInstance = negInstances[_currentIdx];
+							}
+							ProcessDataInstance(_currentInstance);
+						}
+						//_currentIdx = _rand->Next(instances.Count());
+						//_currentIdx = _randRange->Next();
+						//_currentIdx = static_cast<int>(rand()) % instances.Count();
+						//ProcessDataInstance(instances[_currentIdx]);
+					}
+					FinishDataIteration();
 				}
-
-				FinishDataIteration();
+				else if (loopType == LoopType::Roc)
+				{
+					InstancePtr posInstance, negInstance;
+					posInstance = posInstances[_rand->Next(posInstances.Count())];
+					negInstance = negInstances[_rand->Next(negInstances.Count())];
+					//_currentInstance = make_shared<Instance>(*posInstance); 
+					//_currentInstance->features -= negInstance->features;
+					//ProcessDataInstance(_currentInstance);
+					ProcessDataInstance(posInstance, negInstance);
+				}
 			}
-
-			TrainingComplete();
 		}
 
 		virtual void Finalize(Instances& instances) override
@@ -205,13 +322,75 @@ namespace gezi {
 			}
 		}
 
+		//ROC svm输入是正负两个label的向量，并且暂时仿照sofia不支持一次选多个 @TODO流程可以合并 设置RocInsatnce持有两个InstancePtr即可 需要函数模板
+		//整合dotOnDifference和AddScale + AddScale统一接口
+		//同时这里不考虑instance的weight
+		void ProcessDataInstance(InstancePtr posInstance, InstancePtr negInstance)
+		{
+			++_numIterExamples;
+			if (_normalizer != nullptr && _normalizeCopy)
+			{//如果不需要normalizeCopy前面Inialize的时候统一都normalize了
+				if (!posInstance->normalized)
+				{
+					posInstance = _normalizer->NormalizeCopy(posInstance);
+				}
+				if (!negInstance->normalized)
+				{
+					negInstance = _normalizer->NormalizeCopy(negInstance);
+				}
+			}
+
+			Float output = _bias + _weights.dotOnDifference(posInstance->features, negInstance->features);
+			Float trueOutput = (posInstance->label > negInstance->label) ? 1 : -1;
+			_loss = 1 - output * trueOutput;
+
+			//------------------------scale
+			Float learningRate = 1 / (_args.lambda * _iteration);
+			Float scale = 1 - learningRate * _args.lambda;
+
+			if (scale <= 0.0000001)
+			{ //来自sofia-ml
+				//LOG(WARNING) << scale;
+				scale = 0.0000001;
+			}
+
+			_weights.ScaleBy(scale);
+			_bias *= scale;
+
+			//---------------------update gradient
+			if (_loss > 0)
+			{
+				Float update = trueOutput * learningRate / _numIterExamples;
+				_weights.AddScale(posInstance->features, update);
+				_weights.AddScale(negInstance->features, -update);
+				if (!_args.noBias)
+				{
+					_bias += update;
+				}
+			}
+
+			//---------------------project
+			//@TODO check performProjection
+			// w_{t+1} = min{1, 1/sqrt(lambda)/|w_{t+1/2}|} * w_{t+1/2}
+			if (_args.performProjection)
+			{
+				Float normalizer = 1 / sqrt(_args.lambda * _weights.squaredNorm); 
+				Pval2_4(normalizer, _weights.squaredNorm);
+				if (normalizer < 1)
+				{
+					_weights.ScaleBy(normalizer);
+					//_bias = _bias * normalizer; //@TODO tlc注释了这个？ sofia用统一向量 貌似都有*吧 需要看论文确认
+				}
+			}
+		}
+
 		/// Observe an example and update weights if necessary
-		bool ProcessDataInstance(InstancePtr instance)
+		void ProcessDataInstance(InstancePtr instance)
 		{
 			++_numIterExamples;
 
 			if (_normalizer != nullptr && !instance->normalized && _normalizeCopy)
-			{
+			{//如果不需要normalizeCopy前面Inialize的时候统一都normalize了
 				instance = _normalizer->NormalizeCopy(instance);
 			}
 
@@ -232,7 +411,7 @@ namespace gezi {
 
 				if (_sampleSize == 1)
 				{
-					_biasUpdate = currentBiasUpdate;
+					_gradientUpdate = currentBiasUpdate;
 				}
 				else
 				{
@@ -246,7 +425,7 @@ namespace gezi {
 						{
 							_weightsUpdate.Add(currentWeightUpdate);
 						}
-						_biasUpdate += currentBiasUpdate;
+						_gradientUpdate += currentBiasUpdate;
 					}
 					else
 					{ // pick a slot
@@ -265,14 +444,10 @@ namespace gezi {
 					}
 				}
 			}
-
-			return true;
 		}
 
 		void FinishDataIteration()
 		{
-			++_iteration;
-
 			if (_numIterExamples > 0)
 			{
 				ScaleWeights();
@@ -309,16 +484,15 @@ namespace gezi {
 		/// Given an impression, and the output of the classifier, compute an update
 		/// </summary>        
 		void GetUpdate(Float output, Float trueOutput, InstancePtr instance,
-			Vector& gradient, Float& biasUpdate)
+			Vector& gradient, Float& _gradientUpdate)
 		{
 			// scale regret by weight
-			trueOutput *= instance->weight;
+			_gradientUpdate = trueOutput * instance->weight;
 			if (_sampleSize > 1)
 			{
 				gradient = instance->features;
-				gradient.ScaleBy(trueOutput);
+				gradient.ScaleBy(_gradientUpdate);
 			}
-			biasUpdate = _args.noBias ? 0 : trueOutput;
 		}
 
 		/// <summary>
@@ -358,15 +532,21 @@ namespace gezi {
 			{
 				if (_sampleSize == 1)
 				{
-					Float update = _biasUpdate * learningRate / _numIterExamples;
+					Float update = _gradientUpdate * learningRate / _numIterExamples;
 					_weights.AddScale(_currentInstance->features, update);
-					_bias += update;
+					if (!_args.noBias)
+					{
+						_bias += update;
+					}
 				}
 				else
 				{
 					Float update = learningRate / _numIterExamples;
 					_weights.AddScale(_weightsUpdate, update);
-					_bias += _biasUpdate * update;
+					if (!_args.noBias)
+					{
+						_bias += _gradientUpdate * update;
+					}
 				}
 			}
 
@@ -374,7 +554,8 @@ namespace gezi {
 			// w_{t+1} = min{1, 1/sqrt(lambda)/|w_{t+1/2}|} * w_{t+1/2}
 			if (_args.performProjection)
 			{
-				Float normalizer = 1 / sqrt(_args.lambda * _weights.squaredNorm); //@FIXME WeightVector::Norm() like sofia
+				Float normalizer = 1 / sqrt(_args.lambda * _weights.squaredNorm); 	
+				Pval2_4(normalizer, _weights.squaredNorm);
 				if (normalizer < 1)
 				{
 					_weights.ScaleBy(normalizer);
@@ -405,7 +586,7 @@ namespace gezi {
 				// add up bias update
 				for (Float bUpdate : _biasUpdates)
 				{
-					_biasUpdate += bUpdate;
+					_gradientUpdate += bUpdate;
 				}
 			}
 
@@ -426,7 +607,7 @@ namespace gezi {
 		/// <summary> Prediction bias </summary>
 		/// TODO: Note, I changed this also to mean the averaged bias. Should probably have two functions to
 		///  make explicit whether you want the averaged or last bias. Same for weights.
-		Float _bias;
+		Float _bias = 1.; //初始1 原来0？ @TODO
 
 		int _sampleSize = 1;
 
@@ -440,7 +621,7 @@ namespace gezi {
 		int _iteration = 0;
 
 		Vector _weightsUpdate;
-		Float _biasUpdate = 0;
+		Float _gradientUpdate = 0;
 		vector<Vector> _weightUpdates;
 		Fvec _biasUpdates;
 
