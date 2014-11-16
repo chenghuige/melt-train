@@ -61,19 +61,19 @@ namespace gezi {
 			{ "stochastic", LoopType::Stochastic },
 			{ "balance", LoopType::BalancedStochastic },
 			{ "balanced", LoopType::BalancedStochastic },
-			{ "balanced_stochastic", LoopType::BalancedStochastic },
-			{ "roc", LoopType::Roc }
+			{ "balancedstochastic", LoopType::BalancedStochastic },
+			{ "roc", LoopType::Roc },
 		};
 
 		map<string, TrainerType> _trainerTypes = {
 			{ "pegasos", TrainerType::Pegasos },
-			{ "passive_aggressive", TrainerType::PassiveAggressive },
-			{ "margin_perceptron", TrainerType::MarginPerceptron },
+			{ "passiveaggressive", TrainerType::PassiveAggressive },
+			{ "marginperceptron", TrainerType::MarginPerceptron },
 			{ "romma", TrainerType::Romma },
 			{ "sgdsvm", TrainerType::SgdSVM },
-			{ "least_mean_squares", TrainerType::LeastMeanSquares },
+			{ "leastmeansquares", TrainerType::LeastMeanSquares },
 			{ "logreg", TrainerType::Logreg },
-			{ "logreg_pegasos", TrainerType::LogregPegasos }
+			{ "logregpegasos", TrainerType::LogregPegasos },
 		};
 
 		struct Arguments
@@ -248,8 +248,8 @@ namespace gezi {
 			//ProgressBar pb(format("LinearSVM training with trainerType {}, loopType {}", _args.trainerType, _args.loopType), _args.numIterations);
 			ProgressBar pb("LinearSVM training", _args.numIterations);
 			//AutoTimer timer("LinearSVM training", 0);
-			LoopType loopType = _loopTypes[_args.loopType];
-			TrainerType trainerType = _trainerTypes[_args.trainerType];
+			LoopType loopType = _loopTypes[arg(_args.loopType)];
+			TrainerType trainerType = _trainerTypes[arg(_args.trainerType)];
 			Instances posInstances, negInstances;
 			if (loopType == LoopType::BalancedStochastic || loopType == LoopType::Roc)
 			{
