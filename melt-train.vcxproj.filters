@@ -131,6 +131,9 @@
     <ClInclude Include="include\Trainers\SVM\BaseLineLinearSVM.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\Trainers\VWTrainer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="test\data\test.20140115-0304\feature\feature.def">

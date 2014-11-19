@@ -95,6 +95,7 @@
     <ClInclude Include="include\Trainers\RandomTrainer.h" />
     <ClInclude Include="include\Trainers\SVM\BaseLineLinearSVM.h" />
     <ClInclude Include="include\Trainers\SVM\LinearSVM.h" />
+    <ClInclude Include="include\Trainers\VWTrainer.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Trainers\FastRank.cpp" />

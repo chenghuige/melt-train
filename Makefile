@@ -38,7 +38,8 @@ CPPFLAGS=-D_GNU_SOURCE \
   -DVERSION=\"1.9.8.7\"
 INCPATH=-I./ \
   -I./include \
-  -I./utils
+  -I./utils \
+  -I./include/Trainers/
 DEP_INCPATH=-I../../../../app/search/sep/anti-spam/gezi \
   -I../../../../app/search/sep/anti-spam/gezi/include \
   -I../../../../app/search/sep/anti-spam/gezi/output \
@@ -138,7 +139,11 @@ DEP_INCPATH=-I../../../../app/search/sep/anti-spam/gezi \
   -I../../../../third-64/tcmalloc \
   -I../../../../third-64/tcmalloc/include \
   -I../../../../third-64/tcmalloc/output \
-  -I../../../../third-64/tcmalloc/output/include
+  -I../../../../third-64/tcmalloc/output/include \
+  -I../../../../third-64/zlib \
+  -I../../../../third-64/zlib/include \
+  -I../../../../third-64/zlib/output \
+  -I../../../../third-64/zlib/output/include
 
 #============ CCP vars ============
 CCHECK=@ccheck.py
@@ -150,7 +155,7 @@ CCP_FLAGS=
 
 
 #COMAKE UUID
-COMAKE_MD5=e4bceb1640816865d7661ac18a5d17b2  COMAKE
+COMAKE_MD5=3789faca693f0aa9c52584b1fa141c11  COMAKE
 
 
 .PHONY:all

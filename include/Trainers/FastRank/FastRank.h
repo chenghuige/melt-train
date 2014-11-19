@@ -48,7 +48,7 @@ namespace gezi {
 			//也就是说尽量不要再构造函数有虚函数 如果必须 只放置在最底层的derived class构造函数中
 		}
 
-		virtual void ShowHelp()
+		virtual void ShowHelp() override
 		{
 			fmt::print_line("DECLARE_bool(calibrate);");
 			fmt::print_line("DECLARE_string(calibrator);");

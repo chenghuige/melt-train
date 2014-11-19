@@ -90,14 +90,14 @@ if GCC_HIGH  == 1:
 LDFLAGS('-lpthread -lcrypto -lrt -lssl -lldap -lcurl -ldl -rdynamic', GCC_LDFLAGS)
 
 #头文件路径.
-INCPATHS('./ ./include ./utils'.replace('./', RELATIVE_PATH))
+INCPATHS('./ ./include ./utils ./include/Trainers/'.replace('./', RELATIVE_PATH))
 
 #使用库
 #LIBS('./librsc-sender.a')
 
 #依赖模块
 #CONFIGS('third-64/openssl@base')
-#CONFIGS('third-64/zlib@base')
+CONFIGS('third-64/zlib@base')
 CONFIGS('third-64/boost@base')
 CONFIGS('third-64/gflags@base')
 CONFIGS('third-64/glog@base')

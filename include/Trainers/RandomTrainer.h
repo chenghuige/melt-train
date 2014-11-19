@@ -14,13 +14,8 @@
 #ifndef TRAINERS__RANDOM_TRAINER_H_
 #define TRAINERS__RANDOM_TRAINER_H_
 
-#include "ProgressBar.h"
 #include "MLCore/Trainer.h"
-#include "Prediction/Instances/Instances.h"
-#include "Numeric/Vector/Vector.h"
 #include "Predictors/RandomPredictor.h"
-#include "Prediction/Normalization/NormalizerFactory.h"
-#include "Prediction/Calibrate/CalibratorFactory.h"
 
 namespace gezi {
 

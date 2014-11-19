@@ -3,6 +3,7 @@
 #include "Trainers/SVM/LinearSVM.h"
 #include "Trainers/FastRank/BinaryClassificationFastRank.h"
 #include "Trainers/RandomTrainer.h"
+#include "Trainers/VWTrainer.h"
 namespace gezi {
 
 	void TrainerFactory::PrintTrainersInfo()
@@ -27,7 +28,9 @@ namespace gezi {
 		RandomForest,
 		DecisionTree,
 		KernalSVM,
-		BinaryNeuralNetwork
+		BinaryNeuralNetwork,
+		VW,
+		Sofia
 	};
 
 	map<string, TrainerType> _trainerTypes
@@ -40,6 +43,8 @@ namespace gezi {
 		{ "fastrank", TrainerType::BinaryClassificationFastRank },
 		{ "gbdt", TrainerType::BinaryClassificationFastRank },
 		{ "fr", TrainerType::BinaryClassificationFastRank },
+		{ "vw", TrainerType::VW },
+		{ "sofia", TrainerType::Sofia }
 	};
 
 	TrainerPtr TrainerFactory::CreateTrainer(string name)
@@ -79,6 +84,13 @@ namespace gezi {
 			break;
 		case  TrainerType::BinaryNeuralNetwork:
 			VLOG(0) << "Creating BinaryNeuralNetwork trainer";
+			break;
+		case  TrainerType::VW:
+			VLOG(0) << "Creating VW trainer";
+			return make_shared<VWTrainer>();
+			break;
+		case  TrainerType::Sofia:
+			VLOG(0) << "Creating Sofia trainer";
 			break;
 		case  TrainerType::Unknown:
 			break;

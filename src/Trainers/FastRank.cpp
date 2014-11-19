@@ -29,7 +29,7 @@ DEFINE_int32(mil, 10, "minInstancesInLeaf: Minimal instances in leaves allowd");
 DEFINE_bool(bsr, false, "bestStepRankingRegressionTrees: ");
 DEFINE_double(sp, 0.1, "Sparsity level needed to use sparse feature representation, if 0.3 means be sparsify only if real data less then 30%, 0-1 the smaller more dense and faster but use more memeory");
 DEFINE_double(ff, 1, "The fraction of features (chosen randomly) to use on each iteration");
-DEFINE_int32(mb, 255, "Maximum number of distinct values (bins) per feature");
+DEFINE_int32(mb, 255, "Maximum number of distinct values (bins) per feature"); 
 DEFINE_int32(ps, -1, "The number of histograms in the pool (between 2 and numLeaves)");
 
 namespace gezi {
