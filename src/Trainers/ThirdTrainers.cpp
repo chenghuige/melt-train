@@ -23,9 +23,11 @@ namespace gezi {
 	//@TODO 所有第三方的共同特性抽出
 	void SofiaTrainer::ParseArgs()
 	{
+		PVAL(FLAGS_cls);
 		if (!FLAGS_cls.empty())
 		{
 			_classiferSettings = FLAGS_cls;
+			_classiferSettings = gezi::replace_chars(_classiferSettings, "=,", ' ');
 		}
 		_randSeed = FLAGS_rs;
 	}
