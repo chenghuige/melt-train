@@ -15,7 +15,7 @@
 #define TRAINERS__SOFIA_TRAINER_H_
 #include "common_util.h"
 
-#include "MLCore/Trainer.h"
+#include "ThirdTrainer.h"
 #include "Predictors/LinearPredictor.h"
 #include "Predictors/SofiaPredictor.h" //not used, will gen LinearPredictor
 #include "string2argcargv.h"
@@ -28,21 +28,23 @@
 
 namespace gezi {
 
-	class SofiaTrainer : public Trainer
+	class SofiaTrainer : public ThirdTrainer
 	{
 	public:
+		SofiaTrainer()
+		{
+			_classiferSettings = "--lambda 0.001 --iterations 50000";
+		}
+
 		virtual PredictorPtr CreatePredictor() override
 		{
 			return make_shared<LinearPredictor>(_weights, _bias, nullptr, nullptr, _featureNames, "Sofia");
 		}
 
 	protected:
-		virtual void ParseArgs() override;
-
 		virtual void ShowHelp() override;
 
 		SfDataSet Instances2SfDataSet(Instances& instances);
-		virtual void Init() override;
 		virtual void Initialize(Instances& instances) override;
 		virtual void InnerTrain(Instances& instances) override;
 		virtual void Finalize(Instances& instances) override;
@@ -56,13 +58,6 @@ namespace gezi {
 		}
 
 	private:
-		static Instances& normalizedInstances()
-		{
-			static thread_local Instances _normalizedInstances;
-			return _normalizedInstances;
-		}
-		Instances* _instances = NULL;
-
 
 		FeatureNamesVector _featureNames;
 		int _numFeatures;
@@ -71,10 +66,6 @@ namespace gezi {
 		Float _bias = 1.;
 
 		SfWeightVector* w = NULL;
-	
-		//string _classiferSettings = "--learner_type pegasos --loop_type roc --lambda 0.001 --iterations 200000"; // cls 这个解析不对@FIXME
-		string _classiferSettings;
-		unsigned _randSeed = 0;
 	};
 
 }  //----end of namespace gezi

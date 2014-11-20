@@ -17,12 +17,6 @@
 #include "sofia/simple-cmd-line-helper.h"
 #include "Trainers/SofiaTrainer.h"
 
-DECLARE_bool(norm); //will speed up a if pre normalize and then --norm=0 for cross validation
-DECLARE_string(normalizer);
-
-DECLARE_bool(calibrate);
-DECLARE_string(calibrator);
-
 namespace gezi {
 
 	//copy from sofia-ml.cc
@@ -247,25 +241,6 @@ namespace gezi {
 		}
 
 		PrintElapsedTime(train_start, "Time to complete training: ");
-	}
-
-
-	void SofiaTrainer::Init()
-	{
-		ParseArgs();
-
-		PVAL(_randSeed);
-		if (FLAGS_norm) //@TODO to trainer
-		{
-			_normalizer = NormalizerFactory::CreateNormalizer(FLAGS_normalizer);
-		}
-		PVAL((_normalizer == nullptr));
-
-		if (FLAGS_calibrate) //@TODO to trainer
-		{
-			_calibrator = CalibratorFactory::CreateCalibrator(FLAGS_calibrator);
-		}
-		PVAL((_calibrator == nullptr));
 	}
 
 	//-------------from SofiaTrainer
