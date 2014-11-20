@@ -262,7 +262,6 @@ namespace gezi {
 		vector<SfSparseVector>& vec = sfDataSet.vectors_;
 		for (InstancePtr instance : instances)
 		{
-			//SfSparseVector sfVec("1", useBias); //不接受空string
 			SfSparseVector sfVec(useBias);
 			sfVec.y_ = instance->label <= 0 ? -1 : instance->label;
 			instance->features.ForEach([&](int index, Float value) {
@@ -301,35 +300,11 @@ namespace gezi {
 		else {
 			w = new SfHashWeightVector(CMD_LINE_INTS["--hash_mask_bits"]);
 		}
-
-		if (_normalizer != nullptr && _normalizeCopy)
-		{
-			for (InstancePtr instance : instances)
-			{
-				normalizedInstances().push_back(_normalizer->NormalizeCopy(instance));
-			}
-			_instances = &normalizedInstances();
-		}
-		else
-		{
-			_instances = &instances;
-		}
 	}
 
 	void SofiaTrainer::InnerTrain(Instances& instances)
 	{
-		//@TODO 兼容streaming模式
-		if (_normalizer != nullptr && _normalizeCopy && !instances.IsNormalized())
-		{
-			normalizedInstances() = _normalizer->NormalizeCopy(instances);
-			_instances = &normalizedInstances();
-		}
-		else
-		{
-			_instances = &instances;
-		}
-
-		SfDataSet sfDataSet = Instances2SfDataSet(*_instances);
+		SfDataSet sfDataSet = Instances2SfDataSet(instances);
 		{
 			Notifer timer("Sofia training");
 			TrainModel(sfDataSet, w);
@@ -350,7 +325,7 @@ namespace gezi {
 
 		if (_calibrator != nullptr)
 		{
-			_calibrator->Train(*_instances, [this](InstancePtr instance) {
+			_calibrator->Train(instances, [this](InstancePtr instance) {
 				return Margin(instance->features); });
 		}
 	}

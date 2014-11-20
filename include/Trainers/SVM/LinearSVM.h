@@ -234,20 +234,8 @@ namespace gezi {
 
 
 		/// Override the default training loop:   we need to pick random instances manually...
-		virtual void InnerTrain(Instances& instances_) override
+		virtual void InnerTrain(Instances& instances) override
 		{
-			//@TODO 兼容streaming模式
-			if (_normalizer != nullptr && _normalizeCopy && !instances_.IsNormalized())
-			{
-				normalizedInstances() = _normalizer->NormalizeCopy(instances_);
-				_instances = &normalizedInstances();
-			}
-			else
-			{
-				_instances = &instances_;
-			}
-
-			Instances& instances = *_instances;
 			//ProgressBar pb(format("LinearSVM training with trainerType {}, loopType {}", _args.trainerType, _args.loopType), _args.numIterations);
 			ProgressBar pb("LinearSVM training", _args.numIterations);
 			//AutoTimer timer("LinearSVM training", 0);
@@ -307,7 +295,7 @@ namespace gezi {
 			}
 		}
 
-		virtual void Finalize(Instances& instances_) override
+		virtual void Finalize(Instances& instances) override
 		{
 			if (_calibrator != nullptr)
 			{
@@ -327,17 +315,17 @@ namespace gezi {
 		void ProcessDataInstance(InstancePtr posInstance, InstancePtr negInstance)
 		{
 			++_numIterExamples;
-			if (_normalizer != nullptr && _normalizeCopy)
-			{//如果不需要normalizeCopy前面Inialize的时候统一都normalize了
-				if (!posInstance->normalized)
-				{
-					posInstance = _normalizer->NormalizeCopy(posInstance);
-				}
-				if (!negInstance->normalized)
-				{
-					negInstance = _normalizer->NormalizeCopy(negInstance);
-				}
-			}
+			//if (_normalizer != nullptr && _normalizeCopy)
+			//{//如果不需要normalizeCopy前面Inialize的时候统一都normalize了
+			//	if (!posInstance->normalized)
+			//	{
+			//		posInstance = _normalizer->NormalizeCopy(posInstance);
+			//	}
+			//	if (!negInstance->normalized)
+			//	{
+			//		negInstance = _normalizer->NormalizeCopy(negInstance);
+			//	}
+			//}
 
 			Float output = _bias + _weights.dotOnDifference(posInstance->features, negInstance->features);
 			Float trueOutput = (posInstance->label > negInstance->label) ? 1 : -1;
@@ -387,11 +375,6 @@ namespace gezi {
 		void ProcessDataInstance(InstancePtr instance)
 		{
 			++_numIterExamples;
-
-			//if (_normalizer != nullptr && !instance->normalized && _normalizeCopy)
-			//{//如果不需要normalizeCopy前面Inialize的时候统一都normalize了
-			//	instance = _normalizer->NormalizeCopy(instance);
-			//}
 
 			_currentInstance = instance;
 
@@ -627,12 +610,6 @@ namespace gezi {
 		int64 _currentIdx = 0;
 		int64 _lastIdx = -1;
 
-		static Instances& normalizedInstances()
-		{
-			static thread_local Instances _normalizedInstances;
-			return _normalizedInstances;
-		}
-		Instances* _instances = NULL;
 	};
 
 }  //----end of namespace gezi

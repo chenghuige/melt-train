@@ -65,18 +65,7 @@ namespace gezi {
 
 		virtual void InnerTrain(Instances& instances) override
 		{
-			//@TODO ¼æÈÝstreamingÄ£Ê½
-			if (_normalizer != nullptr && _normalizeCopy && !instances.IsNormalized())
-			{
-				normalizedInstances() = _normalizer->NormalizeCopy(instances);
-				_instances = &normalizedInstances();
-			}
-			else
-			{
-				_instances = &instances;
-			}
-
-			for (InstancePtr instance : *_instances)
+			for (InstancePtr instance : instances)
 			{
 				example* ec = Instance2Example(instance, true);
 				_vw->learn(ec);
@@ -94,12 +83,13 @@ namespace gezi {
 			VW::finish_example(*_vw, ec);
 			return output;
 		}
+
 		virtual void Finalize(Instances& instances) override
 		{
 			//FREE_ARRAY(_psf.fs);
 			if (_calibrator != nullptr)
 			{
-				_calibrator->Train(*_instances, [this](InstancePtr instance) {
+				_calibrator->Train(instances, [this](InstancePtr instance) {
 					return Margin(instance);
 				});
 			}
