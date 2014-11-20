@@ -92,7 +92,10 @@
     <ClInclude Include="include\Trainers\FastRank\ScoreTracker.h" />
     <ClInclude Include="include\Trainers\FastRank\TreeLearner.h" />
     <ClInclude Include="include\Trainers\FastRank\TrivialGradientWrapper.h" />
+    <ClInclude Include="include\Trainers\LibLinearTrainer.h" />
+    <ClInclude Include="include\Trainers\LibSVMTrainer.h" />
     <ClInclude Include="include\Trainers\RandomTrainer.h" />
+    <ClInclude Include="include\Trainers\SofiaTrainer.h" />
     <ClInclude Include="include\Trainers\SVM\BaseLineLinearSVM.h" />
     <ClInclude Include="include\Trainers\SVM\LinearSVM.h" />
     <ClInclude Include="include\Trainers\VWTrainer.h" />
@@ -100,6 +103,9 @@
   <ItemGroup>
     <ClCompile Include="src\Trainers\FastRank.cpp" />
     <ClCompile Include="src\Trainers\LinearSVM.cpp" />
+    <ClCompile Include="src\Trainers\SofiaTrainer.cpp" />
+    <ClCompile Include="src\Trainers\ThirdTrainers.cpp" />
+    <ClCompile Include="src\Trainers\Trainer.cpp" />
     <ClCompile Include="src\Trainers\TrainerFactory.cpp" />
     <ClCompile Include="test\test_bit.cc" />
     <ClCompile Include="test\test_fastrank_instances2dataset.cc" />

@@ -4,18 +4,8 @@
 #include "Trainers/FastRank/BinaryClassificationFastRank.h"
 #include "Trainers/RandomTrainer.h"
 #include "Trainers/VWTrainer.h"
+#include "Trainers/SofiaTrainer.h"
 namespace gezi {
-
-	void TrainerFactory::PrintTrainersInfo()
-	{
-		VLOG(0) << "BinaryClassification Trainers";
-		VLOG(0) << "[LinearSVM] -cl linearsvm or svm | ./melt -helpmatch LinearSVM.cpp";
-		VLOG(0) << "super fast, for classification with large number of features like text classification";
-		VLOG(0) << "[FastRank] -cl fastrank or fr or gbdt | ./melt -helpmatch FastRank.cpp";
-		VLOG(0) << "fast, best auc result for most classification problems with num features < 10^5";
-		VLOG(0) << "For per trainer parameters use, like LinearSVM just <./melt -helpmatch LinearSVM.cpp>, for other common parameters <./melt -helpmatch Melt>";
-		VLOG(0) << "The default trainer is LinearSVM, if use other trainers use -cl, eg. <./melt feature.txt -c train -cl gbdt> will train feature.txt using gbdt trainer";
-	}
 
 	enum class TrainerType
 	{
@@ -30,7 +20,9 @@ namespace gezi {
 		KernalSVM,
 		BinaryNeuralNetwork,
 		VW,
-		Sofia
+		Sofia,
+		LibLinear,
+		LibSVM,
 	};
 
 	map<string, TrainerType> _trainerTypes
@@ -44,14 +36,29 @@ namespace gezi {
 		{ "gbdt", TrainerType::BinaryClassificationFastRank },
 		{ "fr", TrainerType::BinaryClassificationFastRank },
 		{ "vw", TrainerType::VW },
-		{ "sofia", TrainerType::Sofia }
+		{ "sofia", TrainerType::Sofia },
+		{ "iblinear", TrainerType::LibLinear },
+		{ "libsvm", TrainerType::LibSVM },
 	};
+
+	void TrainerFactory::PrintTrainersInfo()
+	{
+		VLOG(0) << "BinaryClassification Trainers";
+		VLOG(0) << "[LinearSVM] -cl linearsvm or svm | ./melt -helpmatch LinearSVM.cpp";
+		VLOG(0) << "super fast, for classification with large number of features like text classification";
+		VLOG(0) << "[FastRank] -cl fastrank or fr or gbdt | ./melt -helpmatch FastRank.cpp";
+		VLOG(0) << "fast, best auc result for most classification problems with num features < 10^5";
+		VLOG(0) << "For per trainer parameters use, like LinearSVM just <./melt -helpmatch LinearSVM.cpp>, for other common parameters <./melt -helpmatch Melt>";
+		VLOG(0) << "The default trainer is LinearSVM, if use other trainers use -cl, eg. <./melt feature.txt -c train -cl gbdt> will train feature.txt using gbdt trainer";
+
+		print_enum_map(_trainerTypes);
+	}
 
 	TrainerPtr TrainerFactory::CreateTrainer(string name)
 	{
-		boost::to_lower(name);
+		name = arg(name);
 		TrainerType trainerType = _trainerTypes[name];
-	
+
 		switch (trainerType)
 		{
 		case TrainerType::Random:
@@ -91,6 +98,13 @@ namespace gezi {
 			break;
 		case  TrainerType::Sofia:
 			VLOG(0) << "Creating Sofia trainer";
+			return make_shared<SofiaTrainer>();
+			break;
+		case  TrainerType::LibLinear:
+			VLOG(0) << "Creating LibLinear trainer";
+			break;
+		case  TrainerType::LibSVM:
+			VLOG(0) << "Creating LibSVM trainer";
 			break;
 		case  TrainerType::Unknown:
 			break;

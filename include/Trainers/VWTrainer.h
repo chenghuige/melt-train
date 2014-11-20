@@ -53,7 +53,7 @@ protected:
 		return ec;
 	}
 protected:
-	virtual void Initialize(Instances& instances)
+	virtual void Initialize(Instances& instances) override
 	{
 		string s = "";
 		_vw = VW::initialize(s);
@@ -62,7 +62,7 @@ protected:
 		_pFeatureSpace->fs = new feature[instances.NumFeatures()];
 	}
 
-	virtual void InnerTrain(Instances& instances)
+	virtual void InnerTrain(Instances& instances) override
 	{
 		for(InstancePtr instance : instances)
 		{
@@ -74,7 +74,7 @@ protected:
 		//VW::finish(*_vw);
 	}
 
-	virtual void Finalize(Instances& instances)
+	virtual void Finalize(Instances& instances) override
 	{
 		//FREE_ARRAY(_psf.fs);
 	}

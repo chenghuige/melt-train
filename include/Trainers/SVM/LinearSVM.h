@@ -56,7 +56,6 @@ namespace gezi {
 			LogregPegasos
 		};
 
-		//@TODO 自动根据LoopType生成下面代码。。
 		map<string, LoopType> _loopTypes = {
 			{ "stochastic", LoopType::Stochastic },
 			{ "balance", LoopType::BalancedStochastic },
@@ -147,7 +146,7 @@ namespace gezi {
 		}
 
 		virtual void ParseArgs() override;
-		void Init()
+		virtual void Init() override
 		{
 			PVAL(_args.randSeed);
 			_rand = make_shared<Random>(random_engine(_args.randSeed));
@@ -157,13 +156,15 @@ namespace gezi {
 			}
 			PVAL((_normalizer == nullptr));
 
+			if (_args.calibrateOutput) //@TODO to trainer
+			{
+				_calibrator = CalibratorFactory::CreateCalibrator(_args.calibratorName);
+			}
+			PVAL((_calibrator == nullptr));
 		}
 
 		virtual void Initialize(Instances& instances) override
 		{
-
-			Init();
-
 			_sampleSize = _args.sampleSize == 0 ? instances.Count() * _args.sampleRate : _args.sampleSize;
 
 			_numFeatures = instances.FeatureNum();
@@ -213,16 +214,7 @@ namespace gezi {
 			_numProcessedExamples = 0;
 			_numIterExamples = 0;
 
-			//--- 将所有数据归一化 和TLC策略不同 TLC将normalize混在训练过程中(主要可能是兼容streaming模式)
-			//特别是hadoop scope训练  @TODO  也许这里也会变化
-			//如果不是类似交叉验证 比如就是训练测试 默认是 no normalize copy
-			if (_normalizer != nullptr && !instances.IsNormalized())
-			{
-				if (!_normalizeCopy)
-					_normalizer->RunNormalize(instances);
-				else
-					_normalizer->Prepare(instances);
-			}
+			_featureNames = instances.schema.featureNames;
 
 			VLOG(3) << "Initialized LinearSVM on " << _numFeatures << " features";
 		}
@@ -242,9 +234,20 @@ namespace gezi {
 
 
 		/// Override the default training loop:   we need to pick random instances manually...
-		virtual void InnerTrain(Instances& instances) override
+		virtual void InnerTrain(Instances& instances_) override
 		{
-			_featureNames = instances.schema.featureNames;
+			//@TODO 兼容streaming模式
+			if (_normalizer != nullptr && _normalizeCopy && !instances_.IsNormalized())
+			{
+				normalizedInstances() = _normalizer->NormalizeCopy(instances_);
+				_instances = &normalizedInstances();
+			}
+			else
+			{
+				_instances = &instances_;
+			}
+
+			Instances& instances = *_instances;
 			//ProgressBar pb(format("LinearSVM training with trainerType {}, loopType {}", _args.trainerType, _args.loopType), _args.numIterations);
 			ProgressBar pb("LinearSVM training", _args.numIterations);
 			//AutoTimer timer("LinearSVM training", 0);
@@ -304,20 +307,16 @@ namespace gezi {
 			}
 		}
 
-		virtual void Finalize(Instances& instances) override
+		virtual void Finalize(Instances& instances_) override
 		{
-			if (_args.calibrateOutput) //@TODO to trainer
+			if (_calibrator != nullptr)
 			{
-				_calibrator = CalibratorFactory::CreateCalibrator(_args.calibratorName);
-			}
-			PVAL((_calibrator == nullptr));
-			if (_calibrator)
-			{
+				Instances& instances = *_instances;
 				_calibrator->Train(instances, [this](InstancePtr instance) {
-					if (_normalizer != nullptr && !instance->normalized)
-					{
-						instance = _normalizer->NormalizeCopy(instance);
-					}
+					//if (_normalizer != nullptr && !instance->normalized)
+					//{//@TODO 等于重复做了一次normalize
+					//	instance = _normalizer->NormalizeCopy(instance);
+					//}
 					return Margin(instance->features); });
 			}
 		}
@@ -374,7 +373,7 @@ namespace gezi {
 			// w_{t+1} = min{1, 1/sqrt(lambda)/|w_{t+1/2}|} * w_{t+1/2}
 			if (_args.performProjection)
 			{
-				Float normalizer = 1 / sqrt(_args.lambda * _weights.squaredNorm); 
+				Float normalizer = 1 / sqrt(_args.lambda * _weights.squaredNorm);
 				Pval2_4(normalizer, _weights.squaredNorm);
 				if (normalizer < 1)
 				{
@@ -389,10 +388,10 @@ namespace gezi {
 		{
 			++_numIterExamples;
 
-			if (_normalizer != nullptr && !instance->normalized && _normalizeCopy)
-			{//如果不需要normalizeCopy前面Inialize的时候统一都normalize了
-				instance = _normalizer->NormalizeCopy(instance);
-			}
+			//if (_normalizer != nullptr && !instance->normalized && _normalizeCopy)
+			//{//如果不需要normalizeCopy前面Inialize的时候统一都normalize了
+			//	instance = _normalizer->NormalizeCopy(instance);
+			//}
 
 			_currentInstance = instance;
 
@@ -554,7 +553,7 @@ namespace gezi {
 			// w_{t+1} = min{1, 1/sqrt(lambda)/|w_{t+1/2}|} * w_{t+1/2}
 			if (_args.performProjection)
 			{
-				Float normalizer = 1 / sqrt(_args.lambda * _weights.squaredNorm); 	
+				Float normalizer = 1 / sqrt(_args.lambda * _weights.squaredNorm);
 				Pval2_4(normalizer, _weights.squaredNorm);
 				if (normalizer < 1)
 				{
@@ -627,6 +626,13 @@ namespace gezi {
 
 		int64 _currentIdx = 0;
 		int64 _lastIdx = -1;
+
+		static Instances& normalizedInstances()
+		{
+			static thread_local Instances _normalizedInstances;
+			return _normalizedInstances;
+		}
+		Instances* _instances = NULL;
 	};
 
 }  //----end of namespace gezi
