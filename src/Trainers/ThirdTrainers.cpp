@@ -26,8 +26,7 @@ namespace gezi {
 		PVAL(FLAGS_cls);
 		if (!FLAGS_cls.empty())
 		{
-			_classiferSettings = FLAGS_cls;
-			_classiferSettings = gezi::replace_chars(_classiferSettings, "=,", ' ');
+			_classiferSettings = gezi::replace_chars(FLAGS_cls, "=,", ' ');
 		}
 		_randSeed = FLAGS_rs;
 	}
