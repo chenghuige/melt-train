@@ -198,6 +198,12 @@ namespace gezi {
 				_ensemble.ToGainSummary(TrainSet.Features);
 		}
 
+
+		virtual void Train(Instances& instances, bool isStreaming = false) override
+		{
+			InnerTrain(instances);
+		}
+
 		virtual void InnerTrain(Instances& instances) override
 		{
 			ParseArgs();

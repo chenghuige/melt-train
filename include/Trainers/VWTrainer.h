@@ -32,7 +32,7 @@ namespace gezi {
 	public:
 		virtual PredictorPtr CreatePredictor() override
 		{
-			return make_shared<VWPredictor>(_vw, _pFeatureSpace);
+			return make_shared<VWPredictor>(_vw, _pFeatureSpace, _normalizer, _calibrator, _featureNames);
 		}
 	protected:
 		example* Instance2Example(InstancePtr instance, bool includeLabel)

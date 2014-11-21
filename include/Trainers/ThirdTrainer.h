@@ -25,13 +25,6 @@ namespace gezi {
 	protected:
 		string _classiferSettings;
 		unsigned _randSeed = 0;
-
-		static Instances& normalizedInstances()
-		{
-			static thread_local Instances _normalizedInstances;
-			return _normalizedInstances;
-		}
-		Instances* _instances = NULL;
 	};
 
 }  //----end of namespace gezi

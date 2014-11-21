@@ -38,7 +38,7 @@ namespace gezi {
 
 		virtual PredictorPtr CreatePredictor() override
 		{
-			return make_shared<LinearPredictor>(_weights, _bias, nullptr, nullptr, _featureNames, "Sofia");
+			return make_shared<LinearPredictor>(_weights, _bias, _normalizer, _calibrator, _featureNames, "Sofia");
 		}
 
 	protected:
@@ -58,10 +58,6 @@ namespace gezi {
 		}
 
 	private:
-
-		FeatureNamesVector _featureNames;
-		int _numFeatures;
-
 		Vector _weights;
 		Float _bias = 1.;
 

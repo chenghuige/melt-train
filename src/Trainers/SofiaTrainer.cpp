@@ -274,9 +274,6 @@ namespace gezi {
 
 	void SofiaTrainer::Initialize(Instances& instances)
 	{
-		_featureNames = instances.schema.featureNames;
-		_numFeatures = instances.NumFeatures();
-
 		int argc;
 		char** argv = NULL;
 		Pval(_classiferSettings);
@@ -294,6 +291,7 @@ namespace gezi {
 
 		// Set up empty model with specified dimensionality.
 		CMD_LINE_INTS["--dimensionality"] = _numFeatures + 1; //°üº¬Ò»Î»bias
+	
 		if (CMD_LINE_INTS["--hash_mask_bits"] == 0) {
 			w = new SfWeightVector(CMD_LINE_INTS["--dimensionality"]);
 		}

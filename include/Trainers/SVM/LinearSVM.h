@@ -166,8 +166,6 @@ namespace gezi {
 		virtual void Initialize(Instances& instances) override
 		{
 			_sampleSize = _args.sampleSize == 0 ? instances.Count() * _args.sampleRate : _args.sampleSize;
-
-			_numFeatures = instances.FeatureNum();
 			_randRange = make_shared<RandomRange>(instances.Count(), random_engine(_args.randSeed));
 
 			if (_args.initialWeightsString.size() > 0)
@@ -213,8 +211,6 @@ namespace gezi {
 			_iteration = 0;
 			_numProcessedExamples = 0;
 			_numIterExamples = 0;
-
-			_featureNames = instances.schema.featureNames;
 
 			VLOG(3) << "Initialized LinearSVM on " << _numFeatures << " features";
 		}
@@ -578,10 +574,6 @@ namespace gezi {
 	private:
 		Arguments _args;
 
-		FeatureNamesVector _featureNames;
-
-		/// <summary> Total number of features </summary>
-		int _numFeatures;
 		/// <summary> Feature weights: weights for the last-seen training example </summary>
 		//Vector _weights;
 		WeightVector _weights;
