@@ -14,23 +14,19 @@
 #ifndef SOFIA_TRAINER_CPP_
 #define SOFIA_TRAINER_CPP_
 
+#define protected public
+#define  private public
+#include "sofia/sf-hash-weight-vector.h"
+#include "sofia/sofia-ml-methods.h"
+#include "sofia/sf-weight-vector.h"
 #include "sofia/simple-cmd-line-helper.h"
 #include "Trainers/SofiaTrainer.h"
 
 namespace gezi {
 
 	//copy from sofia-ml.cc
-	void CommandLine(int argc, char** argv, int start = 0) {
-		//chg added 不考虑多线程 因为目前多个相同类型Trainer只是cross validation时候可能 而cross validation是顺序执行的
-		static bool isFirst = true;
-		if (!isFirst)
-		{
-			return;
-		}
-		else
-		{
-			isFirst = false;
-		}
+	// 不考虑多线程 因为目前多个相同类型Trainer只是cross validation时候可能 而cross validation是顺序执行的
+	void CommandLine(int argc, char** argv) {
 		AddFlag("--training_file", "File to be used for training.", string(""));
 		AddFlag("--test_file", "File to be used for testing.", string(""));
 		AddFlag("--results_file", "File to which to write predictions.", string(""));
@@ -119,7 +115,23 @@ namespace gezi {
 			"    this flag as no effect for rank and roc optimzation.\n"
 			"    Default: not set.",
 			bool(false));
-		ParseFlags(argc, argv, start);
+
+		//chg modify
+		if (argc > 1)
+		{
+			ParseFlags(argc, argv);
+		}
+	}
+
+	void* InitCommandLine_(int argc, char** argv)
+	{
+		CommandLine(argc, argv);
+		return NULL;
+	}
+	void* InitCommandLine(int argc, char** argv)
+	{
+		static void* inited = InitCommandLine_(argc, argv);
+		return inited;
 	}
 
 	void PrintElapsedTime(clock_t start, const string& message) {
@@ -247,7 +259,7 @@ namespace gezi {
 
 	void SofiaTrainer::ShowHelp()
 	{
-		CommandLine(0, NULL);
+		InitCommandLine(0, NULL);  //1 will show help, here not use internal show help but use below
 		print_map(CMD_LINE_BOOLS);
 		print_map(CMD_LINE_INTS);
 		print_map(CMD_LINE_FLOATS);
@@ -274,12 +286,9 @@ namespace gezi {
 
 	void SofiaTrainer::Initialize(Instances& instances)
 	{
-		int argc;
-		char** argv = NULL;
 		Pval(_classiferSettings);
-		stringToArgcArgv(_classiferSettings, &argc, &argv);
-		CommandLine(argc, argv);
-		freeArgcArgv(argc, argv);
+		static String2ArgcArgv args("sofia " + _classiferSettings);
+		InitCommandLine(args.argc(),args.argv());
 		CMD_LINE_INTS["--random_seed"] = _randSeed;
 		if (CMD_LINE_INTS["--random_seed"] == 0) {
 			srand(time(NULL));
@@ -291,7 +300,7 @@ namespace gezi {
 
 		// Set up empty model with specified dimensionality.
 		CMD_LINE_INTS["--dimensionality"] = _numFeatures + 1; //包含一位bias
-	
+
 		if (CMD_LINE_INTS["--hash_mask_bits"] == 0) {
 			w = new SfWeightVector(CMD_LINE_INTS["--dimensionality"]);
 		}
