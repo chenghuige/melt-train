@@ -16,16 +16,11 @@
 #include "common_util.h"
 
 #include "ThirdTrainer.h"
-#include "Predictors/LinearPredictor.h"
-#include "Predictors/SofiaPredictor.h" //not used, will gen LinearPredictor
+#include "Predictors/SofiaPredictor.h" //not used, will generate LinearPredictor
 #include "string2argcargv.h"
 
-#define protected public
-#define  private public
-#include "sofia/sf-hash-weight-vector.h"
-#include "sofia/sofia-ml-methods.h"
-#include "sofia/sf-weight-vector.h"
-
+class SfWeightVector;
+class SfDataSet;
 namespace gezi {
 
 	class SofiaTrainer : public ThirdTrainer
@@ -36,9 +31,9 @@ namespace gezi {
 			_classiferSettings = "--lambda 0.001 --iterations 50000";
 		}
 
-		virtual PredictorPtr CreatePredictor() override
+		virtual string GetPredictorName() override
 		{
-			return make_shared<LinearPredictor>(_weights, _bias, _normalizer, _calibrator, _featureNames, "Sofia");
+			return "sofia";
 		}
 
 	protected:
@@ -58,9 +53,6 @@ namespace gezi {
 		}
 
 	private:
-		Vector _weights;
-		Float _bias = 1.;
-
 		SfWeightVector* w = NULL;
 	};
 

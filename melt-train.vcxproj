@@ -98,6 +98,7 @@
     <ClInclude Include="include\Trainers\SofiaTrainer.h" />
     <ClInclude Include="include\Trainers\SVM\BaseLineLinearSVM.h" />
     <ClInclude Include="include\Trainers\SVM\LinearSVM.h" />
+    <ClInclude Include="include\Trainers\ThirdTrainer.h" />
     <ClInclude Include="include\Trainers\VWTrainer.h" />
   </ItemGroup>
   <ItemGroup>
@@ -107,6 +108,7 @@
     <ClCompile Include="src\Trainers\ThirdTrainers.cpp" />
     <ClCompile Include="src\Trainers\Trainer.cpp" />
     <ClCompile Include="src\Trainers\TrainerFactory.cpp" />
+    <ClCompile Include="src\Trainers\VWTrainer.cpp" />
     <ClCompile Include="test\test_bit.cc" />
     <ClCompile Include="test\test_fastrank_instances2dataset.cc" />
     <ClCompile Include="test\test_fastrank_train.cc" />

@@ -14,11 +14,16 @@
 #ifndef TRAINERS__LIB_LINEAR_TRAINER_H_
 #define TRAINERS__LIB_LINEAR_TRAINER_H_
 
+#include "ThirdTrainer.h"
 namespace gezi {
 
-class LibLinearTrainer 
+class LibLinearTrainer : public ThirdTrainer
 {
 public:
+	virtual string GetPredictorName() override
+	{
+		return "LibLinear";
+	}
 
 protected:
 private:
