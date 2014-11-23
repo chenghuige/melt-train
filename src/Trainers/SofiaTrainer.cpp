@@ -286,7 +286,6 @@ namespace gezi {
 
 	void SofiaTrainer::Initialize(Instances& instances)
 	{
-		Pval(_classiferSettings);
 		static String2ArgcArgv args("sofia " + _classiferSettings);
 		InitCommandLine(args.argc(),args.argv());
 		CMD_LINE_INTS["--random_seed"] = _randSeed;
@@ -318,7 +317,7 @@ namespace gezi {
 		}
 	}
 
-	void SofiaTrainer::Finalize(Instances& instances)
+	void SofiaTrainer::Finalize_(Instances& instances)
 	{
 		_bias = w->ValueOf(0);
 		_weights.resize(_numFeatures, 0);
@@ -329,12 +328,6 @@ namespace gezi {
 			_weights[i - 1] = w->ValueOf(i);
 		}
 		FREE(w);
-
-		if (_calibrator != nullptr)
-		{
-			_calibrator->Train(instances, [this](InstancePtr instance) {
-				return Margin(instance->features); });
-		}
 	}
 
 }  //----end of namespace gezi

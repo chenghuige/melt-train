@@ -36,13 +36,38 @@ namespace gezi {
 		{
 			return "";
 		}
+
+		virtual void Finalize(Instances& instances) override
+		{
+			Finalize_(instances);
+			if (_calibrator != nullptr)
+			{
+				_calibrator->Train(instances, [this](InstancePtr instance) {
+					return Margin(instance->features); },
+						_maxCalibrationExamples);
+			}
+		}
+	protected:
+		virtual void Finalize_(Instances& instances)
+		{
+
+		}
+		/// <summary>
+		/// Return the raw margin from the decision hyperplane
+		/// </summary>		
+		Float Margin(const Vector& features)
+		{
+			return _bias + _weights.dot(features);
+		}
 	protected:
 		//----------for LinearPredictor
 		Vector _weights;
-		Float _bias = 1.;
+		Float _bias = 0.;
 
 		string _classiferSettings;
 		unsigned _randSeed = 0;
+
+		size_t _maxCalibrationExamples = 1000000;
 	};
 
 }  //----end of namespace gezi

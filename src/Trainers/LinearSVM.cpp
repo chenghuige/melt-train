@@ -19,6 +19,7 @@
 
 DECLARE_bool(calibrate);
 DECLARE_string(calibrator);
+DECLARE_uint64(numCali);
 DECLARE_uint64(rs);
 
 DECLARE_bool(norm); //will speed up a if pre normalize and then --norm=0 for cross validation
@@ -55,6 +56,8 @@ namespace gezi {
 
 		_args.loopType = FLAGS_lt;
 		_args.trainerType = FLAGS_trt;
+
+		_args.maxCalibrationExamples = FLAGS_numCali;
 	}
 
 	void BaseLineLinearSVM::ParseArgs()

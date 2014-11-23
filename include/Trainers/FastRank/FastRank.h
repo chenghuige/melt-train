@@ -199,7 +199,7 @@ namespace gezi {
 		}
 
 
-		virtual void Train(Instances& instances, bool isStreaming = false) override
+		virtual void Train(Instances& instances) override
 		{
 			InnerTrain(instances);
 		}

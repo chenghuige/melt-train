@@ -15,6 +15,8 @@
 #define TRAINERS__LIB_LINEAR_TRAINER_H_
 
 #include "ThirdTrainer.h"
+
+class problem;
 namespace gezi {
 
 class LibLinearTrainer : public ThirdTrainer
@@ -24,10 +26,15 @@ public:
 	{
 		return "LibLinear";
 	}
-
+	
 protected:
-private:
+	virtual void ShowHelp() override;
 
+	problem Instances2problem(Instances& instances);
+	virtual void Initialize(Instances& instances) override;
+	virtual void InnerTrain(Instances& instances) override;
+	virtual void Finalize_(Instances& instances) override;
+private:
 };
 
 }  //----end of namespace gezi

@@ -182,6 +182,7 @@ clean:ccpclean
 	rm -rf libmelt_trainers.a
 	rm -rf ./output/lib/libmelt_trainers.a
 	rm -rf src/Trainers/melt_trainers_FastRank.o
+	rm -rf src/Trainers/melt_trainers_LibLinearTrainer.o
 	rm -rf src/Trainers/melt_trainers_LinearSVM.o
 	rm -rf src/Trainers/melt_trainers_SofiaTrainer.o
 	rm -rf src/Trainers/melt_trainers_ThirdTrainer.o
@@ -207,6 +208,7 @@ love:
 	@echo "make love done"
 
 libmelt_trainers.a:src/Trainers/melt_trainers_FastRank.o \
+  src/Trainers/melt_trainers_LibLinearTrainer.o \
   src/Trainers/melt_trainers_LinearSVM.o \
   src/Trainers/melt_trainers_SofiaTrainer.o \
   src/Trainers/melt_trainers_ThirdTrainer.o \
@@ -215,6 +217,7 @@ libmelt_trainers.a:src/Trainers/melt_trainers_FastRank.o \
   src/Trainers/melt_trainers_VWTrainer.o
 	@echo "[[1;32;40mCOMAKE:BUILD[0m][Target:'[1;32;40mlibmelt_trainers.a[0m']"
 	ar crs libmelt_trainers.a src/Trainers/melt_trainers_FastRank.o \
+  src/Trainers/melt_trainers_LibLinearTrainer.o \
   src/Trainers/melt_trainers_LinearSVM.o \
   src/Trainers/melt_trainers_SofiaTrainer.o \
   src/Trainers/melt_trainers_ThirdTrainer.o \
@@ -231,6 +234,14 @@ src/Trainers/melt_trainers_FastRank.o:src/Trainers/FastRank.cpp
   -DVERSION=\"1.9.8.7\" \
   -O3 \
   -DNDEBUG $(CXXFLAGS)  -o src/Trainers/melt_trainers_FastRank.o src/Trainers/FastRank.cpp
+
+src/Trainers/melt_trainers_LibLinearTrainer.o:src/Trainers/LibLinearTrainer.cpp
+	@echo "[[1;32;40mCOMAKE:BUILD[0m][Target:'[1;32;40msrc/Trainers/melt_trainers_LibLinearTrainer.o[0m']"
+	$(CXX) -c $(INCPATH) $(DEP_INCPATH) -D_GNU_SOURCE \
+  -D__STDC_LIMIT_MACROS \
+  -DVERSION=\"1.9.8.7\" \
+  -O3 \
+  -DNDEBUG $(CXXFLAGS)  -o src/Trainers/melt_trainers_LibLinearTrainer.o src/Trainers/LibLinearTrainer.cpp
 
 src/Trainers/melt_trainers_LinearSVM.o:src/Trainers/LinearSVM.cpp
 	@echo "[[1;32;40mCOMAKE:BUILD[0m][Target:'[1;32;40msrc/Trainers/melt_trainers_LinearSVM.o[0m']"

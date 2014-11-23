@@ -5,6 +5,8 @@
 #include "Trainers/RandomTrainer.h"
 #include "Trainers/VWTrainer.h"
 #include "Trainers/SofiaTrainer.h"
+#include "Trainers/LibLinearTrainer.h"
+#include "Trainers/LibSVMTrainer.h"
 namespace gezi {
 
 	enum class TrainerType
@@ -37,7 +39,7 @@ namespace gezi {
 		{ "fr", TrainerType::BinaryClassificationFastRank },
 		{ "vw", TrainerType::VW },
 		{ "sofia", TrainerType::Sofia },
-		{ "iblinear", TrainerType::LibLinear },
+		{ "liblinear", TrainerType::LibLinear },
 		{ "libsvm", TrainerType::LibSVM },
 	};
 
@@ -102,9 +104,11 @@ namespace gezi {
 			break;
 		case  TrainerType::LibLinear:
 			VLOG(0) << "Creating LibLinear trainer";
+			return make_shared<LibLinearTrainer>();
 			break;
 		case  TrainerType::LibSVM:
 			VLOG(0) << "Creating LibSVM trainer";
+			return make_shared<LibSVMTrainer>();
 			break;
 		case  TrainerType::Unknown:
 			break;

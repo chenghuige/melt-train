@@ -20,6 +20,7 @@ DECLARE_string(normalizer);
 
 DECLARE_bool(calibrate);
 DECLARE_string(calibrator);
+DECLARE_uint64(numCali);
 
 DECLARE_string(cls);
 DECLARE_uint64(rs);
@@ -34,7 +35,9 @@ namespace gezi {
 		{
 			_classiferSettings = gezi::replace_chars(FLAGS_cls, "=,", ' ');
 		}
+		Pval(_classiferSettings);
 		_randSeed = FLAGS_rs;
+		_maxCalibrationExamples = FLAGS_numCali;
 	}
 
 	void ThirdTrainer::Init()

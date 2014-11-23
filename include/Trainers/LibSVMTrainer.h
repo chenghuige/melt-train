@@ -14,11 +14,18 @@
 #ifndef TRAINERS__LIB_S_V_M_TRAINER_H_
 #define TRAINERS__LIB_S_V_M_TRAINER_H_
 
+#include "ThirdTrainer.h"
+
 namespace gezi {
 
-class LibSVMTrainer 
+class LibSVMTrainer : public ThirdTrainer
 {
 public:
+
+	virtual string GetPredictorName() override
+	{
+		return "LibSVM";
+	}
 
 protected:
 private:

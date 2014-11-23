@@ -14,10 +14,8 @@
 #ifndef TRAINERS__SOFIA_TRAINER_H_
 #define TRAINERS__SOFIA_TRAINER_H_
 #include "common_util.h"
-
 #include "ThirdTrainer.h"
 #include "Predictors/SofiaPredictor.h" //not used, will generate LinearPredictor
-#include "string2argcargv.h"
 
 class SfWeightVector;
 class SfDataSet;
@@ -42,15 +40,7 @@ namespace gezi {
 		SfDataSet Instances2SfDataSet(Instances& instances);
 		virtual void Initialize(Instances& instances) override;
 		virtual void InnerTrain(Instances& instances) override;
-		virtual void Finalize(Instances& instances) override;
-
-		/// <summary>
-		/// Return the raw margin from the decision hyperplane
-		/// </summary>		
-		Float Margin(const Vector& features)
-		{
-			return _bias + _weights.dot(features);
-		}
+		virtual void Finalize_(Instances& instances) override;
 
 	private:
 		SfWeightVector* w = NULL;

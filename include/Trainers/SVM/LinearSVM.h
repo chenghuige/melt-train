@@ -96,10 +96,11 @@ namespace gezi {
 
 			bool calibrateOutput = true; //calibrate| use calibrator to gen probability?
 			string calibratorName = "sigmoid"; //calibrator| sigmoid/platt naive pav
-			//uint64 maxCalibrationExamples = 1000000; //numCali|Number of instances to train the calibrator
 
 			string loopType = "stochastic"; //lt| now support [stochastic, balancedStochastic, roc] like sofia-ml will support [stochastic, balancedStochastic, roc, rank, queryNormRank, combinedRanking, combinedRoc]
 			string trainerType = "pegasos"; //trt| now support [pegasos] like sofia-ml will support [pegasos, passiveAggressive, marginPerceptron, romma, sgdSvm, leastMeanSquares, logreg, and logregPegasos]
+
+			size_t maxCalibrationExamples = 1000000; //numCali|Number of instances to train the calibrator
 		};
 
 		virtual void ShowHelp() override
@@ -301,7 +302,8 @@ namespace gezi {
 					//{//@TODO 等于重复做了一次normalize
 					//	instance = _normalizer->NormalizeCopy(instance);
 					//}
-					return Margin(instance->features); });
+					return Margin(instance->features); },
+						_args.maxCalibrationExamples);
 			}
 		}
 
@@ -581,7 +583,7 @@ namespace gezi {
 		/// <summary> Prediction bias </summary>
 		/// TODO: Note, I changed this also to mean the averaged bias. Should probably have two functions to
 		///  make explicit whether you want the averaged or last bias. Same for weights.
-		Float _bias = 1.; //初始1 原来0？ @TODO
+		Float _bias = 0.; //应该是0,这里只是<f,w>+bias 可以去掉显示bias融合到f或者w(liblinear在f最后添加bias,而sofia选择w的0位置放置bias)
 
 		int _sampleSize = 1;
 
