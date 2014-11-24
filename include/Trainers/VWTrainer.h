@@ -38,9 +38,8 @@ namespace gezi {
 
 		virtual void InnerTrain(Instances& instances) override;
 
-		inline Float Margin(InstancePtr instance);
-
-		virtual void Finalize(Instances& instances) override;
+		virtual Float Margin(InstancePtr instance) override;
+		virtual void Finalize_(Instances& instances) override;
 
 	public:
 		static VW::primitive_feature_space* pFeatureSpace();

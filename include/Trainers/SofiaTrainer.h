@@ -21,7 +21,7 @@ class SfWeightVector;
 class SfDataSet;
 namespace gezi {
 
-	class SofiaTrainer : public ThirdTrainer
+	class SofiaTrainer : public LinearThirdTrainer
 	{
 	public:
 		SofiaTrainer()

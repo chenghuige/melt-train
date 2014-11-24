@@ -16,11 +16,17 @@
 
 #include "ThirdTrainer.h"
 
+class svm_problem;
 namespace gezi {
 
 class LibSVMTrainer : public ThirdTrainer
 {
 public:
+
+	LibSVMTrainer()
+	{
+		_classiferSettings = "-b 1";
+	}
 
 	virtual string GetPredictorName() override
 	{
@@ -28,6 +34,17 @@ public:
 	}
 
 protected:
+	virtual Float Margin(InstancePtr instance) override;
+
+	virtual PredictorPtr CreatePredictor() override;
+
+	virtual void ShowHelp() override;
+
+	svm_problem  Instances2SvmProblem(Instances& instances);
+	virtual void Initialize(Instances& instances) override;
+	virtual void InnerTrain(Instances& instances) override;
+	virtual void Finalize_(Instances& instances) override;
+
 private:
 
 };

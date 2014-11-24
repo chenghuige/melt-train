@@ -26,15 +26,47 @@ namespace gezi {
 		virtual void ParseArgs() override;
 		virtual void Init() override;
 
+		
+		virtual string GetPredictorName()
+		{
+			return "";
+		}
+
+		virtual void Finalize(Instances& instances) override
+		{
+			Finalize_(instances);
+			if (_calibrator != nullptr)
+			{
+				_calibrator->Train(instances, [this](InstancePtr instance) {
+					return Margin(instance); },
+						_maxCalibrationExamples);
+			}
+		}
+
+	protected:
+		virtual void Finalize_(Instances& instances)
+		{
+
+		}
+		
+		virtual Float Margin(InstancePtr instance)
+		{
+			return 0;
+		}
+	protected:
+		string _classiferSettings;
+		unsigned _randSeed = 0;
+
+		size_t _maxCalibrationExamples = 1000000;
+	};
+
+	class LinearThirdTrainer : public ThirdTrainer
+	{
+	public:
 		//Ä¬ÈÏ·µ»ØLinearPredictor
 		virtual PredictorPtr CreatePredictor() override
 		{
 			return make_shared<LinearPredictor>(_weights, _bias, _normalizer, _calibrator, _featureNames, GetPredictorName());
-		}
-
-		virtual string GetPredictorName()
-		{
-			return "";
 		}
 
 		virtual void Finalize(Instances& instances) override
@@ -48,10 +80,6 @@ namespace gezi {
 			}
 		}
 	protected:
-		virtual void Finalize_(Instances& instances)
-		{
-
-		}
 		/// <summary>
 		/// Return the raw margin from the decision hyperplane
 		/// </summary>		
@@ -59,15 +87,11 @@ namespace gezi {
 		{
 			return _bias + _weights.dot(features);
 		}
+
 	protected:
 		//----------for LinearPredictor
 		Vector _weights;
 		Float _bias = 0.;
-
-		string _classiferSettings;
-		unsigned _randSeed = 0;
-
-		size_t _maxCalibrationExamples = 1000000;
 	};
 
 }  //----end of namespace gezi

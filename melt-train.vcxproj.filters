@@ -57,6 +57,9 @@
     <ClCompile Include="src\Trainers\ThirdTrainer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\Trainers\LibSVMTrainer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\Trainers\SVM\LinearSVM.h">

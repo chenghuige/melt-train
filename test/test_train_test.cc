@@ -33,8 +33,6 @@ DECLARE_bool(norm);
 
 TEST(train_test, func)
 {
-	FLAGS_norm = false;
-	FLAGS_calibrate = false;
 	auto trainer = TrainerFactory::CreateTrainer(FLAGS_cl);
 	CHECK_NE((trainer == nullptr), true);
 	auto instances = create_instances(FLAGS_in);

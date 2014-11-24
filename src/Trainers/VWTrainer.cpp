@@ -55,7 +55,7 @@ namespace gezi {
 		return ec;
 	}
 
-	void VWTrainer::Initialize(Instances& instances) 
+	void VWTrainer::Initialize(Instances& instances)
 	{
 		string s = "";
 		_vw = VW::initialize(s);
@@ -65,7 +65,7 @@ namespace gezi {
 	}
 
 
-	void VWTrainer::InnerTrain(Instances& instances) 
+	void VWTrainer::InnerTrain(Instances& instances)
 	{
 		for (InstancePtr instance : instances)
 		{
@@ -86,17 +86,10 @@ namespace gezi {
 		return output;
 	}
 
-	void VWTrainer::Finalize(Instances& instances)
+	void VWTrainer::Finalize_(Instances& instances)
 	{
-		//FREE_ARRAY(_psf.fs);
-		if (_calibrator != nullptr)
-		{
-			_calibrator->Train(instances, [this](InstancePtr instance) {
-				return Margin(instance);
-			});
-		}
-	}
 
+	}
 }  //----end of namespace gezi
 
 #endif  //----end of V_W_TRAINER_CPP_

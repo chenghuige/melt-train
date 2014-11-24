@@ -22,188 +22,192 @@
 
 namespace gezi {
 
-	struct feature_node thread_local *x_space;
-	struct parameter param;
-	struct problem thread_local prob;
-	struct model thread_local *model_;
-	int flag_cross_validation;
-	int nr_fold;
-	double bias;
-
-	void print_null(const char *s) {}
-
-	void exit_with_help()
+	namespace
 	{
-		printf(
-			"Usage: train [options] training_set_file [model_file]\n"
-			"options:\n"
-			"-s type : set type of solver (default 1)\n"
-			"  for multi-class classification\n"
-			"	 0 -- L2-regularized logistic regression (primal)\n"
-			"	 1 -- L2-regularized L2-loss support vector classification (dual)\n"
-			"	 2 -- L2-regularized L2-loss support vector classification (primal)\n"
-			"	 3 -- L2-regularized L1-loss support vector classification (dual)\n"
-			"	 4 -- support vector classification by Crammer and Singer\n"
-			"	 5 -- L1-regularized L2-loss support vector classification\n"
-			"	 6 -- L1-regularized logistic regression\n"
-			"	 7 -- L2-regularized logistic regression (dual)\n"
-			"  for regression\n"
-			"	11 -- L2-regularized L2-loss support vector regression (primal)\n"
-			"	12 -- L2-regularized L2-loss support vector regression (dual)\n"
-			"	13 -- L2-regularized L1-loss support vector regression (dual)\n"
-			"-c cost : set the parameter C (default 1)\n"
-			"-p epsilon : set the epsilon in loss function of SVR (default 0.1)\n"
-			"-e epsilon : set tolerance of termination criterion\n"
-			"	-s 0 and 2\n"
-			"		|f'(w)|_2 <= eps*min(pos,neg)/l*|f'(w0)|_2,\n"
-			"		where f is the primal function and pos/neg are # of\n"
-			"		positive/negative data (default 0.01)\n"
-			"	-s 11\n"
-			"		|f'(w)|_2 <= eps*|f'(w0)|_2 (default 0.001)\n"
-			"	-s 1, 3, 4, and 7\n"
-			"		Dual maximal violation <= eps; similar to libsvm (default 0.1)\n"
-			"	-s 5 and 6\n"
-			"		|f'(w)|_1 <= eps*min(pos,neg)/l*|f'(w0)|_1,\n"
-			"		where f is the primal function (default 0.01)\n"
-			"	-s 12 and 13\n"
-			"		|f'(alpha)|_1 <= eps |f'(alpha0)|,\n"
-			"		where f is the dual function (default 0.1)\n"
-			"-B bias : if bias >= 0, instance x becomes [x; bias]; if < 0, no bias term added (default -1)\n"
-			"-wi weight: weights adjust the parameter C of different classes (see README for details)\n"
-			"-v n: n-fold cross validation mode\n"
-			"-q : quiet mode (no outputs)\n"
-			);
-		exit(1);
-	}
+		struct feature_node thread_local *x_space;
+		struct parameter param;
+		struct problem thread_local prob;
+		struct model thread_local *model_;
+		int flag_cross_validation;
+		int nr_fold;
+		double bias;
 
-	void parse_command_line(int argc, char **argv)
-	{
-		int i;
-		void(*print_func)(const char*) = NULL;	// default printing to stdout
+		void print_null(const char *s) {}
 
-		// default values
-		param.solver_type = L2R_L2LOSS_SVC_DUAL;
-		param.C = 1;
-		param.eps = INF; // see setting below
-		param.p = 0.1;
-		param.nr_weight = 0;
-		param.weight_label = NULL;
-		param.weight = NULL;
-		flag_cross_validation = 0;
-		bias = -1;
-
-		// parse options
-		for (i = 1; i < argc; i++)
+		void exit_with_help()
 		{
-			if (argv[i][0] != '-') break;
-			if (++i >= argc)
-				exit_with_help();
-			switch (argv[i - 1][1])
+			printf(
+				"Usage: train [options] training_set_file [model_file]\n"
+				"options:\n"
+				"-s type : set type of solver (default 1)\n"
+				"  for multi-class classification\n"
+				"	 0 -- L2-regularized logistic regression (primal)\n"
+				"	 1 -- L2-regularized L2-loss support vector classification (dual)\n"
+				"	 2 -- L2-regularized L2-loss support vector classification (primal)\n"
+				"	 3 -- L2-regularized L1-loss support vector classification (dual)\n"
+				"	 4 -- support vector classification by Crammer and Singer\n"
+				"	 5 -- L1-regularized L2-loss support vector classification\n"
+				"	 6 -- L1-regularized logistic regression\n"
+				"	 7 -- L2-regularized logistic regression (dual)\n"
+				"  for regression\n"
+				"	11 -- L2-regularized L2-loss support vector regression (primal)\n"
+				"	12 -- L2-regularized L2-loss support vector regression (dual)\n"
+				"	13 -- L2-regularized L1-loss support vector regression (dual)\n"
+				"-c cost : set the parameter C (default 1)\n"
+				"-p epsilon : set the epsilon in loss function of SVR (default 0.1)\n"
+				"-e epsilon : set tolerance of termination criterion\n"
+				"	-s 0 and 2\n"
+				"		|f'(w)|_2 <= eps*min(pos,neg)/l*|f'(w0)|_2,\n"
+				"		where f is the primal function and pos/neg are # of\n"
+				"		positive/negative data (default 0.01)\n"
+				"	-s 11\n"
+				"		|f'(w)|_2 <= eps*|f'(w0)|_2 (default 0.001)\n"
+				"	-s 1, 3, 4, and 7\n"
+				"		Dual maximal violation <= eps; similar to libsvm (default 0.1)\n"
+				"	-s 5 and 6\n"
+				"		|f'(w)|_1 <= eps*min(pos,neg)/l*|f'(w0)|_1,\n"
+				"		where f is the primal function (default 0.01)\n"
+				"	-s 12 and 13\n"
+				"		|f'(alpha)|_1 <= eps |f'(alpha0)|,\n"
+				"		where f is the dual function (default 0.1)\n"
+				"-B bias : if bias >= 0, instance x becomes [x; bias]; if < 0, no bias term added (default -1)\n"
+				"-wi weight: weights adjust the parameter C of different classes (see README for details)\n"
+				"-v n: n-fold cross validation mode\n"
+				"-q : quiet mode (no outputs)\n"
+				);
+			exit(1);
+		}
+
+		void parse_command_line(int argc, char **argv)
+		{
+			int i;
+			void(*print_func)(const char*) = NULL;	// default printing to stdout
+
+			// default values
+			param.solver_type = L2R_L2LOSS_SVC_DUAL;
+			param.C = 1;
+			param.eps = INF; // see setting below
+			param.p = 0.1;
+			param.nr_weight = 0;
+			param.weight_label = NULL;
+			param.weight = NULL;
+			flag_cross_validation = 0;
+			bias = -1;
+
+			// parse options
+			for (i = 1; i < argc; i++)
 			{
-			case 's':
-				param.solver_type = atoi(argv[i]);
-				break;
-
-			case 'c':
-				param.C = atof(argv[i]);
-				break;
-
-			case 'p':
-				param.p = atof(argv[i]);
-				break;
-
-			case 'e':
-				param.eps = atof(argv[i]);
-				break;
-
-			case 'B':
-				bias = atof(argv[i]);
-				break;
-
-			case 'w':
-				++param.nr_weight;
-				param.weight_label = (int *)realloc(param.weight_label, sizeof(int)*param.nr_weight);
-				param.weight = (double *)realloc(param.weight, sizeof(double)*param.nr_weight);
-				param.weight_label[param.nr_weight - 1] = atoi(&argv[i - 1][2]);
-				param.weight[param.nr_weight - 1] = atof(argv[i]);
-				break;
-
-			case 'v':
-				flag_cross_validation = 1;
-				nr_fold = atoi(argv[i]);
-				if (nr_fold < 2)
-				{
-					fprintf(stderr, "n-fold cross validation: n must >= 2\n");
+				if (argv[i][0] != '-') break;
+				if (++i >= argc)
 					exit_with_help();
+				switch (argv[i - 1][1])
+				{
+				case 's':
+					param.solver_type = atoi(argv[i]);
+					break;
+
+				case 'c':
+					param.C = atof(argv[i]);
+					break;
+
+				case 'p':
+					param.p = atof(argv[i]);
+					break;
+
+				case 'e':
+					param.eps = atof(argv[i]);
+					break;
+
+				case 'B':
+					bias = atof(argv[i]);
+					break;
+
+				case 'w':
+					++param.nr_weight;
+					param.weight_label = (int *)realloc(param.weight_label, sizeof(int)*param.nr_weight);
+					param.weight = (double *)realloc(param.weight, sizeof(double)*param.nr_weight);
+					param.weight_label[param.nr_weight - 1] = atoi(&argv[i - 1][2]);
+					param.weight[param.nr_weight - 1] = atof(argv[i]);
+					break;
+
+				case 'v':
+					flag_cross_validation = 1;
+					nr_fold = atoi(argv[i]);
+					if (nr_fold < 2)
+					{
+						fprintf(stderr, "n-fold cross validation: n must >= 2\n");
+						exit_with_help();
+					}
+					break;
+
+				case 'q':
+					print_func = &print_null;
+					i--;
+					break;
+
+				default:
+					fprintf(stderr, "unknown option: -%c\n", argv[i - 1][1]);
+					exit_with_help();
+					break;
 				}
-				break;
-
-			case 'q':
-				print_func = &print_null;
-				i--;
-				break;
-
-			default:
-				fprintf(stderr, "unknown option: -%c\n", argv[i - 1][1]);
-				exit_with_help();
-				break;
 			}
-		}
 
-		set_print_string_function(print_func);
+			set_print_string_function(print_func);
 
-		//chg removed can be used withou file input
-		//// determine filenames
-		//if (i >= argc)
-		//	exit_with_help();
+			//chg removed can be used withou file input
+			//// determine filenames
+			//if (i >= argc)
+			//	exit_with_help();
 
-		//strcpy(input_file_name, argv[i]);
+			//strcpy(input_file_name, argv[i]);
 
-		//if (i < argc - 1)
-		//	strcpy(model_file_name, argv[i + 1]);
-		//else
-		//{
-		//	char *p = strrchr(argv[i], '/');
-		//	if (p == NULL)
-		//		p = argv[i];
-		//	else
-		//		++p;
-		//	sprintf(model_file_name, "%s.model", p);
-		//}
+			//if (i < argc - 1)
+			//	strcpy(model_file_name, argv[i + 1]);
+			//else
+			//{
+			//	char *p = strrchr(argv[i], '/');
+			//	if (p == NULL)
+			//		p = argv[i];
+			//	else
+			//		++p;
+			//	sprintf(model_file_name, "%s.model", p);
+			//}
 
-		if (param.eps == INF)
-		{
-			switch (param.solver_type)
+			if (param.eps == INF)
 			{
-			case L2R_LR:
-			case L2R_L2LOSS_SVC:
-				param.eps = 0.01;
-				break;
-			case L2R_L2LOSS_SVR:
-				param.eps = 0.001;
-				break;
-			case L2R_L2LOSS_SVC_DUAL:
-			case L2R_L1LOSS_SVC_DUAL:
-			case MCSVM_CS:
-			case L2R_LR_DUAL:
-				param.eps = 0.1;
-				break;
-			case L1R_L2LOSS_SVC:
-			case L1R_LR:
-				param.eps = 0.01;
-				break;
-			case L2R_L1LOSS_SVR_DUAL:
-			case L2R_L2LOSS_SVR_DUAL:
-				param.eps = 0.1;
-				break;
+				switch (param.solver_type)
+				{
+				case L2R_LR:
+				case L2R_L2LOSS_SVC:
+					param.eps = 0.01;
+					break;
+				case L2R_L2LOSS_SVR:
+					param.eps = 0.001;
+					break;
+				case L2R_L2LOSS_SVC_DUAL:
+				case L2R_L1LOSS_SVC_DUAL:
+				case MCSVM_CS:
+				case L2R_LR_DUAL:
+					param.eps = 0.1;
+					break;
+				case L1R_L2LOSS_SVC:
+				case L1R_LR:
+					param.eps = 0.01;
+					break;
+				case L2R_L1LOSS_SVR_DUAL:
+				case L2R_L2LOSS_SVR_DUAL:
+					param.eps = 0.1;
+					break;
+				}
 			}
 		}
-	}
 
-	void* ParseCommandLine(int argc, char** argv)
-	{
-		parse_command_line(argc, argv);
-		return NULL;
+		void* ParseCommandLine(int argc, char** argv)
+		{
+			parse_command_line(argc, argv);
+			return NULL;
+		}
+
 	}
 
 	void LibLinearTrainer::ShowHelp()
@@ -211,15 +215,15 @@ namespace gezi {
 		exit_with_help();
 	}
 
-	problem LibLinearTrainer::Instances2problem(Instances& instances)
+	problem LibLinearTrainer::Instances2Problem(Instances& instances)
 	{
-		Notifer timer("Instances2problem");
-
-		int max_index, inst_max_index, i;
-		long int elements, j;
-
+		Notifer timer("Instances2Problem");
+	
 		problem prob;
 		prob.l = 0;
+	
+		int max_index, inst_max_index, i;
+		long int elements, j;
 		elements = 0;
 		for (InstancePtr instance : instances)
 		{
@@ -231,7 +235,7 @@ namespace gezi {
 
 		prob.y = Malloc(double, prob.l);
 		prob.x = Malloc(struct feature_node *, prob.l);
-		x_space = Malloc(struct feature_node, elements + prob.l);
+		x_space = Malloc(struct feature_node, elements + prob.l); // = prob.l for end index of -1
 
 		max_index = 0;
 		j = 0;
@@ -281,7 +285,15 @@ namespace gezi {
 	
 	void LibLinearTrainer::InnerTrain(Instances& instances)
 	{
-		prob = Instances2problem(instances);
+		prob = Instances2Problem(instances);
+
+		const char *error_msg = check_parameter(&prob, &param);
+		if (error_msg)
+		{
+			fprintf(stderr, "ERROR: %s\n", error_msg);
+			exit(1);
+		}
+
 		{
 			Notifer timer("LibLinear train");
 			model_ = train(&prob, &param);

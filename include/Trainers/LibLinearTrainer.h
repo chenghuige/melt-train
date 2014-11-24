@@ -19,23 +19,28 @@
 class problem;
 namespace gezi {
 
-class LibLinearTrainer : public ThirdTrainer
-{
-public:
-	virtual string GetPredictorName() override
+	class LibLinearTrainer : public LinearThirdTrainer
 	{
-		return "LibLinear";
-	}
-	
-protected:
-	virtual void ShowHelp() override;
+	public:
+		LibLinearTrainer()
+		{
+			_classiferSettings = "-B 1";
+		}
 
-	problem Instances2problem(Instances& instances);
-	virtual void Initialize(Instances& instances) override;
-	virtual void InnerTrain(Instances& instances) override;
-	virtual void Finalize_(Instances& instances) override;
-private:
-};
+		virtual string GetPredictorName() override
+		{
+			return "LibLinear";
+		}
+
+	protected:
+		virtual void ShowHelp() override;
+
+		problem Instances2Problem(Instances& instances);
+		virtual void Initialize(Instances& instances) override;
+		virtual void InnerTrain(Instances& instances) override;
+		virtual void Finalize_(Instances& instances) override;
+	private:
+	};
 
 }  //----end of namespace gezi
 
