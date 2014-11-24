@@ -219,7 +219,7 @@ namespace gezi {
 
 	svm_problem LibSVMTrainer::Instances2SvmProblem(Instances& instances)
 	{
-		Notifer timer("Instances2problem");
+		Notifer timer("Instances2SvmProblem");
 
 		svm_problem prob;
 		prob.l = 0;
