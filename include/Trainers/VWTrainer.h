@@ -31,6 +31,7 @@ namespace gezi {
 	public:
 		virtual PredictorPtr CreatePredictor() override;
 
+		virtual void ShowHelp() override;
 	protected:
 		example* Instance2Example(InstancePtr instance, bool includeLabel);
 
@@ -43,10 +44,8 @@ namespace gezi {
 
 	public:
 		static VW::primitive_feature_space* pFeatureSpace();
-		VW::primitive_feature_space* _pFeatureSpace;
+		VW::primitive_feature_space* _pFeatureSpace = NULL;
 		vw* _vw = NULL;
-		string modelFile;
-		string readableModelFile;
 	};
 
 }  //----end of namespace gezi

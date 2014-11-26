@@ -25,6 +25,16 @@
 
 namespace gezi {
 
+	namespace {
+		void dispatch_example(vw& all, example& ec) //copied from learner.cc
+		{
+			if (ec.test_only || !all.training)
+				all.l->predict(ec);
+			else
+				all.l->learn(ec);
+			all.l->finish_example(all, ec);
+		}
+	}
 	static VW::primitive_feature_space* VWTrainer::pFeatureSpace()
 	{
 		static thread_local VW::primitive_feature_space _pFeatureSpace;
@@ -33,13 +43,26 @@ namespace gezi {
 
 	PredictorPtr VWTrainer::CreatePredictor()
 	{
+		_vw->training = false;
+		Pval(_featureNames.size());
 		return make_shared<VWPredictor>(_vw, _pFeatureSpace, _normalizer, _calibrator, _featureNames);
+	}
+
+	void VWTrainer::ShowHelp()
+	{
+		ParseArgs();
+		if (!_vw)
+		{
+			_vw = VW::initialize(_classiferSettings);
+		}
+		cout << _vw->opts << endl;
 	}
 
 	example* VWTrainer::Instance2Example(InstancePtr instance, bool includeLabel)
 	{
 		int idx = 0;
-		instance->features.ForEach([&](int index, Float value) {
+		//注意如果是ForEach对于稠密数据是有问题的 需要ForEachNonZero
+		instance->features.ForEachNonZero([&](int index, Float value) {
 			_pFeatureSpace->fs[idx].weight_index = index;
 			_pFeatureSpace->fs[idx].x = value;
 			idx++;
@@ -57,22 +80,26 @@ namespace gezi {
 
 	void VWTrainer::Initialize(Instances& instances)
 	{
-		string s = "";
-		_vw = VW::initialize(s);
+		_classiferSettings = _classiferSettings + " --random_seed " + STR(_randSeed);
+		if (!_vw)
+		{
+			_vw = VW::initialize(_classiferSettings);
+		}
+		_vw->training = true;
 		_pFeatureSpace = pFeatureSpace();
 		_pFeatureSpace->name = 'a';
 		_pFeatureSpace->fs = new feature[instances.NumFeatures()];
 	}
-
 
 	void VWTrainer::InnerTrain(Instances& instances)
 	{
 		for (InstancePtr instance : instances)
 		{
 			example* ec = Instance2Example(instance, true);
-			_vw->learn(ec);
+			dispatch_example(*_vw, *ec);
+			//_vw->learn(ec);
 			//Pval(VW::get_prediction(ec));
-			VW::finish_example(*_vw, ec);
+			//VW::finish_example(*_vw, ec);
 		}
 		//VW::finish(*_vw);
 	}

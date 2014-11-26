@@ -123,14 +123,14 @@ namespace gezi {
 		}
 	}
 
-	void* InitCommandLine_(int argc, char** argv)
+	bool InitCommandLine_(int argc, char** argv)
 	{
 		CommandLine(argc, argv);
-		return NULL;
+		return true;
 	}
-	void* InitCommandLine(int argc, char** argv)
+	bool InitCommandLine(int argc, char** argv)
 	{
-		static void* inited = InitCommandLine_(argc, argv);
+		static bool inited = InitCommandLine_(argc, argv); //sofia不支持多个同时 需要单线程 command line 只可能全局初始化一次
 		return inited;
 	}
 

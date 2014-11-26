@@ -30,14 +30,19 @@ namespace gezi {
 	//所有第三方的共同特性抽出
 	void ThirdTrainer::ParseArgs()
 	{
-		PVAL(FLAGS_cls);
-		if (!FLAGS_cls.empty())
+		static bool isInited = false;
+		if (!isInited)
 		{
-			_classiferSettings = gezi::replace_chars(FLAGS_cls, "=,", ' ');
+			isInited = true;
+			PVAL(FLAGS_cls);
+			if (!FLAGS_cls.empty())
+			{
+				_classiferSettings = gezi::replace_chars(FLAGS_cls, "=,", ' ');
+			}
+			Pval(_classiferSettings);
+			_randSeed = FLAGS_rs;
+			_maxCalibrationExamples = FLAGS_numCali;
 		}
-		Pval(_classiferSettings);
-		_randSeed = FLAGS_rs;
-		_maxCalibrationExamples = FLAGS_numCali;
 	}
 
 	void ThirdTrainer::Init()

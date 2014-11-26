@@ -55,7 +55,7 @@ namespace gezi {
 		}
 	protected:
 		string _classiferSettings;
-		unsigned _randSeed = 0;
+		unsigned _randSeed = 0; //@TODO all unsigned rand seed to size_t ?
 
 		size_t _maxCalibrationExamples = 1000000;
 	};

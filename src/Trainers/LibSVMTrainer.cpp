@@ -24,12 +24,12 @@
 namespace gezi {
 
 	namespace {
-		struct svm_parameter param;		// set by parse_command_line
-		struct svm_problem prob;		// set by read_problem
-		struct svm_model *model;
-		struct svm_node *x_space;
-		int cross_validation;
-		int nr_fold;
+		struct svm_parameter thread_local param;		// set by parse_command_line
+		struct svm_problem thread_local prob;		// set by read_problem
+		struct svm_model thread_local *model;
+		struct svm_node thread_local *x_space;
+		int thread_local cross_validation;
+		int thread_local nr_fold;
 
 		void print_null(const char *s) {}
 
@@ -183,10 +183,10 @@ namespace gezi {
 
 		}
 
-		void* ParseCommandLine(int argc, char** argv)
+		bool ParseCommandLine(int argc, char** argv)
 		{
 			parse_command_line(argc, argv);
-			return NULL;
+			return true;
 		}
 
 		vector<svm_node> Instance2SvmNodeVec(InstancePtr instance)
@@ -214,7 +214,7 @@ namespace gezi {
 
 	PredictorPtr LibSVMTrainer::CreatePredictor()
 	{
-		return make_shared<LibSVMPredictor>(model, _normalizer, _calibrator, _featureNames);
+		return make_shared<LibSVMPredictor>(model, &prob, x_space, &param, _normalizer, _calibrator, _featureNames);
 	}
 
 	svm_problem LibSVMTrainer::Instances2SvmProblem(Instances& instances)
@@ -303,6 +303,7 @@ namespace gezi {
 		{
 			Notifer timer("LibSVM train");
 			model = svm_train(&prob, &param);
+			Pval2(prob.l, model->l);
 		}
 	}
 
@@ -318,10 +319,10 @@ namespace gezi {
 	void LibSVMTrainer::Finalize_(Instances& instances)
 	{
 		//svm_free_and_destroy_model(&model);
-		svm_destroy_param(&param);
-		free(prob.y);
-		free(prob.x);
-		free(x_space);
+		//svm_destroy_param(&param);
+		//free(prob.y);
+		//free(prob.x); //model内部还依赖这个 不能free 放到predictor中析构 需要传递prob过去
+		//free(x_space);
 	}
 
 }  //----end of namespace gezi

@@ -25,12 +25,12 @@ namespace gezi {
 	namespace
 	{
 		struct feature_node thread_local *x_space;
-		struct parameter param;
+		struct parameter thread_local param;
 		struct problem thread_local prob;
 		struct model thread_local *model_;
-		int flag_cross_validation;
-		int nr_fold;
-		double bias;
+		int thread_local flag_cross_validation;
+		int thread_local nr_fold;
+		double thread_local bias;
 
 		void print_null(const char *s) {}
 
