@@ -44,7 +44,6 @@ namespace gezi {
 	PredictorPtr VWTrainer::CreatePredictor()
 	{
 		_vw->training = false;
-		Pval(_featureNames.size());
 		return make_shared<VWPredictor>(_vw, _pFeatureSpace, _normalizer, _calibrator, _featureNames);
 	}
 
@@ -60,6 +59,10 @@ namespace gezi {
 
 	example* VWTrainer::Instance2Example(InstancePtr instance, bool includeLabel)
 	{
+		if (!instance->line.empty())
+		{
+			return VW::read_example(*_vw, instance->line);
+		}
 		int idx = 0;
 		//注意如果是ForEach对于稠密数据是有问题的 需要ForEachNonZero
 		instance->features.ForEachNonZero([&](int index, Float value) {
@@ -88,7 +91,10 @@ namespace gezi {
 		_vw->training = true;
 		_pFeatureSpace = pFeatureSpace();
 		_pFeatureSpace->name = 'a';
-		_pFeatureSpace->fs = new feature[instances.NumFeatures()];
+		if (instances[0]->line.empty())
+		{
+			_pFeatureSpace->fs = new feature[instances.NumFeatures()];
+		}
 	}
 
 	void VWTrainer::InnerTrain(Instances& instances)

@@ -104,6 +104,7 @@
   <ItemGroup>
     <ClCompile Include="src\Trainers\FastRank.cpp" />
     <ClCompile Include="src\Trainers\LibLinearTrainer.cpp" />
+    <ClCompile Include="src\Trainers\LibSVMTrainer.cpp" />
     <ClCompile Include="src\Trainers\LinearSVM.cpp" />
     <ClCompile Include="src\Trainers\SofiaTrainer.cpp" />
     <ClCompile Include="src\Trainers\ThirdTrainer.cpp" />
