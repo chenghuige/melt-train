@@ -65,7 +65,7 @@ namespace gezi {
 			}
 		}
 
-		virtual void InitScores(Fvec& initScores)
+		virtual void InitScores(const Fvec& initScores)
 		{
 			if (initScores.empty())
 			{

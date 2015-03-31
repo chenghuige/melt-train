@@ -202,6 +202,7 @@ namespace gezi {
 		virtual void Train(Instances& instances) override
 		{
 			InnerTrain(instances);
+			Finalize(instances);
 		}
 
 		virtual void InnerTrain(Instances& instances) override
