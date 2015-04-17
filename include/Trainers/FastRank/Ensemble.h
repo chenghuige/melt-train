@@ -157,8 +157,12 @@ namespace gezi {
 			int id = 0;
 			for (auto item : sortedByGain)
 			{
+				/*	ss << "f_" << STR(id++) << ":"  << item.first << ":"
+						<< featureList[item.first].Name
+						<< setiosflags(ios::left) << setfill(' ') << setw(40)
+						<< " " << std::pow(item.second, power) / normalizingFactor << endl;*/
 				ss << setiosflags(ios::left) << setfill(' ') << setw(40)
-					<< STR(id++) + ":" + featureList[item.first].Name
+					<< "f_" + STR(id++) + ":" + STR(item.first) + ":" + featureList[item.first].Name
 					<< " " << std::pow(item.second, power) / normalizingFactor << endl;
 			}
 			return ss.str();

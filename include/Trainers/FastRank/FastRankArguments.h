@@ -36,11 +36,10 @@ struct FastRankArguments
 
 	int maxTreeOutput = 100; //mo|Upper bound on absolute value of single tree output
 
-	bool affineRegressionTrees = false; //art|Use affine regression trees
+	bool affineRegressionTrees = false; //art|Use affine regression trees @TODO
 	bool allowDummyRootSplits = true; //dummies|When a root split is impossible, construct a dummy empty tree rather than fail
 
-	Float baggingTrainFraction = 0.7;//bagfrac|Percentage of training queries used in each bag
-	bool bestStepRankingRegressionTrees = false; //bsr|Use best ranking step trees
+	bool bestStepRankingRegressionTrees = false; //bsr|Use best ranking step trees  @TODO
 
 	Float entropyCoefficient = 0; //e|The entropy (regularization) coefficient between 0 and 1
 
@@ -54,8 +53,13 @@ struct FastRankArguments
 	Float featureReusePenalty = 0;
 	Float softmaxTemperature = 0;
 
-	Float featureFraction = 1;
-	Float splitFraction = 1;
+	Float featureFraction = 1; //ff|The fraction of features (chosen randomly) to use on each iteration
+	Float splitFraction = 1; //sf|The fraction of features (chosen randomly) to use on each split
+	bool preSplitCheck = false; //psc|Wether first randomly select a subset of features and then pick the feature that maximizes gain or post do this
+
+	int baggingSize = 0; //bag|Number of trees in each bag (0 for disabling bagging) 
+	double baggingTrainFraction = 0.7; //bagfrac|Percentage of training queries used in each bag
+	
 	bool filterZeroLambdas = false;
 	Float gainConfidenceLevel = 0;
 };

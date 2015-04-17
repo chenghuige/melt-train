@@ -263,13 +263,17 @@ namespace gezi {
 		LeafSplitCandidates _largerChildSplitCandidates; //右子树信息
 		Float _softmaxTemperature;
 		Float _splitFraction;
+		bool _preSplitCheck = false;
 	public:
-		LeastSquaresRegressionTreeLearner(Dataset& trainData, int numLeaves, int minDocsInLeaf, Float entropyCoefficient, Float featureFirstUsePenalty, Float featureReusePenalty, Float softmaxTemperature, int histogramPoolSize, int randomSeed, Float splitFraction, bool filterZeros)
-			: LeastSquaresRegressionTreeLearner(trainData, numLeaves, minDocsInLeaf, entropyCoefficient, featureFirstUsePenalty, featureReusePenalty, softmaxTemperature, histogramPoolSize, randomSeed, splitFraction, filterZeros, false, 0.0, false, -1.0)
-		{
-		}
+		//LeastSquaresRegressionTreeLearner(Dataset& trainData, int numLeaves, int minDocsInLeaf, Float entropyCoefficient, Float featureFirstUsePenalty, Float featureReusePenalty, Float softmaxTemperature, int histogramPoolSize, int randomSeed, Float splitFraction, bool filterZeros)
+		//	: LeastSquaresRegressionTreeLearner(trainData, numLeaves, minDocsInLeaf, entropyCoefficient, featureFirstUsePenalty, featureReusePenalty, softmaxTemperature, histogramPoolSize, randomSeed, splitFraction, filterZeros, false, 0.0, false, -1.0)
+		//{
+		//}
 
-		LeastSquaresRegressionTreeLearner(Dataset& trainData, int numLeaves, int minDocsInLeaf, Float entropyCoefficient, Float featureFirstUsePenalty, Float featureReusePenalty, Float softmaxTemperature, int histogramPoolSize, int randomSeed, Float splitFraction, bool filterZeros, bool allowDummies, Float gainConfidenceLevel, bool areTargetsWeighted, Float bsrMaxTreeOutput)
+		LeastSquaresRegressionTreeLearner(Dataset& trainData, int numLeaves, int minDocsInLeaf, Float entropyCoefficient, 
+			Float featureFirstUsePenalty, Float featureReusePenalty, Float softmaxTemperature, int histogramPoolSize, 
+			int randomSeed, Float splitFraction, bool preSplitCheck, bool filterZeros, bool allowDummies,
+			Float gainConfidenceLevel, bool areTargetsWeighted, Float bsrMaxTreeOutput)
 			: TreeLearner(trainData, numLeaves), _rand(randomSeed)
 		{
 			_minDocsInLeaf = minDocsInLeaf;
@@ -301,6 +305,7 @@ namespace gezi {
 			MakeSplitCandidateArrays(TrainData.NumFeatures, TrainData.NumDocs);
 			_featureUseCount.resize(TrainData.NumFeatures);
 			_splitFraction = splitFraction;
+			_preSplitCheck = preSplitCheck;
 			_filterZeros = filterZeros;
 			_bsrMaxTreeOutput = bsrMaxTreeOutput;
 			_gainConfidenceInSquaredStandardDeviations = ProbabilityFunctions::Probit(1.0 - ((1.0 - gainConfidenceLevel) * 0.5));
@@ -358,6 +363,18 @@ namespace gezi {
 		bool HasWeights()
 		{
 			return _areTargetsWeighted;
+		}
+
+		virtual bool IsFeatureOk(int index) override
+		{
+			if (!_preSplitCheck)
+			{
+				return (*_activeFeatures)[index];
+			}
+			else
+			{ //前期检查过滤特征是有问题的@FIXME
+				return (*_activeFeatures)[index] && _rand.NextDouble() > _splitFraction;
+			}
 		}
 
 		//@TODO 最终不一致的微小结果很可能来自这里 弄清楚是否需要clear 是否用指针可以避免问题？
@@ -441,18 +458,33 @@ namespace gezi {
 			return (sumTargets / (2.0 * sumWeights));
 		}
 
+		//@TODO TLC 对于splitFraction 采用的是后处理 这样不会加快速度 是否可以类似featureFraction采用前处理过滤？ 但是每次分裂筛选的问题是比如
+		//现有剪枝 上一层无分裂收益 不再考虑 那么如果直接前过滤处理 后续还可能考虑逐个特征
 		//@TODO FindBestFeatureFromGains(IEnumerable<Float> gains)
 		int GetBestFeature(vector<SplitInfo>& featureSplitInfo)
 		{
-			//AutoTimer timer("GetBestFeature");
-			return 	max_element(featureSplitInfo.begin(), featureSplitInfo.end(),
-				[](SplitInfo& l, SplitInfo& r) {return l.Gain < r.Gain; }) - featureSplitInfo.begin();
+			if (_splitFraction == 1 || _preSplitCheck) //@TODO float problem?
+			{
+				return 	max_element(featureSplitInfo.begin(), featureSplitInfo.end(),
+					[](const SplitInfo& l, const SplitInfo& r) {return l.Gain < r.Gain; }) - featureSplitInfo.begin();
+			}
+			else
+			{
+				return max_pos_rand(featureSplitInfo, _rand, _splitFraction, [](const SplitInfo& l, const SplitInfo& r) {return l.Gain < r.Gain; });
+			}
 		}
 
 		int GetBestFeature(vector<SplitInfo*>& featureSplitInfo)
 		{
-			return 	max_element(featureSplitInfo.begin(), featureSplitInfo.end(),
-				[](SplitInfo* l, SplitInfo* r) {return l->Gain < r->Gain; }) - featureSplitInfo.begin();
+			if (_splitFraction == 1 || _preSplitCheck)
+			{
+				return 	max_element(featureSplitInfo.begin(), featureSplitInfo.end(),
+					[](const SplitInfo* const l, const SplitInfo* const r) {return l->Gain < r->Gain; }) - featureSplitInfo.begin();
+			}
+			else
+			{
+				return max_pos_rand(featureSplitInfo, _rand, _splitFraction, [](const SplitInfo* const l, const SplitInfo* const r) {return l->Gain < r->Gain; });
+			}
 		}
 
 		void FindAndSetBestFeatureForLeaf(LeafSplitCandidates& leafSplitCandidates)
@@ -507,6 +539,7 @@ namespace gezi {
 			_parentHistogramArray = NULL;
 			_histogramArrayPool.Get(0, _smallerChildHistogramArray); //从pool中抽取一个histogram位置
 			_largerChildSplitCandidates.Initialize(); //larger clear也就是不处理 LeafIndex =-1
+
 #pragma omp parallel for
 			for (int featureIndex = 0; featureIndex < TrainData.NumFeatures; featureIndex++)
 			{
@@ -610,8 +643,10 @@ namespace gezi {
 #pragma omp parallel for
 					for (int featureIndex = 0; featureIndex < TrainData.NumFeatures; featureIndex++)
 					{
-						if (IsFeatureOk(featureIndex))
+						if (IsFeatureOk(featureIndex)) //@TODO 如果使用Random 多线程ok吗？
+						{
 							FindBestThresholdForFeature(featureIndex);
+						}
 					}
 				}
 				FindAndSetBestFeatureForLeaf(_smallerChildSplitCandidates);

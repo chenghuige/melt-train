@@ -54,7 +54,7 @@ namespace gezi {
 			Pval(NumLeaves);
 		}
 
-		void Print(vector<Feature>& features)
+		void Print(const vector<Feature>& features)
 		{
 			Pvector(_splitFeature);
 			Pvector(_splitGain);
@@ -80,7 +80,7 @@ namespace gezi {
 			Reset(NumLeaves);
 		}
 
-		void ToOnline(vector<Feature>& features)
+		void ToOnline(const vector<Feature>& features)
 		{
 			for (size_t i = 0; i < _threshold.size(); i++)
 			{
@@ -90,7 +90,7 @@ namespace gezi {
 		}
 
 		//scoreÒÑ¾­resizeºÃ
-		void AddOutputsToScores(Dataset& dataset, Fvec& scores)
+		void AddOutputsToScores(const Dataset& dataset, Fvec& scores)
 		{
 #pragma omp parallel for
 			for (int d = 0; d < dataset.NumDocs; d++)
@@ -99,11 +99,21 @@ namespace gezi {
 			}
 		}
 
-		void AddOutputsToScores(Dataset& dataset, Fvec& scores, Float multiplier)
+		void AddOutputsToScores(const Dataset& dataset, Fvec& scores, Float multiplier)
 		{
+#pragma omp parallel for
 			for (int d = 0; d < dataset.NumDocs; d++)
 			{
 				scores[d] += multiplier * GetOutput(dataset.GetFeatureBinRow(d));
+			}
+		}
+
+		void AddOutputsToScores(const Dataset& dataset, Fvec& scores, const ivec& docIndices)
+		{
+#pragma omp parallel for
+			for (size_t d = 0; d < docIndices.size(); d++)
+			{
+				scores[docIndices[d]] += GetOutput(dataset.GetFeatureBinRow(docIndices[d]));
 			}
 		}
 

@@ -27,6 +27,7 @@
 #include "QueryWeightsGradientWrapper.h"
 #include "QueryWeightsBestResressionStepGradientWrapper.h"
 #include "LeastSquaresRegressionTreeLearner.h"
+#include "BaggingProvider.h"
 #include "Predictors/FastRankPredictor.h"
 #include "Prediction/Calibrate/CalibratorFactory.h"
 namespace gezi {
@@ -61,6 +62,7 @@ namespace gezi {
 			fmt::print_line("DEFINE_bool(bsr, false, \"bestStepRankingRegressionTrees: \");");
 			fmt::print_line("DEFINE_double(sp, 0.1, \"Sparsity level needed to use sparse feature representation, if 0.3 means be sparsify only if real data less then 30%, 0-1 the smaller more dense and faster but use more memeory\");");
 			fmt::print_line("DEFINE_double(ff, 1, \"The fraction of features (chosen randomly) to use on each iteration\");");
+			fmt::print_line("DEFINE_double(sf, 1, \"The fraction of features(chosen randomly) to use on each split\");");
 			fmt::print_line("DEFINE_int32(mb, 255, \"Maximum number of distinct values (bins) per feature\");");
 
 			fmt::print_line("int numTrees = 100;");
@@ -86,8 +88,8 @@ namespace gezi {
 			fmt::print_line("Float featureFirstUsePenalty = 0;");
 			fmt::print_line("Float featureReusePenalty = 0;");
 			fmt::print_line("Float softmaxTemperature = 0;");
-			fmt::print_line("Float featureFraction = 1;");
-			fmt::print_line("Float splitFraction = 1;");
+			fmt::print_line("Float featureFraction = 1; //");
+			fmt::print_line("Float splitFraction = 1; //");
 			fmt::print_line("bool filterZeroLambdas = false;");
 			fmt::print_line("Float gainConfidenceLevel = 0;");
 		}
@@ -169,14 +171,26 @@ namespace gezi {
 				revertRandomStart = true;
 			}
 			ProgressBar pb(numTotalTrees, "Ensemble trainning");
+		
+			BaggingProvider baggingProvider(TrainSet, _args->randSeed, _args->numLeaves, _args->baggingTrainFraction);
 			while (_ensemble.NumTrees() < numTotalTrees)
 			{
+				DocumentPartitioning currentOutOfBagPartition;
+				if (_args->baggingSize != 0 && _ensemble.NumTrees() % _args->baggingSize == 0)
+				{
+					baggingProvider.GenPartion(_optimizationAlgorithm->TreeLearner->Partitioning, currentOutOfBagPartition);
+				}
 				++pb;
 				PVAL(_ensemble.NumTrees());
 				BitArray activeFeatures;
 				BitArray* pactiveFeatures = GetActiveFeatures(activeFeatures);
-
 				_optimizationAlgorithm->TrainingIteration(*pactiveFeatures);
+				if (_args->baggingSize > 0)
+				{
+					_ensemble.LastTree().AddOutputsToScores(_optimizationAlgorithm->TrainingScores->Dataset, 
+						_optimizationAlgorithm->TrainingScores->Scores, 
+						currentOutOfBagPartition.Documents());
+				}
 				CustomizedTrainingIteration();
 				if (revertRandomStart)
 				{
@@ -194,8 +208,9 @@ namespace gezi {
 
 		void FeatureGainPrint(int level = 1)
 		{
-			VLOG(level) << "Per feature gain:\n" <<
+			VLOG(level) << "Per_feature_gain:\n" <<
 				_ensemble.ToGainSummary(TrainSet.Features);
+			VLOG(level) << "Per_feature_gain_end";
 		}
 
 
@@ -231,7 +246,11 @@ namespace gezi {
 		virtual TreeLearnerPtr ConstructTreeLearner()
 		{
 			PVAL(AreTargetsWeighted());
-			return make_shared<LeastSquaresRegressionTreeLearner>(TrainSet, _args->numLeaves, _args->minInstancesInLeaf, _args->entropyCoefficient, _args->featureFirstUsePenalty, _args->featureReusePenalty, _args->softmaxTemperature, _args->histogramPoolSize, _args->randSeed, _args->splitFraction, _args->filterZeroLambdas, _args->allowDummyRootSplits, _args->gainConfidenceLevel, AreTargetsWeighted(), BsrMaxTreeOutput());
+			return make_shared<LeastSquaresRegressionTreeLearner>(TrainSet, _args->numLeaves, _args->minInstancesInLeaf, _args->entropyCoefficient, 
+				_args->featureFirstUsePenalty, _args->featureReusePenalty, _args->softmaxTemperature, _args->histogramPoolSize,
+				_args->randSeed, _args->splitFraction, _args->preSplitCheck,
+				_args->filterZeroLambdas, _args->allowDummyRootSplits, _args->gainConfidenceLevel,
+				AreTargetsWeighted(), BsrMaxTreeOutput());
 		}
 
 		bool AreTrainWeightsUsed()

@@ -26,11 +26,15 @@ DEFINE_int32(ntree, 100, "numTrees: Number of trees/iteraiton number");
 DECLARE_double(lr);
 DEFINE_int32(nl, 20, "numLeaves: Number of leaves maximam allowed in each regression tree");
 DEFINE_int32(mil, 10, "minInstancesInLeaf: Minimal instances in leaves allowd");
-DEFINE_bool(bsr, false, "bestStepRankingRegressionTrees: ");
+DEFINE_bool(bsr, false, "bestStepRankingRegressionTrees: @TODO");
 DEFINE_double(sp, 0.1, "Sparsity level needed to use sparse feature representation, if 0.3 means be sparsify only if real data less then 30%, 0-1 the smaller more dense and faster but use more memeory");
 DEFINE_double(ff, 1, "The fraction of features (chosen randomly) to use on each iteration");
+DEFINE_double(sf, 1, "The fraction of features (chosen randomly) to use on each split");
 DEFINE_int32(mb, 255, "Maximum number of distinct values (bins) per feature"); 
 DEFINE_int32(ps, -1, "The number of histograms in the pool (between 2 and numLeaves)");
+DEFINE_bool(psc, false, "Wether first randomly select a subset of features and then pick the feature that maximizes gain or post do this: @FIXME");
+DEFINE_int32(bag, 0, "Number of trees in each bag (0 for disabling bagging");
+DEFINE_double(bagfrac, 0.7, "Percentage of training queries used in each bag");
 
 namespace gezi {
 
@@ -62,6 +66,16 @@ namespace gezi {
 		_args->sparsifyRatio = FLAGS_sp;
 
 		_args->featureFraction = FLAGS_ff;
+		_args->splitFraction = FLAGS_sf;
+		_args->preSplitCheck = FLAGS_psc;
+
+		_args->baggingSize = FLAGS_bag;
+		_args->baggingTrainFraction = FLAGS_bagfrac;
+
+		if (_args->baggingSize != 0)
+		{
+			CHECK_EQ(_args->numTrees % _args->baggingSize, 0) << "numTrees must be n * baggingSize";
+		}
 
 		_args->maxBins = FLAGS_mb;
 

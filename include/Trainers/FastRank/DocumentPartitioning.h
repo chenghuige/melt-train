@@ -22,6 +22,7 @@ namespace gezi {
 	class DocumentPartitioning
 	{
 	public:
+		//暂时没有用到
 		DocumentPartitioning(RegressionTree& tree, Dataset& dataset)
 			: DocumentPartitioning(dataset.NumDocs, tree.NumLeaves)
 		{
@@ -53,6 +54,10 @@ namespace gezi {
 			}
 		}
 
+		DocumentPartitioning()
+		{
+		}
+
 		DocumentPartitioning(int numDocuments, int maxLeaves)
 		{
 			_leafBegin.resize(maxLeaves, 0);
@@ -60,7 +65,7 @@ namespace gezi {
 			_documents.resize(numDocuments, 0);
 		}
 
-		DocumentPartitioning(ivec& documents, int numDocuments, int maxLeaves)
+		DocumentPartitioning(const ivec& documents, int numDocuments, int maxLeaves)
 			: DocumentPartitioning(numDocuments, maxLeaves)
 		{
 			//@TODO will below ok?
@@ -209,7 +214,16 @@ namespace gezi {
 		{
 			return _leafCount[leaf];
 		}
+		
+		ivec& Documents()
+		{
+			return _documents;
+		}
 
+		const ivec& Documents() const
+		{
+			return _documents;
+		}
 	protected:
 	private:
 		ivec _documents; //doc id按照叶子顺序0-NumLeaves从新排列 leaf内部的doc id可否不排序 应该可以?@TODO

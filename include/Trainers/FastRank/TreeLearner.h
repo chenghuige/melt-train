@@ -40,7 +40,7 @@ namespace gezi {
 			return "TargetWeightsDataset";
 		}
 
-		bool IsFeatureOk(int index)
+		virtual bool IsFeatureOk(int index)
 		{
 			//return TrainData.Features[index].NumBins() > 1;
 			return (*_activeFeatures)[index];
