@@ -42,13 +42,13 @@ namespace gezi {
 		{
 			//-------------- 行转换为列
 			int numFeatures = instances.NumFeatures();
-			vector<short> ratings;
+			vector<Float> ratings;
 			Fvec weights;
 			bool useWeight = false;
 			vector<Vector> valuesVec(numFeatures, Vector(instances.size()));
 			{
 				//ProgressBar pb(instances.size(), "Converting from row format to column format");
-				AutoTimer timer("Converting from row format to column format", 0);
+				AutoTimer timer("Converting from row format to column format", 2);
 				int numInstancesProcessed = 0;
 				for (InstancePtr instance : instances)
 				{
@@ -91,7 +91,7 @@ namespace gezi {
 				}
 				else
 				{
-					AutoTimer timer("Binning for bounds and medians", 0);
+					AutoTimer timer("Binning for bounds and medians", 2);
 					BinFinder binFinder;
 #pragma omp parallel for firstprivate(binFinder)
 					for (int i = 0; i < numFeatures; i++)
@@ -109,7 +109,7 @@ namespace gezi {
 			//------------- 计算各个instance对应各个feature分到的桶号 bin 
 			{
 				//ProgressBar pb(numFeatures, "Get bin number for values");
-				AutoTimer timer("Get bin number for values", 0);
+				AutoTimer timer("Get bin number for values", 2);
 				//#pragma omp parallel for firstprivate(pb) 
 				for (int i = 0; i < numFeatures; i++)
 				{

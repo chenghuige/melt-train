@@ -66,6 +66,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="include\Trainers\EnsembleTrainer.h" />
+    <ClInclude Include="include\Trainers\FastRank\BaggingProvider.h" />
     <ClInclude Include="include\Trainers\FastRank\BestStepRegressionGradientWrapper.h" />
     <ClInclude Include="include\Trainers\FastRank\BinaryClassificationFastRank.h" />
     <ClInclude Include="include\Trainers\FastRank\BinaryClassificationFastRankArguments.h" />
@@ -89,6 +90,10 @@
     <ClInclude Include="include\Trainers\FastRank\ProbabilityFunctions.h" />
     <ClInclude Include="include\Trainers\FastRank\QueryWeightsBestResressionStepGradientWrapper.h" />
     <ClInclude Include="include\Trainers\FastRank\QueryWeightsGradientWrapper.h" />
+    <ClInclude Include="include\Trainers\FastRank\RankingFastRankArguments.h" />
+    <ClInclude Include="include\Trainers\FastRank\RegressionFastRank.h" />
+    <ClInclude Include="include\Trainers\FastRank\RegressionFastRankArguments.h" />
+    <ClInclude Include="include\Trainers\FastRank\RegressionObjectiveFunction.h" />
     <ClInclude Include="include\Trainers\FastRank\RegressionTree.h" />
     <ClInclude Include="include\Trainers\FastRank\ScoreTracker.h" />
     <ClInclude Include="include\Trainers\FastRank\TreeLearner.h" />

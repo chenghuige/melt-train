@@ -60,7 +60,7 @@ public:
 			>> to_vector();*/
 
 		TrainSetLabels = from(TrainSet.Ratings)
-			>> select([this](short a) { return (bool)(a >= ((BinaryClassificationFastRankArguments*)(_args.get()))->smallestPositive); })
+			>> select([this](Float a) { return (bool)(a >= ((BinaryClassificationFastRankArguments*)(_args.get()))->smallestPositive); })
 			>> to_vector();
 	}
 

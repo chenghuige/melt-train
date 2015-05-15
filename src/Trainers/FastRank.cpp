@@ -33,8 +33,10 @@ DEFINE_double(sf, 1, "The fraction of features (chosen randomly) to use on each 
 DEFINE_int32(mb, 255, "Maximum number of distinct values (bins) per feature"); 
 DEFINE_int32(ps, -1, "The number of histograms in the pool (between 2 and numLeaves)");
 DEFINE_bool(psc, false, "Wether first randomly select a subset of features and then pick the feature that maximizes gain or post do this: @FIXME");
-DEFINE_int32(bag, 0, "Number of trees in each bag (0 for disabling bagging");
+DEFINE_int32(bag, 0, "Number of trees in each bag (0 for disabling bagging)");
 DEFINE_double(bagfrac, 0.7, "Percentage of training queries used in each bag");
+//bagging 应该还是有问题。。。 关键是TrainSet的问题？ NumDocs 等等 scores等等
+DEFINE_int32(nbag, 1, "NumBags|if nbag > 1 then we actually has nbag * numtress = totalTrees  @FIXME");
 
 namespace gezi {
 
@@ -71,6 +73,7 @@ namespace gezi {
 
 		_args->baggingSize = FLAGS_bag;
 		_args->baggingTrainFraction = FLAGS_bagfrac;
+		_args->numBags = FLAGS_nbag;
 
 		if (_args->baggingSize != 0)
 		{

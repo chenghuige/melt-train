@@ -43,7 +43,7 @@ namespace gezi {
 		Dataset(const Dataset&) = default;
 		Dataset& operator = (const Dataset&) = default;
 
-		Dataset(vector<Feature>& features, vector<short>& ratings, Fvec& weights)
+		Dataset(vector<Feature>& features, vector<Float>& ratings, Fvec& weights)
 			:Features(features), Ratings(ratings), SampleWeights(weights)
 		{
 			for (auto feature : Features)
@@ -75,7 +75,8 @@ namespace gezi {
 		int NumFeatures = 0;
 		vector<Fvec*> FeatureBinMedians;
 		vector<Feature> Features;
-		vector<short> Ratings; //二分类 0,1 排序 ndcg 0,1,2,3,4 ?
+		//vector<short> Ratings; //二分类 0,1 排序 ndcg 0,1,2,3,4 ?
+		Fvec Ratings;
 		Fvec SampleWeights;
 	protected:
 	private:

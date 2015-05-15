@@ -7,15 +7,18 @@
 #include "Trainers/SofiaTrainer.h"
 #include "Trainers/LibLinearTrainer.h"
 #include "Trainers/LibSVMTrainer.h"
+#include "Trainers/EnsembleTrainer.h"
+#include "Trainers/FastRank/RegressionFastRank.h"
 namespace gezi {
 
 	enum class TrainerType
 	{
 		Unknown,
+		//----------------------Binary Classification
 		Random,
 		LinearSVM,
 		BaseLineLinearSVM,
-		BinaryClassificationFastRank,
+		FastRankBinaryClassification,
 		LogisticRegression,
 		RandomForest,
 		DecisionTree,
@@ -25,34 +28,45 @@ namespace gezi {
 		Sofia,
 		LibLinear,
 		LibSVM,
+		Ensemble,
+		//----------------------Regression
+		FastRankRegression,
 	};
 
 	map<string, TrainerType> _trainerTypes
 	{
+		//----------------------Binary Classification
 		{ "random", TrainerType::Random },
 		{ "baselinelinearsvm", TrainerType::BaseLineLinearSVM },
 		{ "baselinesvm", TrainerType::BaseLineLinearSVM },
 		{ "linearsvm", TrainerType::LinearSVM },
 		{ "svm", TrainerType::LinearSVM },
-		{ "fastrank", TrainerType::BinaryClassificationFastRank },
-		{ "gbdt", TrainerType::BinaryClassificationFastRank },
-		{ "fr", TrainerType::BinaryClassificationFastRank },
+		{ "fastrank", TrainerType::FastRankBinaryClassification },
+		{ "gbdt", TrainerType::FastRankBinaryClassification },
+		{ "fr", TrainerType::FastRankBinaryClassification },
 		{ "vw", TrainerType::VW },
 		{ "sofia", TrainerType::Sofia },
 		{ "liblinear", TrainerType::LibLinear },
 		{ "libsvm", TrainerType::LibSVM },
+		{ "ensemble", TrainerType::Ensemble },
+		//----------------------Regression
+		{ "fastrankregression", TrainerType::FastRankRegression },
+		{ "gbdtregression", TrainerType::FastRankRegression },
+		{ "frr", TrainerType::FastRankRegression },
+		{ "gbrt", TrainerType::FastRankRegression },
 	};
 
 	void TrainerFactory::PrintTrainersInfo()
 	{
-		VLOG(0) << "BinaryClassification Trainers";
+		VLOG(0) << "---BinaryClassification Trainers";
 		VLOG(0) << "[LinearSVM] -cl linearsvm or svm | ./melt -helpmatch LinearSVM.cpp";
 		VLOG(0) << "super fast, for classification with large number of features like text classification";
 		VLOG(0) << "[FastRank] -cl fastrank or fr or gbdt | ./melt -helpmatch FastRank.cpp";
 		VLOG(0) << "fast, best auc result for most classification problems with num features < 10^5";
 		VLOG(0) << "For per trainer parameters use, like LinearSVM just <./melt -helpmatch LinearSVM.cpp>, for other common parameters <./melt -helpmatch Melt>";
 		VLOG(0) << "The default trainer is LinearSVM, if use other trainers use -cl, eg. <./melt feature.txt -c train -cl gbdt> will train feature.txt using gbdt trainer";
-
+		VLOG(0) << "---Regression Trainers";
+		VLOG(0) << "[FastRank] -cl gbdtRegression or fastrankRegression or frr or gbrt| ./melt -helpmatch FastRank.cpp";
 		print_enum_map(_trainerTypes);
 	}
 
@@ -60,9 +74,12 @@ namespace gezi {
 	{
 		name = arg(name);
 		TrainerType trainerType = _trainerTypes[name];
-
+		//----------------------Binary Classification
 		switch (trainerType)
 		{
+		case  TrainerType::Unknown:
+			break;
+
 		case TrainerType::Random:
 			VLOG(0) << "Creating Random trainer, just for test auc will be around 0.5";
 			return make_shared<RandomTrainer>();
@@ -75,7 +92,7 @@ namespace gezi {
 			VLOG(0) << "Creating LinearSVM trainer";
 			return make_shared<LinearSVM>();
 			break;
-		case TrainerType::BinaryClassificationFastRank:
+		case TrainerType::FastRankBinaryClassification:
 			VLOG(0) << "Creating FastRank/GBDT trainer";
 			return make_shared<BinaryClassificationFastRank>();
 			break;
@@ -110,7 +127,10 @@ namespace gezi {
 			VLOG(0) << "Creating LibSVM trainer";
 			return make_shared<LibSVMTrainer>();
 			break;
-		case  TrainerType::Unknown:
+			//----------------------Regression
+		case  TrainerType::FastRankRegression:
+			VLOG(0) << "Creating FastRank/GBDT trainer for regression";
+			return make_shared<RegressionFastRank>();
 			break;
 		default:
 			break;

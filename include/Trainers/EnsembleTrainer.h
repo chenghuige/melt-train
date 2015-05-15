@@ -15,13 +15,16 @@
 #define TRAINERS__ENSEMBLE_TRAINER_H_
 
 #include "MLCore/Trainer.h"
-
+#include "Predictors/RandomPredictor.h"
 namespace gezi {
 
-	class EnsembleTrainer
+	class EnsembleTrainer : public Trainer
 	{
 	public:
-
+		virtual PredictorPtr CreatePredictor() override
+		{
+			return make_shared<RandomPredictor>();
+		}
 	protected:
 	private:
 

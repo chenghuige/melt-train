@@ -160,9 +160,16 @@ namespace gezi {
 			return pactiveFeatures;
 		}
 
-		void TrainCore()
+		void ReInitialize(int step)
 		{
-			int numTotalTrees = _args->numTrees;
+			_args->randSeed += step * 1024;
+			//_rand = make_shared<Random>(random_engine(_args->randSeed));
+			_optimizationAlgorithm = ConstructOptimizationAlgorithm();
+		}
+
+		void TrainCore(int step = 1)
+		{
+			int numTotalTrees = step * _args->numTrees;
 			bool revertRandomStart = false;
 			if (_args->randomStart && (_ensemble.NumTrees() < numTotalTrees))
 			{
@@ -171,12 +178,11 @@ namespace gezi {
 				revertRandomStart = true;
 			}
 			ProgressBar pb(numTotalTrees, "Ensemble trainning");
-		
 			BaggingProvider baggingProvider(TrainSet, _args->randSeed, _args->numLeaves, _args->baggingTrainFraction);
+			DocumentPartitioning currentOutOfBagPartition;
 			while (_ensemble.NumTrees() < numTotalTrees)
 			{
-				DocumentPartitioning currentOutOfBagPartition;
-				if (_args->baggingSize != 0 && _ensemble.NumTrees() % _args->baggingSize == 0)
+				if (_args->numBags == 1 && _args->baggingSize != 0 && _ensemble.NumTrees() % _args->baggingSize == 0)
 				{
 					baggingProvider.GenPartion(_optimizationAlgorithm->TreeLearner->Partitioning, currentOutOfBagPartition);
 				}
@@ -185,10 +191,10 @@ namespace gezi {
 				BitArray activeFeatures;
 				BitArray* pactiveFeatures = GetActiveFeatures(activeFeatures);
 				_optimizationAlgorithm->TrainingIteration(*pactiveFeatures);
-				if (_args->baggingSize > 0)
+				if (_args->numBags == 1 && _args->baggingSize > 0)
 				{
-					_ensemble.LastTree().AddOutputsToScores(_optimizationAlgorithm->TrainingScores->Dataset, 
-						_optimizationAlgorithm->TrainingScores->Scores, 
+					_ensemble.LastTree().AddOutputsToScores(_optimizationAlgorithm->TrainingScores->Dataset,
+						_optimizationAlgorithm->TrainingScores->Scores,
 						currentOutOfBagPartition.Documents());
 				}
 				CustomizedTrainingIteration();
@@ -204,6 +210,14 @@ namespace gezi {
 				}
 			}
 			_optimizationAlgorithm->FinalizeLearning(GetBestIteration());
+
+			if (_args->numBags > 1)
+			{
+				for (int t = 0; t < _ensemble.NumTrees(); t++)
+				{
+					_ensemble.Tree(t).ScaleOutputsBy(1.0 / ((double)_args->numBags));
+				}
+			}
 		}
 
 		void FeatureGainPrint(int level = 1)
@@ -220,12 +234,41 @@ namespace gezi {
 			Finalize(instances);
 		}
 
+		Instances GenPartionInstances(Instances& instances, Random& rand)
+		{
+			Instances partitionInstaces;
+			partitionInstaces.CopySchema(instances.schema);
+			for (auto& instance : instances)
+			{
+				if (rand.NextDouble() < _args->baggingTrainFraction)
+				{
+					partitionInstaces.push_back(instance);
+				}
+			}
+			return partitionInstaces;
+		}
+
 		virtual void InnerTrain(Instances& instances) override
 		{
 			ParseArgs();
-			ConvertData(instances);
-			Initialize();
-			TrainCore();
+			if (_args->numBags == 1)
+			{
+				ConvertData(instances);
+				Initialize();
+				TrainCore();
+			}
+			else
+			{
+				Random rand(_args->randSeed);
+				for (int i = 1; i <= _args->numBags; i++)
+				{
+					Instances partionInstances = GenPartionInstances(instances, rand);
+					Pval2_2(partionInstances.size(), (partionInstances.size() / (double)instances.size()));
+					ConvertData(partionInstances);
+					Initialize(i);
+					TrainCore(i);
+				}
+			}
 			FeatureGainPrint();
 		}
 
@@ -246,7 +289,7 @@ namespace gezi {
 		virtual TreeLearnerPtr ConstructTreeLearner()
 		{
 			PVAL(AreTargetsWeighted());
-			return make_shared<LeastSquaresRegressionTreeLearner>(TrainSet, _args->numLeaves, _args->minInstancesInLeaf, _args->entropyCoefficient, 
+			return make_shared<LeastSquaresRegressionTreeLearner>(TrainSet, _args->numLeaves, _args->minInstancesInLeaf, _args->entropyCoefficient,
 				_args->featureFirstUsePenalty, _args->featureReusePenalty, _args->softmaxTemperature, _args->histogramPoolSize,
 				_args->randSeed, _args->splitFraction, _args->preSplitCheck,
 				_args->filterZeroLambdas, _args->allowDummyRootSplits, _args->gainConfidenceLevel,
@@ -309,6 +352,31 @@ namespace gezi {
 		virtual void Initialize()
 		{
 			_rand = make_shared<Random>(random_engine(_args->randSeed));
+
+			_activeFeatures.resize(TrainSet.Features.size(), true);
+			for (size_t i = 0; i < TrainSet.Features.size(); i++)
+			{
+				if (TrainSet.Features[i].NumBins() <= 1)
+				{
+					_activeFeatures[i] = false;
+				}
+			}
+
+			PrepareLabels();
+			_optimizationAlgorithm = ConstructOptimizationAlgorithm();
+			InitializeTests();
+		}
+
+		void Initialize(int step)
+		{
+			if (step == 1)
+			{
+				_rand = make_shared<Random>(random_engine(_args->randSeed));
+			}
+			else
+			{
+				_args->randSeed += step * 1024;
+			}
 
 			_activeFeatures.resize(TrainSet.Features.size(), true);
 			for (size_t i = 0; i < TrainSet.Features.size(); i++)

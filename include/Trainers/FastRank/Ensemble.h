@@ -94,6 +94,11 @@ namespace gezi {
 			return _trees.back();
 		}
 
+		RegressionTree& Tree(int idx)
+		{
+			return _trees[idx];
+		}
+
 		RegressionTree& LastTree()
 		{
 			return _trees.back();
@@ -161,8 +166,12 @@ namespace gezi {
 						<< featureList[item.first].Name
 						<< setiosflags(ios::left) << setfill(' ') << setw(40)
 						<< " " << std::pow(item.second, power) / normalizingFactor << endl;*/
-				ss << setiosflags(ios::left) << setfill(' ') << setw(40)
+			/*	ss << setiosflags(ios::left) << setfill(' ') << setw(40)
 					<< "f_" + STR(id++) + ":" + STR(item.first) + ":" + featureList[item.first].Name
+					<< " " << std::pow(item.second, power) / normalizingFactor << endl;*/
+
+				ss << setiosflags(ios::left) << setfill(' ') << setw(40)
+					<< STR(id++) + ":" + featureList[item.first].Name
 					<< " " << std::pow(item.second, power) / normalizingFactor << endl;
 			}
 			return ss.str();

@@ -28,7 +28,7 @@ namespace gezi {
 		double _trainFraction;
 
 		BaggingProvider(const Dataset& completeTrainerSet, int randomSeed, int maxLeaves, double trainFraction)
-			:_completeTrainerSet(completeTrainerSet), _rand(randomSeed), _maxLeaves(maxLeaves), _trainFraction(trainFraction)
+			:_completeTrainerSet(completeTrainerSet), _rand(random_engine(randomSeed)), _maxLeaves(maxLeaves), _trainFraction(trainFraction)
 		{
 
 		}
@@ -55,6 +55,23 @@ namespace gezi {
 			currentOutOfBagPartition = DocumentPartitioning(outOfBagDocs, outOfBagSize, _maxLeaves);
 			currentTrainPartition.Initialize();
 			currentOutOfBagPartition.Initialize();
+		}
+
+		DocumentPartitioning GenPartion()
+		{
+			DocumentPartitioning currentTrainPartition;
+			ivec trainDocs(_completeTrainerSet.NumDocs, -1);
+			int trainSize = 0;
+			for (int i = 0; i < _completeTrainerSet.NumDocs; i++)
+			{
+				if (_rand.NextDouble() < _trainFraction)
+				{
+					trainDocs[trainSize++] = i;
+				}
+			}
+			currentTrainPartition = DocumentPartitioning(trainDocs, trainSize, _maxLeaves);
+			currentTrainPartition.Initialize();
+			return currentTrainPartition;
 		}
 	protected:
 	private:

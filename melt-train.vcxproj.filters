@@ -167,6 +167,24 @@
     <ClInclude Include="include\Trainers\ThirdTrainer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\Trainers\EnsembleTrainer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Trainers\FastRank\BaggingProvider.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Trainers\FastRank\RankingFastRankArguments.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Trainers\FastRank\RegressionFastRank.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Trainers\FastRank\RegressionFastRankArguments.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Trainers\FastRank\RegressionObjectiveFunction.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="test\data\test.20140115-0304\feature\feature.def">

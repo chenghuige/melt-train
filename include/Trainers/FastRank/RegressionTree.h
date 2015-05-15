@@ -117,6 +117,14 @@ namespace gezi {
 			}
 		}
 
+		void ScaleOutputsBy(Float scalar)
+		{
+			for (auto& val : _leafValue)
+			{
+				val *= scalar;
+			}
+		}
+
 		Float GetOutput(const FeatureBin& featureBin)
 		{
 			if (_lteChild[0] == 0)
