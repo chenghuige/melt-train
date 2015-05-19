@@ -24,7 +24,7 @@ namespace gezi {
 	class GradientDescent : public OptimizationAlgorithm
 	{
 	public:
-		IGradientAdjusterPtr _gradientWrapper; //@TODO
+		IGradientAdjusterPtr _gradientWrapper = nullptr; //@TODO
 		Fvec _adjustedGradient; //AdjustTargetsAndSetWeights 如果改变了结果 那么返回这个值
 
 		GradientDescent(gezi::Ensemble& ensemble, Dataset& trainData,
@@ -36,6 +36,18 @@ namespace gezi {
 		virtual RegressionTree& TrainingIteration(BitArray& activeFeatures) override
 		{
 			RegressionTree tree = TreeLearner->FitTargets(activeFeatures, AdjustTargetsAndSetWeights());
+			//if (base.AdjustTreeOutputsOverride == null)
+			//{
+			//	if (!(base.ObjectiveFunction is IStepSearch))
+			//	{
+			//		throw new Exception("No AdjustTreeOutputs defined. Objective function should define IStepSearch or AdjustTreeOutputsOverride should be set");
+			//	}
+			//	(base.ObjectiveFunction as IStepSearch).AdjustTreeOutputs(tree, base.TreeLearner.Partitioning, base.TrainingScores);
+			//}
+			//else
+			//{
+			//	base.AdjustTreeOutputsOverride.AdjustTreeOutputs(tree, base.TreeLearner.Partitioning, base.TrainingScores);
+			//}
 			if (AdjustTreeOutputsOverride == nullptr)
 			{ //如果父类ObjectiveFunction里面没有虚函数 不能使用dynamic_pointer_cast... @TODO
 				(dynamic_pointer_cast<IStepSearch>(ObjectiveFunction))->AdjustTreeOutputs(tree, TreeLearner->Partitioning, *TrainingScores);
@@ -64,9 +76,8 @@ namespace gezi {
 			{
 				return GetGradient();
 			}
-			Fvec* targetWeights = NULL;
-			Fvec& targets = _gradientWrapper->AdjustTargetAndSetWeights(GetGradient(), *ObjectiveFunction, targetWeights);
-			TreeLearner->TargetWeights = targetWeights;
+
+			Fvec& targets = _gradientWrapper->AdjustTargetAndSetWeights(GetGradient(), *ObjectiveFunction, TreeLearner->TargetWeights);
 			return targets;
 		}
 

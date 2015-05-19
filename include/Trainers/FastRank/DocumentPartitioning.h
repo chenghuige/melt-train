@@ -168,7 +168,7 @@ namespace gezi {
 		{
 			if (sampleWeights.empty())
 			{
-				return Mean(weights, leaf, filterZeros);
+				return Mean(weights, leaf, filterZeros);  //@?
 			}
 			Float mean = 0.0;
 			int end = _leafBegin[leaf] + _leafCount[leaf];

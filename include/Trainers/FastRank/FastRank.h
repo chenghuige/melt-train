@@ -325,6 +325,8 @@ namespace gezi {
 			return -1.0;
 		}
 
+		//@why bestStepRankingRegressionTrees 具体什么意思 很难理解 AdjustOutput的时候不再使用 _weight平滑 但是LeastSquareRegression中使用了weight
+		//default的策略恰恰相反
 		virtual IGradientAdjusterPtr MakeGradientWrapper()
 		{
 			if (AreSamplesWeighted())
@@ -333,9 +335,22 @@ namespace gezi {
 				{
 					return make_shared<QueryWeightsBestStepRegressionGradientWrapper>();
 				}
-				return make_shared<QueryWeightsGradientWrapper>();
+				else
+				{
+					return make_shared<QueryWeightsGradientWrapper>();
+				}
 			}
-			return make_shared<TrivialGradientWrapper>();
+			else
+			{
+				if (_args->bestStepRankingRegressionTrees)
+				{
+					return make_shared<BestStepRegressionGradientWrapper>();
+				}
+				else
+				{
+					return make_shared<TrivialGradientWrapper>();
+				}
+			}
 		}
 
 		virtual int GetBestIteration()

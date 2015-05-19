@@ -401,6 +401,10 @@ namespace gezi {
 
 			_bestSplitInfoPerLeaf[0].LTEOutput = rootTarget;
 			_bestSplitInfoPerLeaf[0].GTOutput = rootTarget;
+			//----------没有下面的 会使得所有叶子分到同一个节点 @?
+			_bestSplitInfoPerLeaf[0].Feature = 0;   
+			_bestSplitInfoPerLeaf[0].Threshold = 0;
+			_bestSplitInfoPerLeaf[0].Gain = 0;
 
 			/*	_bestSplitInfoPerLeafCopy[NumLeaves].LTEOutput = rootTarget;
 			_bestSplitInfoPerLeafCopy[NumLeaves].GTOutput = rootTarget;
@@ -765,7 +769,8 @@ namespace gezi {
 			leafSplitCandidates.FeatureSplitInfo[feature].Gain = ((bestShiftedGain - gainShift) * trust) - usePenalty;
 			Float erfcArg = std::sqrt(((bestShiftedGain - gainShift) * (totalCount - 1)) / ((2.0 * leafSplitCandidates.VarianceTargets()) * totalCount));
 			leafSplitCandidates.FeatureSplitInfo[feature].GainPValue = ProbabilityFunctions::Erfc(erfcArg);
-			//PVAL5(bestShiftedGain, gainShift, leafSplitCandidates.FeatureSplitInfo[feature].Gain, trust, usePenalty);
+			PVAL2(leafSplitCandidates.FeatureSplitInfo[feature].LTEOutput, leafSplitCandidates.FeatureSplitInfo[feature].GTOutput);
+			PVAL5(bestShiftedGain, gainShift, leafSplitCandidates.FeatureSplitInfo[feature].Gain, trust, usePenalty);
 		}
 
 		void SetRootModel(RegressionTree& tree, Fvec& targets)

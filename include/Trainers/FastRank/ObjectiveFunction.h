@@ -34,7 +34,7 @@ namespace gezi {
 		Float _maxTreeOutput = std::numeric_limits<Float>::max();
 		static const int _queryThreadChunkSize = 100;
 		Random _rnd;
-		Fvec _weights;
+		Fvec _weights; //@? 理解这个很关键
 
 	public:
 		ObjectiveFunction(gezi::Dataset& dataset, Float learningRate, Float maxTreeOutput, int gradSamplingRate, bool useBestStepRankingRegressionTree, int randomNumberGeneratorSeed)

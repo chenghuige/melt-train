@@ -58,7 +58,7 @@ namespace gezi {
 				Float response = ((2.0 * label) * sigmoidParam) / (1.0 + std::exp(((2.0 * label) * sigmoidParam) * scores[query]));
 				Float absResponse = std::abs(response);
 				_gradient[query] = response * recip;
-				_weights[query] = (absResponse * ((2.0 * sigmoidParam) - absResponse)) * recip;
+				_weights[query] = (absResponse * ((2.0 * sigmoidParam) - absResponse)) * recip; //@?
 			};
 		}
 
@@ -73,7 +73,7 @@ namespace gezi {
 					output = _learningRate * tree.GetOutput(l);
 				}
 				else
-				{
+				{//@?    
 					output = (_learningRate * (tree.GetOutput(l) + 1.4E-45)) / (partitioning.Mean(_weights, Dataset.SampleWeights, l, false) + 1.4E-45);
 				}
 				if (output > _maxTreeOutput)
