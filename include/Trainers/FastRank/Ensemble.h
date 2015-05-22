@@ -35,6 +35,7 @@ namespace gezi {
 			}
 			return trees;
 		}
+
 		void AddTree(RegressionTree& tree) //@TODO RegressionTree&& ? python wrapper ok?
 		{
 			_trees.emplace_back(tree);

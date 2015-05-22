@@ -30,10 +30,10 @@ namespace gezi {
 			RegressionFastRankArguments& args)
 			: ObjectiveFunction(trainSet, args.learningRate, args.maxTreeOutput, args.derivativesSampleRate, args.bestStepRankingRegressionTrees, args.randSeed), Labels(trainSetLabels)
 		{
-			GetGradientInOneQuery = [this](int query, const Fvec& scores)
-			{
-				_gradient[query] = Labels[query] - scores[query];
-			};
+					GetGradientInOneQuery = [this](int query, const Fvec& scores)
+					{
+					_gradient[query] = Labels[query] - scores[query];
+					};
 		}
 
 		virtual void AdjustTreeOutputs(RegressionTree& tree, DocumentPartitioning& partitioning, ScoreTracker& trainingScores) override
@@ -56,7 +56,12 @@ namespace gezi {
 			}
 		}
 
+
 	protected:
+		//virtual void GetGradientInOneQuery(int query, const Fvec& scores) override
+		//{
+		//	_gradient[query] = Labels[query] - scores[query];
+		//}
 	};
 
 }  //----end of namespace gezi

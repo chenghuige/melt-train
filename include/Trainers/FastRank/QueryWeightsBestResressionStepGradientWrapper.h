@@ -20,7 +20,7 @@ namespace gezi {
 	class QueryWeightsBestStepRegressionGradientWrapper : public IGradientAdjuster
 	{
 	public:
-		virtual Fvec& AdjustTargetAndSetWeights(Fvec& gradient, ObjectiveFunction& objFunction, Fvec*& targetWeights)
+		virtual Fvec& AdjustTargetAndSetWeights(Fvec& gradient, const ObjectiveFunction& objFunction, Fvec*& targetWeights) override
 		{
 			Fvec& sampleWeights = objFunction.Dataset.SampleWeights;
 			//@TODO 检查正确性 或者 干脆 在 这个类加一个变量 Fvec weights呢？

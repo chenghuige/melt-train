@@ -30,10 +30,15 @@ namespace gezi {
 
 		}
 
+		virtual PredictionKind GetPredictionKind() override
+		{
+			return PredictionKind::Regression;
+		}
+
 		virtual PredictorPtr CreatePredictor() override
 		{
 			vector<OnlineRegressionTree> trees = _ensemble.ToOnline(TrainSet.Features);
-			return make_shared<FastRankRegressionPredictor>(trees, _calibrator, TrainSet.FeatureNames());
+			return make_shared<FastRankRegressionPredictor>(trees, TrainSet.FeatureNames());
 		}
 
 		virtual void ParseArgs() override

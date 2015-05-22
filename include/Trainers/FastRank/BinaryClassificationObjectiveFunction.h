@@ -91,26 +91,24 @@ namespace gezi {
 			}
 		}
 
-
-
 	protected:
-	/*	virtual void GetGradientInOneQuery(int query, const Fvec& scores) override
-		{
-			Float sigmoidParam = _learningRate;
-			Float recip_npos = 1.0;
-			Float recip_nneg = 1.0;
-			if (_unbalancedSets)
-			{
-				recip_npos = 1.0 / ((Float)_npos);
-				recip_nneg = 1.0 / ((Float)_nneg);
-			}
-			int label = Labels[query] ? 1 : -1;
-			Float recip = Labels[query] ? recip_npos : recip_nneg;
-			Float response = ((2.0 * label) * sigmoidParam) / (1.0 + std::exp(((2.0 * label) * sigmoidParam) * scores[query]));
-			Float absResponse = std::abs(response);
-			_gradient[query] = response * recip;
-			_weights[query] = (absResponse * ((2.0 * sigmoidParam) - absResponse)) * recip;
-		}*/
+		//virtual void GetGradientInOneQuery(int query, const Fvec& scores) override
+		//{
+		//	Float sigmoidParam = _learningRate;
+		//	Float recip_npos = 1.0;
+		//	Float recip_nneg = 1.0;
+		//	if (_unbalancedSets)
+		//	{
+		//		recip_npos = 1.0 / ((Float)_npos);
+		//		recip_nneg = 1.0 / ((Float)_nneg);
+		//	}
+		//	int label = Labels[query] ? 1 : -1;
+		//	Float recip = Labels[query] ? recip_npos : recip_nneg;
+		//	Float response = ((2.0 * label) * sigmoidParam) / (1.0 + std::exp(((2.0 * label) * sigmoidParam) * scores[query]));
+		//	Float absResponse = std::abs(response);
+		//	_gradient[query] = response * recip;
+		//	_weights[query] = (absResponse * ((2.0 * sigmoidParam) - absResponse)) * recip; //@?
+		//}
 
 	};
 

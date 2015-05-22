@@ -72,7 +72,7 @@ namespace gezi {
 
 	TrainerPtr TrainerFactory::CreateTrainer(string name)
 	{
-		name = arg(name);
+		name = gezi::arg(name);
 		TrainerType trainerType = _trainerTypes[name];
 		//----------------------Binary Classification
 		switch (trainerType)

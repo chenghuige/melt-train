@@ -19,7 +19,7 @@ namespace gezi {
 class BestStepRegressionGradientWrapper : public IGradientAdjuster
 {
 public:
-	virtual Fvec& AdjustTargetAndSetWeights(Fvec& gradient, ObjectiveFunction& objFunction, Fvec*& targetWeights)
+	virtual Fvec& AdjustTargetAndSetWeights(Fvec& gradient, const ObjectiveFunction& objFunction, Fvec*& targetWeights) override
 	{
 		targetWeights = &objFunction.Weights();
 		return gradient;

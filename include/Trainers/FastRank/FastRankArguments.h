@@ -59,7 +59,7 @@ struct FastRankArguments
 
 	int baggingSize = 0; //bag|Number of trees in each bag (0 for disabling bagging) 
 	double baggingTrainFraction = 0.7; //bagfrac|Percentage of training queries used in each bag
-	int numBags = 0;
+	int numBags = 0; //nbag|if nbag > 1 then we actually has nbag * numtress = totalTrees 
 	
 	bool filterZeroLambdas = false;
 	Float gainConfidenceLevel = 0;

@@ -18,7 +18,7 @@ namespace gezi {
 	class TrivialGradientWrapper : public IGradientAdjuster
 	{
 	public:
-		virtual Fvec& AdjustTargetAndSetWeights(Fvec& gradient, ObjectiveFunction& objFunction, Fvec*& targetWeights)
+		virtual Fvec& AdjustTargetAndSetWeights(Fvec& gradient, const ObjectiveFunction& objFunction, Fvec*& targetWeights) override
 		{
 			targetWeights = NULL;
 			return gradient;

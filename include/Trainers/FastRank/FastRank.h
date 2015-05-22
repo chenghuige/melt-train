@@ -32,7 +32,7 @@
 #include "Prediction/Calibrate/CalibratorFactory.h"
 namespace gezi {
 
-	class FastRank : public Trainer
+	class FastRank : public ValidatingTrainer
 	{
 	public:
 		Dataset TrainSet;
@@ -198,6 +198,11 @@ namespace gezi {
 						currentOutOfBagPartition.Documents());
 				}
 				CustomizedTrainingIteration();
+				if (IsValidating())
+				{
+					PrepareEvaluate();
+					Evaluate();
+				}
 				if (revertRandomStart)
 				{
 					revertRandomStart = false;

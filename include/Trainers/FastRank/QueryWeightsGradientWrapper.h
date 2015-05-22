@@ -20,7 +20,7 @@ namespace gezi {
 	class QueryWeightsGradientWrapper : public IGradientAdjuster
 	{
 	public:
-		virtual Fvec& AdjustTargetAndSetWeights(Fvec& gradient, ObjectiveFunction& objFunction, Fvec*& targetWeights)
+		virtual Fvec& AdjustTargetAndSetWeights(Fvec& gradient, const ObjectiveFunction& objFunction, Fvec*& targetWeights) override
 		{
 			Fvec& sampleWeights = objFunction.Dataset.SampleWeights;
 			for (size_t i = 0; i < gradient.size(); i++)

@@ -22,11 +22,8 @@ namespace gezi {
 	{
 	public:
 		Dataset& Dataset;
-		Fvec& Weights()
-		{
-			return _weights;
-		}
 	protected:
+		Fvec _weights; //@? 理解这个很关键
 		bool _bestStepRankingRegressionTrees = false;
 		Fvec _gradient;
 		int _gradSamplingRate;
@@ -34,7 +31,6 @@ namespace gezi {
 		Float _maxTreeOutput = std::numeric_limits<Float>::max();
 		static const int _queryThreadChunkSize = 100;
 		Random _rnd;
-		Fvec _weights; //@? 理解这个很关键
 
 	public:
 		ObjectiveFunction(gezi::Dataset& dataset, Float learningRate, Float maxTreeOutput, int gradSamplingRate, bool useBestStepRankingRegressionTree, int randomNumberGeneratorSeed)
@@ -47,7 +43,11 @@ namespace gezi {
 			_gradient.resize(Dataset.NumDocs);
 			_weights.resize(Dataset.NumDocs);
 		}
-		
+		Fvec& Weights()
+		{
+			return _weights;
+		}
+
 		//@TODO原代码采用100个分组 每个线程处理100个query`
 		virtual Fvec& GetGradient(const Fvec& scores)
 		{
@@ -56,7 +56,7 @@ namespace gezi {
 			for (int query = 0; query < Dataset.NumDocs; query++)
 			{
 				if ((query % _gradSamplingRate) == sampleIndex)
-				{ 
+				{
 					GetGradientInOneQuery(query, scores);
 				}
 			}
@@ -68,6 +68,7 @@ namespace gezi {
 	protected:
 		//virtual void GetGradientInOneQuery(int query, const Fvec& scores) = 0;
 		//这个去掉虚函数之后 速度能从6.32726 s ->6.19447 s 考虑虚函数之外的设计 特别对于这种内部嵌入的循环内核心虚函数 尽量采用function替代
+		//或者干脆用代码copy的代码 去掉这个内部虚函数
 		std::function<void(int, const Fvec&)> GetGradientInOneQuery;
 	};
 

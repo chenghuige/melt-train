@@ -5,6 +5,7 @@ CC=/opt/compiler/gcc-4.8.2/bin/g++
 CXX=/opt/compiler/gcc-4.8.2/bin/g++
 CXXFLAGS=-g \
   -O5 \
+  -msse2 \
   -pipe \
   -W \
   -Wall \
@@ -20,6 +21,7 @@ CXXFLAGS=-g \
   -fopenmp
 CFLAGS=-g \
   -O5 \
+  -msse2 \
   -pipe \
   -W \
   -Wall \
@@ -155,7 +157,7 @@ CCP_FLAGS=
 
 
 #COMAKE UUID
-COMAKE_MD5=3789faca693f0aa9c52584b1fa141c11  COMAKE
+COMAKE_MD5=598f6a652ce1e39e6be7ae296afdeb5a  COMAKE
 
 
 .PHONY:all
