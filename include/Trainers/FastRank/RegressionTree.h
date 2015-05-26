@@ -21,6 +21,8 @@ namespace gezi {
 
 	class RegressionTree : public OnlineRegressionTree
 	{
+	protected:
+		vector<uint> _threshold; //online是Float离线训练其实是uint 覆盖掉基类中的_threashold
 	public:
 		RegressionTree(int maxLeaves)
 		{
@@ -62,11 +64,10 @@ namespace gezi {
 			Pvector(_lteChild);
 			Pvector(_gtChild);
 			//	Pval(NumLeaves);
-			Fvec threshold;
+			Fvec threshold(_threshold.size());
 			for (size_t i = 0; i < _threshold.size(); i++)
 			{
-				uint val = (uint)_threshold[i];
-				threshold.push_back(features[_splitFeature[i]].BinUpperBounds[val]);
+				threshold.push_back(features[_splitFeature[i]].BinUpperBounds[_threshold[i]]);
 			}
 			//	Pvector(_threshold);
 			Pvector(threshold);
@@ -75,45 +76,48 @@ namespace gezi {
 			Pvector(_leafValue);
 		}
 
-		void Finalize()
-		{
-			Reset(NumLeaves);
-		}
+		//void Finalize()
+		//{
+		//	//Reset(NumLeaves); //@TODO do not need this?
+		//}
 
 		void ToOnline(const vector<Feature>& features)
 		{
+			OnlineRegressionTree::_threshold.resize(_threshold.size());
 			for (size_t i = 0; i < _threshold.size(); i++)
 			{
-				uint val = (uint)_threshold[i];
-				_threshold[i] = features[_splitFeature[i]].BinUpperBounds[val];
+				OnlineRegressionTree::_threshold[i] = features[_splitFeature[i]].BinUpperBounds[_threshold[i]];
 			}
 		}
 
 		//score已经resize好
-		void AddOutputsToScores(const Dataset& dataset, Fvec& scores)
+		template<typename T>
+		void AddOutputsToScores(const T& dataset, Fvec& scores)
 		{
 #pragma omp parallel for
-			for (int d = 0; d < dataset.NumDocs; d++)
+			for (size_t d = 0; d < dataset.size(); d++)
 			{
-				scores[d] += GetOutput(dataset.GetFeatureBinRow(d));
+				scores[d] += GetOutput(dataset[d]);
 			}
 		}
 
-		void AddOutputsToScores(const Dataset& dataset, Fvec& scores, Float multiplier)
+		template<typename T>
+		void AddOutputsToScores(const T& dataset, Fvec& scores, Float multiplier)
 		{
 #pragma omp parallel for
-			for (int d = 0; d < dataset.NumDocs; d++)
+			for (size_t d = 0; d < dataset.size(); d++)
 			{
-				scores[d] += multiplier * GetOutput(dataset.GetFeatureBinRow(d));
+				scores[d] += multiplier * GetOutput(dataset[d]);
 			}
 		}
 
-		void AddOutputsToScores(const Dataset& dataset, Fvec& scores, const ivec& docIndices)
+		template<typename T>
+		void AddOutputsToScores(const T& dataset, Fvec& scores, const ivec& docIndices)
 		{
 #pragma omp parallel for
 			for (size_t d = 0; d < docIndices.size(); d++)
 			{
-				scores[docIndices[d]] += GetOutput(dataset.GetFeatureBinRow(docIndices[d]));
+				scores[docIndices[d]] += GetOutput(dataset[docIndices[d]]);
 			}
 		}
 
@@ -125,7 +129,8 @@ namespace gezi {
 			}
 		}
 
-		Float GetOutput(const FeatureBin& featureBin)
+		template<typename T>
+		Float GetOutput(const T& featureBin)
 		{
 			if (_lteChild[0] == 0)
 			{
@@ -137,24 +142,12 @@ namespace gezi {
 
 		int GetLeaf(const FeatureBin& featureBin)
 		{
-			if (NumLeaves == 1)
-			{
-				return 0;
-			}
-			int node = 0;
+			return GetLeaf_(featureBin, _threshold);
+		}
 
-			while (node >= 0)
-			{
-				if (featureBin[_splitFeature[node]] <= _threshold[node])
-				{
-					node = _lteChild[node];
-				}
-				else
-				{
-					node = _gtChild[node];
-				}
-			}
-			return ~node; //~ means -node - 1 (~-3) --- [2]
+		int GetLeaf(const InstancePtr& instance)
+		{
+			return GetLeaf_(*instance, OnlineRegressionTree::_threshold);
 		}
 
 		//@TODO range ? for IEnumerable ?
@@ -181,12 +174,14 @@ namespace gezi {
 			return _leafValue[leaf];
 		}
 
-		Fvec GetOutputs(Dataset& dataset)
+		template<typename T>
+		Fvec GetOutputs(const T& dataset)
 		{
-			Fvec outputs(dataset.NumDocs);
-			for (int d = 0; d < dataset.NumDocs; d++)
+			Fvec outputs(dataset.size());
+#pragma omp parallel for
+			for (size_t d = 0; d < dataset.size(); d++)
 			{
-				outputs[d] = GetOutput(dataset.GetFeatureBinRow(d));
+				outputs[d] = GetOutput(dataset[d]);
 			}
 			return outputs;
 		}
@@ -286,6 +281,29 @@ namespace gezi {
 		const int NumNodes() const
 		{
 			return NumLeaves - 1;
+		}
+	protected:
+		template<typename T, typename U>
+		int GetLeaf_(const T& featureBin, const U& threshold)
+		{
+			if (NumLeaves == 1)
+			{
+				return 0;
+			}
+			int node = 0;
+
+			while (node >= 0)
+			{
+				if (featureBin[_splitFeature[node]] <= threshold[node])
+				{
+					node = _lteChild[node];
+				}
+				else
+				{
+					node = _gtChild[node];
+				}
+			}
+			return ~node; //~ means -node - 1 (~-3) --- [2]
 		}
 
 	private:

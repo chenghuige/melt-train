@@ -20,26 +20,40 @@
 #include "ScoreTracker.h"
 #include "Ensemble.h"
 #include "IStepSearch.h"
+#include "Prediction/Instances/Instances.h"
 namespace gezi {
 
 	class OptimizationAlgorithm
 	{
 	public:
-		OptimizationAlgorithm(gezi::Ensemble& ensemble, Dataset& trainData, Fvec& initTrainScores)
+		OptimizationAlgorithm(gezi::Ensemble& ensemble, const Dataset& trainData, Fvec& initTrainScores)
 			:Ensemble(ensemble)
 		{
 
 		}
 
-		//因为c++的构造函数中不能有虚函数 ConstructScoreTracker 单独提出 和c#不一样
-		virtual void Initialize(Dataset& trainData, Fvec& initTrainScores)
+		OptimizationAlgorithm(gezi::Ensemble& ensemble)
+			:Ensemble(ensemble)
+		{
+
+		}
+
+		//因为c++的构造函数中不能有虚函数 ConstructScoreTracker 单独提出 和c#不一样  @TODO check好像gcc支持构造函数有虚函数类似c#？
+		virtual void Initialize(const Dataset& trainData, Fvec& initTrainScores)
 		{
 			TrainingScores = ConstructScoreTracker("train", trainData, initTrainScores);
 			TrackedScores.push_back(TrainingScores);
 		}
 
-		virtual RegressionTree& TrainingIteration(BitArray& activeFeatures) = 0;
-		virtual ScoreTrackerPtr ConstructScoreTracker(string name, Dataset& set, Fvec& InitScores) = 0;
+		virtual RegressionTree& TrainingIteration(const BitArray& activeFeatures) = 0;
+		virtual ScoreTrackerPtr ConstructScoreTracker(string name, const Dataset& set, Fvec& initScores)
+		{
+			return make_shared<ScoreTracker>(name, set, initScores);
+		}
+		virtual ScoreTrackerPtr ConstructScoreTracker(string name, const Instances& instances, Fvec& initScores)
+		{
+			return make_shared<ScoreTracker>(name, instances, initScores);
+		}
 
 		virtual void FinalizeLearning(int bestIteration)
 		{
@@ -50,11 +64,11 @@ namespace gezi {
 			}
 		}
 
-		ScoreTrackerPtr GetScoreTracker(string name, Dataset& set, Fvec& InitScores)
+		ScoreTrackerPtr GetScoreTracker(string name, const Instances& set, Fvec& InitScores)
 		{
 			for (ScoreTrackerPtr st : TrackedScores)
 			{
-				if (&(st->Dataset) == &set)
+				if (st->DatasetName == name)
 				{
 					return st;
 				}
@@ -64,7 +78,7 @@ namespace gezi {
 			return newTracker;
 		}
 
-		void SetTrainingData(Dataset& trainData, Fvec& initTrainScores)
+		void SetTrainingData(const Dataset& trainData, Fvec& initTrainScores)
 		{
 			TrainingScores = ConstructScoreTracker("train", trainData, initTrainScores);
 			TrackedScores[0] = TrainingScores;

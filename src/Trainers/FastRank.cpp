@@ -38,6 +38,8 @@ DEFINE_double(bagfrac, 0.7, "Percentage of training queries used in each bag");
 //bagging 应该还是有问题。。。 关键是TrainSet的问题？ NumDocs 等等 scores等等
 DEFINE_int32(nbag, 1, "NumBags|if nbag > 1 then we actually has nbag * numtress = totalTrees  @FIXME");
 
+DEFINE_int32(maxfs, 0, "maxFeaturesShow| max print feature num");
+
 namespace gezi {
 
 	void FastRank::ParseArgs()
@@ -93,6 +95,8 @@ namespace gezi {
 		{
 			_args->histogramPoolSize = _args->numLeaves - 1;
 		}
+
+		_args->maxFeaturesShow = FLAGS_maxfs;
 	}
 }
 

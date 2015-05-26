@@ -48,6 +48,22 @@ namespace gezi {
 			return _weights;
 		}
 
+		virtual Fvec& GetGradient(const Fvec& scores) = 0;
+	
+
+	protected:
+		//virtual void GetGradientInOneQuery(int query, const Fvec& scores) = 0;
+		//这个去掉虚函数之后 速度能从6.32726 s ->6.19447 s 考虑虚函数之外的设计 特别对于这种内部嵌入的循环内核心虚函数 尽量采用function替代
+		//或者干脆用代码copy的代码 去掉这个内部虚函数
+		//std::function<void(int, const Fvec&)> GetGradientInOneQuery;
+	};
+	typedef shared_ptr<ObjectiveFunction> ObjectiveFunctionPtr;
+
+	template<typename Derived>
+	class ObjectiveFunctionImpl : public ObjectiveFunction
+	{
+	public:
+		using ObjectiveFunction::ObjectiveFunction;
 		//@TODO原代码采用100个分组 每个线程处理100个query`
 		virtual Fvec& GetGradient(const Fvec& scores)
 		{
@@ -57,22 +73,17 @@ namespace gezi {
 			{
 				if ((query % _gradSamplingRate) == sampleIndex)
 				{
-					GetGradientInOneQuery(query, scores);
+					static_cast<Derived*>(this)->GetGradientInOneQuery(query, scores);
 				}
 			}
 			/*	Pvector(scores)
-				Pvector(_gradient)*/
+			Pvector(_gradient)*/
 			return _gradient;
 		}
-
-	protected:
-		//virtual void GetGradientInOneQuery(int query, const Fvec& scores) = 0;
-		//这个去掉虚函数之后 速度能从6.32726 s ->6.19447 s 考虑虚函数之外的设计 特别对于这种内部嵌入的循环内核心虚函数 尽量采用function替代
-		//或者干脆用代码copy的代码 去掉这个内部虚函数
-		std::function<void(int, const Fvec&)> GetGradientInOneQuery;
 	};
 
-	typedef shared_ptr<ObjectiveFunction> ObjectiveFunctionPtr;
+
+	
 }  //----end of namespace gezi
 
 #endif  //----end of OBJECTIVE_FUNCTION_H_

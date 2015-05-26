@@ -37,7 +37,7 @@ namespace gezi {
 
 		virtual PredictorPtr CreatePredictor() override
 		{
-			vector<OnlineRegressionTree> trees = _ensemble.ToOnline(TrainSet.Features);
+			vector<OnlineRegressionTree> trees = _ensemble.GetOnlineRegressionTrees();
 			return make_shared<FastRankRegressionPredictor>(trees, TrainSet.FeatureNames());
 		}
 
@@ -66,10 +66,10 @@ namespace gezi {
 			return make_shared<RegressionObjectiveFunction>(TrainSet, *TrainSetLabels, *(((RegressionFastRankArguments*)(_args.get()))));
 		}
 
-		virtual void InitializeTests() override
-		{
+		//virtual void InitializeTests() override
+		//{
 
-		}
+		//}
 	private:
 	};
 

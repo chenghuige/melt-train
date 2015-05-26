@@ -19,15 +19,15 @@ namespace gezi {
 	//这个地方是否可以空间换时间 如果数据量不够大 单独一个全量二维数组 @TODO 在Feature增加一个DenseBins
 	struct FeatureBin
 	{
-		vector<Feature>& _features;
+		const vector<Feature>& _features;
 		int _doc;
-		FeatureBin(vector<Feature>& features, int doc)
+		FeatureBin(const vector<Feature>& features, int doc)
 			:_features(features), _doc(doc)
 		{
 
 		}
 
-		const Float operator [] (int featureIdx) const
+		Float operator [] (int featureIdx) const
 		{
 			return _features[featureIdx].Bins[_doc];
 		}
@@ -54,12 +54,23 @@ namespace gezi {
 			NumFeatures = Features.size();
 		}
 
-		FeatureBin GetFeatureBinRow(int index)
+		size_t size() const
+		{
+			return NumDocs;
+		}
+
+		//按照row 访问
+		FeatureBin operator [] (int index)  const
 		{
 			return FeatureBin(Features, index);
 		}
 
-		bool Empty()
+		FeatureBin GetFeatureBinRow(int index) const
+		{
+			return FeatureBin(Features, index);
+		}
+
+		bool Empty() const
 		{
 			return Features.empty();
 		}

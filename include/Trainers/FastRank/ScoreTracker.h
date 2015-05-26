@@ -16,17 +16,19 @@
 
 #include "common_util.h"
 #include "Dataset.h"
+#include "Prediction/Instances/Instances.h"
 
 namespace gezi {
 
 	class ScoreTracker
 	{
 	public:
-		Dataset& Dataset;
+		const Dataset* Dataset = NULL; //只是TrainSet 是转换成了DataSet使用的
+		const Instances* Instances = NULL; //validating 的时候使用 
 		string DatasetName;
-		Fvec Scores;
+		Fvec& Scores;
 	protected:
-		Fvec& _initScores;
+		int _numDocs;
 
 	public: 
 		ScoreTracker(ScoreTracker&&) = default;
@@ -34,16 +36,28 @@ namespace gezi {
 		ScoreTracker(const ScoreTracker&) = default;
 		ScoreTracker& operator = (const ScoreTracker&) = default;
 
-		ScoreTracker(string datasetName, gezi::Dataset& set, Fvec& initScores)
-			:Dataset(set), DatasetName(datasetName), _initScores(initScores)
+		ScoreTracker(string datasetName, const gezi::Dataset& set, Fvec& initScores)
+			:Dataset(&set), DatasetName(datasetName), Scores(initScores), _numDocs(set.size())
 		{
-			InitScores(initScores);
+			InitScores();
 		}
 
+		ScoreTracker(string datasetName, const gezi::Instances& instances, Fvec& initScores)
+			:Instances(&instances), DatasetName(datasetName), Scores(initScores), _numDocs(instances.size())
+		{
+			InitScores();
+		}
 
 		virtual void AddScores(RegressionTree& tree, Float multiplier)
 		{
-			tree.AddOutputsToScores(Dataset, Scores, multiplier);
+			if (Dataset)
+			{
+				tree.AddOutputsToScores(*Dataset, Scores, multiplier);
+			}
+			if (Instances)
+			{
+				tree.AddOutputsToScores(*Instances, Scores, multiplier);
+			}
 			SendScoresUpdatedMessage();
 		}
 
@@ -65,27 +79,11 @@ namespace gezi {
 			}
 		}
 
-		virtual void InitScores(const Fvec& initScores)
+		virtual void InitScores()
 		{
-			if (initScores.empty())
+			if (Scores.size() != _numDocs)
 			{
-				if (Scores.empty())
-				{
-					Scores.resize(Dataset.NumDocs);
-				}
-				else
-				{
-					zeroset(Scores);
-				}
-			}
-			else
-			{
-				if (initScores.size() != Dataset.NumDocs)
-				{
-					THROW("The length of initScores do not match the length of training set");
-				}
-				LOG(INFO) << "init scores with initScores" << initScores.size();
-				Scores = initScores;
+				Scores.resize(_numDocs, 0);
 			}
 			SendScoresUpdatedMessage();
 		}
@@ -113,6 +111,7 @@ namespace gezi {
 		}
 
 	};
+
 
 	typedef shared_ptr<ScoreTracker> ScoreTrackerPtr;
 }  //----end of namespace gezi

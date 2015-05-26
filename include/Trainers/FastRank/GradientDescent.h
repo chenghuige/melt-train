@@ -33,7 +33,7 @@ namespace gezi {
 		{
 		}
 
-		virtual RegressionTree& TrainingIteration(BitArray& activeFeatures) override
+		virtual RegressionTree& TrainingIteration(const BitArray& activeFeatures) override
 		{
 			RegressionTree tree = TreeLearner->FitTargets(activeFeatures, AdjustTargetsAndSetWeights());
 			//if (base.AdjustTreeOutputsOverride == null)
@@ -85,12 +85,6 @@ namespace gezi {
 		{
 			return ObjectiveFunction->GetGradient(TrainingScores->Scores);
 		}
-
-		virtual ScoreTrackerPtr ConstructScoreTracker(string name, Dataset& set, Fvec& initScores) override
-		{
-			return make_shared<ScoreTracker>(name, set, initScores);
-		}
-
 
 	protected:
 	private:

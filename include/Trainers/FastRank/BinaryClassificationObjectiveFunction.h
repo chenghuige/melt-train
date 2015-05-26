@@ -20,7 +20,8 @@
 #include "BinaryClassificationFastRankArguments.h"
 namespace gezi {
 
-	class BinaryClassificationObjectiveFunction : public ObjectiveFunction, public IStepSearch
+	//class BinaryClassificationObjectiveFunction : public ObjectiveFunction, public IStepSearch
+	class BinaryClassificationObjectiveFunction : public ObjectiveFunctionImpl<BinaryClassificationObjectiveFunction>, public IStepSearch
 	{
 	private:
 		int64 _nneg;
@@ -31,7 +32,7 @@ namespace gezi {
 	public:
 		BinaryClassificationObjectiveFunction(gezi::Dataset& trainSet, BitArray& trainSetLabels,
 			BinaryClassificationFastRankArguments& args)
-			: ObjectiveFunction(trainSet, args.learningRate, args.maxTreeOutput, args.derivativesSampleRate, args.bestStepRankingRegressionTrees, args.randSeed), Labels(trainSetLabels)
+			: ObjectiveFunctionImpl(trainSet, args.learningRate, args.maxTreeOutput, args.derivativesSampleRate, args.bestStepRankingRegressionTrees, args.randSeed), Labels(trainSetLabels)
 		{
 			_unbalancedSets = args.unbalancedSets;
 			if (_unbalancedSets)
@@ -43,23 +44,23 @@ namespace gezi {
 				}*/
 			}
 
-			GetGradientInOneQuery = [this](int query, const Fvec& scores)
-			{
-				Float sigmoidParam = _learningRate;
-				Float recip_npos = 1.0;
-				Float recip_nneg = 1.0;
-				if (_unbalancedSets)
-				{
-					recip_npos = 1.0 / ((Float)_npos);
-					recip_nneg = 1.0 / ((Float)_nneg);
-				}
-				int label = Labels[query] ? 1 : -1;
-				Float recip = Labels[query] ? recip_npos : recip_nneg;
-				Float response = ((2.0 * label) * sigmoidParam) / (1.0 + std::exp(((2.0 * label) * sigmoidParam) * scores[query]));
-				Float absResponse = std::abs(response);
-				_gradient[query] = response * recip;
-				_weights[query] = (absResponse * ((2.0 * sigmoidParam) - absResponse)) * recip; //@?
-			};
+			//GetGradientInOneQuery = [this](int query, const Fvec& scores)
+			//{
+			//	Float sigmoidParam = _learningRate;
+			//	Float recip_npos = 1.0;
+			//	Float recip_nneg = 1.0;
+			//	if (_unbalancedSets)
+			//	{
+			//		recip_npos = 1.0 / ((Float)_npos);
+			//		recip_nneg = 1.0 / ((Float)_nneg);
+			//	}
+			//	int label = Labels[query] ? 1 : -1;
+			//	Float recip = Labels[query] ? recip_npos : recip_nneg;
+			//	Float response = ((2.0 * label) * sigmoidParam) / (1.0 + std::exp(((2.0 * label) * sigmoidParam) * scores[query]));
+			//	Float absResponse = std::abs(response);
+			//	_gradient[query] = response * recip;
+			//	_weights[query] = (absResponse * ((2.0 * sigmoidParam) - absResponse)) * recip; //@?
+			//};
 		}
 
 		virtual void AdjustTreeOutputs(RegressionTree& tree, DocumentPartitioning& partitioning, ScoreTracker& trainingScores) override
@@ -91,24 +92,25 @@ namespace gezi {
 			}
 		}
 
-	protected:
+	public:
 		//virtual void GetGradientInOneQuery(int query, const Fvec& scores) override
-		//{
-		//	Float sigmoidParam = _learningRate;
-		//	Float recip_npos = 1.0;
-		//	Float recip_nneg = 1.0;
-		//	if (_unbalancedSets)
-		//	{
-		//		recip_npos = 1.0 / ((Float)_npos);
-		//		recip_nneg = 1.0 / ((Float)_nneg);
-		//	}
-		//	int label = Labels[query] ? 1 : -1;
-		//	Float recip = Labels[query] ? recip_npos : recip_nneg;
-		//	Float response = ((2.0 * label) * sigmoidParam) / (1.0 + std::exp(((2.0 * label) * sigmoidParam) * scores[query]));
-		//	Float absResponse = std::abs(response);
-		//	_gradient[query] = response * recip;
-		//	_weights[query] = (absResponse * ((2.0 * sigmoidParam) - absResponse)) * recip; //@?
-		//}
+		void GetGradientInOneQuery(int query, const Fvec& scores)
+		{
+			Float sigmoidParam = _learningRate;
+			Float recip_npos = 1.0;
+			Float recip_nneg = 1.0;
+			if (_unbalancedSets)
+			{
+				recip_npos = 1.0 / ((Float)_npos);
+				recip_nneg = 1.0 / ((Float)_nneg);
+			}
+			int label = Labels[query] ? 1 : -1;
+			Float recip = Labels[query] ? recip_npos : recip_nneg;
+			Float response = ((2.0 * label) * sigmoidParam) / (1.0 + std::exp(((2.0 * label) * sigmoidParam) * scores[query]));
+			Float absResponse = std::abs(response);
+			_gradient[query] = response * recip;
+			_weights[query] = (absResponse * ((2.0 * sigmoidParam) - absResponse)) * recip; //@?
+		}
 
 	};
 

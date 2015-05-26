@@ -30,7 +30,7 @@ namespace gezi {
 #pragma omp parallel for
 			for (int d = 0; d < dataset.NumDocs; d++)
 			{
-				int leaf = tree.GetLeaf(dataset.GetFeatureBinRow(d));
+				int leaf = tree.GetLeaf(dataset[d]);
 #pragma omp critical
 				{
 					perLeafDocumentLists[leaf].push_back(d); //注意可能并行造成无序 @TODO 需要再排序？

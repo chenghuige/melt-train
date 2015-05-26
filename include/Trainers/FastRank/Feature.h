@@ -47,7 +47,7 @@ namespace gezi {
 		}
 	public:
 		string Name;
-		Fvec BinUpperBounds;
+		Fvec BinUpperBounds; //@TODO 如果多个DataSet的话 需要共享BinUpperBounds和BinMedians 需要shared_ptr 当然拷贝代价也不大。。
 		Fvec BinMedians;
 		IntArray Bins;
 		Float Trust = 1;

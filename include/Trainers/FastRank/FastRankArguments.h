@@ -63,6 +63,8 @@ struct FastRankArguments
 	
 	bool filterZeroLambdas = false;
 	Float gainConfidenceLevel = 0;
+
+	int maxFeaturesShow = 0; //maxfs| max print feature num
 };
 
 typedef shared_ptr<FastRankArguments> FastRankArgumentsPtr;

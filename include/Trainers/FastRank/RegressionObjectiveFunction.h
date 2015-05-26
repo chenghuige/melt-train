@@ -20,7 +20,18 @@
 #include "BinaryClassificationFastRankArguments.h"
 namespace gezi {
 
-	class RegressionObjectiveFunction : public ObjectiveFunction, public IStepSearch
+	//GetGradientInOneQuery 如果不想用虚函数或者std::function 也可以利用模板设计模式  泛型和多态是两种思路 可以考虑不同场景怎样更合适
+	//泛型比较适合一个框架相同 核心函数交个不同的worker去给出不同实现 缺点是变量什么的 不同worker还需要都自己提供 或者函数接口多一些 不能继承了
+	//template<typename GradientCalculator> 
+	//class ObjectiveFunction //但是 这时候 GetGradientInOneQuery 需要接口增加gradient，和weight 或者GradientCalculator变量存储
+	//{
+	//      for...
+	//          _gradientCalculator.GetGradientInOneQuery(query, scores, gradient, weight)
+	//
+	//  GradientCalculator _gradientCalculator;
+	//}
+	//class RegressionObjectiveFunction : public ObjectiveFunction, public IStepSearch
+	class RegressionObjectiveFunction : public ObjectiveFunctionImpl<RegressionObjectiveFunction>, public IStepSearch
 	{
 	private:
 		Fvec& Labels;
@@ -28,12 +39,12 @@ namespace gezi {
 	public:
 		RegressionObjectiveFunction(gezi::Dataset& trainSet, Fvec& trainSetLabels,
 			RegressionFastRankArguments& args)
-			: ObjectiveFunction(trainSet, args.learningRate, args.maxTreeOutput, args.derivativesSampleRate, args.bestStepRankingRegressionTrees, args.randSeed), Labels(trainSetLabels)
+			: ObjectiveFunctionImpl(trainSet, args.learningRate, args.maxTreeOutput, args.derivativesSampleRate, args.bestStepRankingRegressionTrees, args.randSeed), Labels(trainSetLabels)
 		{
-					GetGradientInOneQuery = [this](int query, const Fvec& scores)
-					{
-					_gradient[query] = Labels[query] - scores[query];
-					};
+			//GetGradientInOneQuery = [this](int query, const Fvec& scores)
+			//{
+			//	_gradient[query] = Labels[query] - scores[query];
+			//};
 		}
 
 		virtual void AdjustTreeOutputs(RegressionTree& tree, DocumentPartitioning& partitioning, ScoreTracker& trainingScores) override
@@ -57,11 +68,12 @@ namespace gezi {
 		}
 
 
-	protected:
+	public:
 		//virtual void GetGradientInOneQuery(int query, const Fvec& scores) override
-		//{
-		//	_gradient[query] = Labels[query] - scores[query];
-		//}
+		void GetGradientInOneQuery(int query, const Fvec& scores)
+		{
+			_gradient[query] = Labels[query] - scores[query];
+		}
 	};
 
 }  //----end of namespace gezi

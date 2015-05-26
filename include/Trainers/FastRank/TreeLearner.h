@@ -33,7 +33,8 @@ namespace gezi {
 		{
 		}
 
-		virtual RegressionTree FitTargets(BitArray& activeFeatures, Fvec& targets) = 0;
+		//@TODO check if targets can be const
+		virtual RegressionTree FitTargets(const BitArray& activeFeatures, Fvec& targets) = 0;
 
 		static string TargetWeightsDatasetName()
 		{

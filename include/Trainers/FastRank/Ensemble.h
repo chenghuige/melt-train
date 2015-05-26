@@ -25,12 +25,23 @@ namespace gezi {
 		string _firstInputInitializationContent;
 		vector<RegressionTree> _trees;
 	public:
-		vector<OnlineRegressionTree> ToOnline(vector<Feature>& features)
+		//不再需要 因为 LeastSquaresRegressionTreeLearner中每次返回的tree 最后都已经做了ToOnline的处理
+		/*	vector<OnlineRegressionTree> ToOnline(vector<Feature>& features)
+			{
+			vector<OnlineRegressionTree> trees;
+			for (auto& tree : _trees)
+			{
+			tree.ToOnline(features);
+			trees.emplace_back((OnlineRegressionTree)tree);
+			}
+			return trees;
+			}*/
+
+		vector<OnlineRegressionTree> GetOnlineRegressionTrees()
 		{
 			vector<OnlineRegressionTree> trees;
 			for (auto& tree : _trees)
 			{
-				tree.ToOnline(features);
 				trees.emplace_back((OnlineRegressionTree)tree);
 			}
 			return trees;
@@ -71,7 +82,7 @@ namespace gezi {
 #pragma omp parallel for
 			for (int doc = 0; doc < dataset.NumDocs; doc++)
 			{
-				outputs[doc] = GetOutput(dataset.GetFeatureBinRow(doc), prefix);
+				outputs[doc] = GetOutput(dataset[doc], prefix);
 			}
 		}
 
@@ -88,6 +99,11 @@ namespace gezi {
 		int NumTrees()
 		{
 			return _trees.size();
+		}
+
+		vector<RegressionTree>& Trees()
+		{
+			return _trees;
 		}
 
 		RegressionTree& Tree()
@@ -139,7 +155,7 @@ namespace gezi {
 		}
 
 
-		string ToGainSummary(vector<Feature>& featureList, int prefix = -1, bool includeZeroGainFeatures = true, bool normalize = true)
+		string ToGainSummary(vector<Feature>& featureList, int maxNum = 0, int prefix = -1, bool includeZeroGainFeatures = true, bool normalize = true)
 		{
 			map<int, Float> m = GainMap(prefix, normalize);
 			if (includeZeroGainFeatures)
@@ -167,13 +183,18 @@ namespace gezi {
 						<< featureList[item.first].Name
 						<< setiosflags(ios::left) << setfill(' ') << setw(40)
 						<< " " << std::pow(item.second, power) / normalizingFactor << endl;*/
-			/*	ss << setiosflags(ios::left) << setfill(' ') << setw(40)
-					<< "f_" + STR(id++) + ":" + STR(item.first) + ":" + featureList[item.first].Name
-					<< " " << std::pow(item.second, power) / normalizingFactor << endl;*/
+				/*	ss << setiosflags(ios::left) << setfill(' ') << setw(40)
+						<< "f_" + STR(id++) + ":" + STR(item.first) + ":" + featureList[item.first].Name
+						<< " " << std::pow(item.second, power) / normalizingFactor << endl;*/
 
 				ss << setiosflags(ios::left) << setfill(' ') << setw(40)
 					<< STR(id++) + ":" + featureList[item.first].Name
 					<< " " << std::pow(item.second, power) / normalizingFactor << endl;
+
+				if (maxNum > 0 && id >= maxNum)
+				{
+					break;
+				}
 			}
 			return ss.str();
 		}

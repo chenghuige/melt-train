@@ -36,12 +36,6 @@ namespace gezi {
 	{
 	public:
 		Dataset TrainSet;
-		vector<Dataset> TestSets;
-		Dataset ValidSet;
-
-		Fmat InitTestScores;
-		Fvec InitTrainScores;
-		Fvec InitValidScores;
 	public:
 		FastRank()
 		{
@@ -187,20 +181,19 @@ namespace gezi {
 					baggingProvider.GenPartion(_optimizationAlgorithm->TreeLearner->Partitioning, currentOutOfBagPartition);
 				}
 				++pb;
-				PVAL(_ensemble.NumTrees());
 				BitArray activeFeatures;
 				BitArray* pactiveFeatures = GetActiveFeatures(activeFeatures);
 				_optimizationAlgorithm->TrainingIteration(*pactiveFeatures);
 				if (_args->numBags == 1 && _args->baggingSize > 0)
 				{
-					_ensemble.LastTree().AddOutputsToScores(_optimizationAlgorithm->TrainingScores->Dataset,
+					_ensemble.LastTree().AddOutputsToScores(*_optimizationAlgorithm->TrainingScores->Dataset,
 						_optimizationAlgorithm->TrainingScores->Scores,
 						currentOutOfBagPartition.Documents());
 				}
 				CustomizedTrainingIteration();
-				if (IsValidating())
+				if (_validating && (_ensemble.NumTrees() % _testFrequency == 0 || _ensemble.NumTrees() == numTotalTrees))
 				{
-					PrepareEvaluate();
+					std::cerr << "NumTrees: " << _ensemble.NumTrees() << " NumLeaves: " << _ensemble.Back().NumLeaves << std::endl;
 					Evaluate();
 				}
 				if (revertRandomStart)
@@ -228,10 +221,9 @@ namespace gezi {
 		void FeatureGainPrint(int level = 1)
 		{
 			VLOG(level) << "Per_feature_gain:\n" <<
-				_ensemble.ToGainSummary(TrainSet.Features);
+				_ensemble.ToGainSummary(TrainSet.Features, _args->maxFeaturesShow);
 			VLOG(level) << "Per_feature_gain_end";
 		}
-
 
 		virtual void Train(Instances& instances) override
 		{
@@ -265,6 +257,7 @@ namespace gezi {
 			else
 			{
 				Random rand(_args->randSeed);
+				//如果每个内部只有一个树 随机森林 , @TODO 可并行
 				for (int i = 1; i <= _args->numBags; i++)
 				{
 					Instances partionInstances = GenPartionInstances(instances, rand);
@@ -278,18 +271,37 @@ namespace gezi {
 		}
 
 		virtual OptimizationAlgorithmPtr ConstructOptimizationAlgorithm()
-		{
-			_optimizationAlgorithm = make_shared<GradientDescent>(_ensemble, TrainSet, InitTrainScores, MakeGradientWrapper());
-			_optimizationAlgorithm->Initialize(TrainSet, InitTrainScores);
+		{ //Scores.back() is TrainingScores
+			_optimizationAlgorithm = make_shared<GradientDescent>(_ensemble, TrainSet, Scores.back(), MakeGradientWrapper());
+			//_optimizationAlgorithm->Initialize(TrainSet, Scores.back()); //move it after InitalizeTests hack!
 			_optimizationAlgorithm->TreeLearner = ConstructTreeLearner();
 			_optimizationAlgorithm->ObjectiveFunction = ConstructObjFunc();
 			_optimizationAlgorithm->Smoothing = _args->smoothing;
 			return _optimizationAlgorithm;
 		}
 
+		ScoreTrackerPtr ConstructScoreTracker(const Instances& set, int index)
+		{
+			return _optimizationAlgorithm->GetScoreTracker(format("tes[{}]", index), _validationSets[index], Scores[index]);
+		}
+
 	protected:
+		void ConstructValidatingScoreTrackers()
+		{
+			for (int i = 0; i < _numValidationsExcludeSelf; i++)
+			{
+				ConstructScoreTracker(_validationSets[i], i);
+			}
+		}
 		virtual ObjectiveFunctionPtr ConstructObjFunc() = 0;
-		virtual void InitializeTests() = 0;
+		virtual void InitializeTests()
+		{
+			//后面 _optimizationAlgorithm 会肯定添加一个Train的 ScoreTracker
+			if (_validating)
+			{
+				ConstructValidatingScoreTrackers();
+			}
+		}
 
 		virtual TreeLearnerPtr ConstructTreeLearner()
 		{
@@ -385,6 +397,7 @@ namespace gezi {
 			PrepareLabels();
 			_optimizationAlgorithm = ConstructOptimizationAlgorithm();
 			InitializeTests();
+			_optimizationAlgorithm->Initialize(TrainSet, Scores.back());
 		}
 
 		void Initialize(int step)
@@ -414,63 +427,68 @@ namespace gezi {
 
 		virtual void PrepareLabels() = 0;
 
-		Fvec& GetInitScores(Dataset& set)
-		{
-			if (&set == &TrainSet)
-			{
-				return InitTrainScores;
-			}
-			if (&set == &ValidSet)
-			{
-				return InitValidScores;
-			}
-			for (size_t i = 0; (!TestSets.empty()) && (i < TestSets.size()); i++)
-			{
-				if (&set == &TestSets[i])
-				{
-					if (InitTestScores.empty())
-					{
-						return _tempScores;
-					}
-					return InitTestScores[i];
-				}
-			}
-			throw new Exception("Queried for unknown set");
-		}
+		//Fvec& GetInitScores(Dataset& set)
+		//{
+		//	if (&set == &TrainSet)
+		//	{
+		//		return InitTrainScores;
+		//	}
+		//	//if (&set == &ValidSet)
+		//	//{
+		//	//	return InitValidScores;
+		//	//}
+		//	//for (size_t i = 0; (!TestSets.empty()) && (i < TestSets.size()); i++)
+		//	//{
+		//	//	if (&set == &TestSets[i])
+		//	//	{
+		//	//		if (InitTestScores.empty())
+		//	//		{
+		//	//			return _tempScores;
+		//	//		}
+		//	//		return InitTestScores[i];
+		//	//	}
+		//	//}
+		//	THROW("Queried for unknown set");
+		//}
 
-		Fvec ComputeScoresSlow(Dataset& set)
-		{
-			Fvec scores(set.NumDocs);
-			_ensemble.GetOutputs(set, scores);
-			Fvec& initScores = GetInitScores(set);
-			if (!initScores.empty())
-			{
-				if (scores.size() != initScores.size())
-				{
-					THROW("Length of initscores and scores mismatch");
-				}
-				for (size_t i = 0; i < scores.size(); i++)
-				{
-					scores[i] += initScores[i];
-				}
-			}
-			return scores;
-		}
+		//Fvec ComputeScoresSlow(Dataset& set)
+		//{
+		//	EvaluateScores.resize(set.size());
+		//	_ensemble.GetOutputs(set, scores);
+		//	Fvec& initScores = GetInitScores(set);
+		//	if (!initScores.empty())
+		//	{
+		//		if (EvaluateScores.size() != initScores.size())
+		//		{
+		//			THROW("Length of initscores and scores mismatch");
+		//		}
+		//		for (size_t i = 0; i < scores.size(); i++)
+		//		{
+		//			scores[i] += initScores[i];
+		//		}
+		//	}
+		//	return scores;
+		//}
 
-		Fvec ComputeScoresSmart(Dataset& set)
+		//Fvec ComputeScoresSmart(Dataset& set)
+		//{
+		//	if (!_args->compressEnsemble)
+		//	{
+		//		for (ScoreTrackerPtr st : _optimizationAlgorithm->TrackedScores)
+		//		{
+		//			if (st->Dataset == &set)
+		//			{
+		//				//Fvec result = move(st->Scores); //如果没有validating self 那么只调用一次 ComputeScoresSmart(用于clibrate)可以用move
+		//				Fvec result = st->Scores;  
+		//				return result;
+		//			}
+		//		}
+		//	}
+		//}
+
+		Fvec& GetTrainSetScores()
 		{
-			if (!_args->compressEnsemble)
-			{
-				for (ScoreTrackerPtr st : _optimizationAlgorithm->TrackedScores)
-				{
-					if (&(st->Dataset) == &set)
-					{
-						Fvec result = move(st->Scores);
-						return result;
-					}
-				}
-			}
-			return ComputeScoresSlow(set);
+			return Scores.back();
 		}
 
 		virtual FastRankArgumentsPtr GetArguments() = 0;

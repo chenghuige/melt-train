@@ -38,12 +38,12 @@ namespace gezi {
 			return bins;
 		}
 
+		//用于将Insatnces转换为trainset,首先计算分桶的BinUpperBounds等确定分桶的界限，然后所有特征值归一到桶序号
 		static Dataset Convert(Instances& instances, int maxBins = 255, Float sparsifyRatio = 0.3)
 		{
 			//-------------- 行转换为列
 			int numFeatures = instances.NumFeatures();
-			vector<Float> ratings;
-			Fvec weights;
+			Fvec ratings, weights;
 			bool useWeight = false;
 			vector<Vector> valuesVec(numFeatures, Vector(instances.size()));
 			{
@@ -53,7 +53,6 @@ namespace gezi {
 				for (InstancePtr instance : instances)
 				{
 					//++pb;
-
 					(instance->features).ForEach([&](int idx, Float val) {
 						valuesVec[idx].Add(numInstancesProcessed, val);
 					});
@@ -65,7 +64,6 @@ namespace gezi {
 					{//如果都是比如2.0 还是默认有权重的 
 						useWeight = true;
 					}
-
 					numInstancesProcessed++;
 				}
 			}
@@ -131,6 +129,7 @@ namespace gezi {
 			PVAL(useWeight);
 			return Dataset(features, ratings, weights);
 		}
+	
 	protected:
 	private:
 

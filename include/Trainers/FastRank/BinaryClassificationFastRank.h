@@ -31,7 +31,7 @@ public:
 
 	virtual PredictorPtr CreatePredictor() override
 	{
-		vector<OnlineRegressionTree> trees = _ensemble.ToOnline(TrainSet.Features);
+		vector<OnlineRegressionTree> trees = _ensemble.GetOnlineRegressionTrees();
 		return make_shared<FastRankPredictor>(trees, _calibrator, TrainSet.FeatureNames());
 	}
 
@@ -48,7 +48,7 @@ public:
 			PVAL((_calibrator == nullptr));
 			if (_calibrator != nullptr)
 			{
-				_calibrator->Train(ComputeScoresSmart(TrainSet), TrainSetLabels, TrainSet.SampleWeights);
+				_calibrator->Train(GetTrainSetScores(), TrainSetLabels, TrainSet.SampleWeights);
 			}
 		}
 	}
@@ -76,10 +76,10 @@ public:
 		return make_shared<BinaryClassificationObjectiveFunction>(TrainSet, TrainSetLabels, *(((BinaryClassificationFastRankArguments*)(_args.get()))));
 	}
 
-	virtual void InitializeTests() override
-	{
+	//virtual void InitializeTests() override
+	//{
 
-	}
+	//}
 private:
 };
 

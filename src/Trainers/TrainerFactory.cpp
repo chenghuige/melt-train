@@ -32,7 +32,13 @@ namespace gezi {
 		//----------------------Regression
 		FastRankRegression,
 	};
-
+	//TrainerFactory的另外一种设计方式是每个Trainer自己处理 而不是统一放到这个cpp, 这样这里不需要应用这么多.h 利用类似REGISTER(NAME,TYPE)的方式,
+	//存储到map<string,TrainerPtr>中  map是个好东西
+	//http://stackoverflow.com/questions/4357500/c-abstract-factory-using-templates
+	//https://gist.github.com/pkrusche/5501253
+	//http://www.mass-communicating.com/code/2013/05/01/generic_factories_cpp.html
+	//这样每个Trainer需要一个.cpp来 register 如果编译的时候去掉这个cpp 那么 就等于没有注册  但是这样一种类型的Trainer只能有一个实例？
+	//这个模式可以进一步泛化 使用模板类统一表述
 	map<string, TrainerType> _trainerTypes
 	{
 		//----------------------Binary Classification
@@ -93,7 +99,7 @@ namespace gezi {
 			return make_shared<LinearSVM>();
 			break;
 		case TrainerType::FastRankBinaryClassification:
-			VLOG(0) << "Creating FastRank/GBDT trainer";
+			VLOG(0) << "Creating GBDT trainer";
 			return make_shared<BinaryClassificationFastRank>();
 			break;
 		case TrainerType::KernalSVM:

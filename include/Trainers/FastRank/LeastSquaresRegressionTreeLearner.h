@@ -312,8 +312,7 @@ namespace gezi {
 			_gainConfidenceInSquaredStandardDeviations *= _gainConfidenceInSquaredStandardDeviations;
 		}
 
-
-		virtual RegressionTree FitTargets(BitArray& activeFeatures, Fvec& targets) override
+		virtual RegressionTree FitTargets(const BitArray& activeFeatures, Fvec& targets) override
 		{
 			//AutoTimer timer("TreeLearner->FitTargets");
 			int maxLeaves = NumLeaves;
@@ -335,6 +334,7 @@ namespace gezi {
 				LOG(WARNING) << "Learner cannot build a tree with root split gain = " << rootSplitInfo.Gain << ", so a dummy tree will be used instead";
 				Float rootTarget = _smallerChildSplitCandidates.SumTargets / ((Float)_smallerChildSplitCandidates.NumDocsInLeaf);
 				MakeDummyRootSplit(tree, rootTarget, targets);
+				tree.ToOnline(TrainData.Features);
 				return tree;
 			}
 			_featureUseCount[rootSplitInfo.Feature]++;
@@ -356,7 +356,7 @@ namespace gezi {
 				PerformSplit(tree, bestLeaf, targets, LTEChild, GTChild);
 				//Pval2(LTEChild, GTChild);
 			}
-			tree.Finalize();
+			tree.ToOnline(TrainData.Features);
 			return tree;
 		}
 	protected:
@@ -385,7 +385,7 @@ namespace gezi {
 				info.Clear();
 			}
 		}
-		void Initialize(BitArray& activeFeatures)
+		void Initialize(const BitArray& activeFeatures)
 		{
 			_activeFeatures = &activeFeatures;
 			_histogramArrayPool.Reset();
