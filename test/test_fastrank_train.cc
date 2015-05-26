@@ -19,17 +19,32 @@
 //#include "Trainers/FastRank/BinaryClassificationFastRank.h"
 #include "MLCore/TrainerFactory.h"
 #include "Prediction/Instances/instances_util.h"
+#include "Utils/EvaluatorUtils.h"
 using namespace std;
 using namespace gezi;
 DEFINE_int32(vl, 0, "vlog level");
-DEFINE_string(in, "./data/feature.txt", "input file");
+
+DECLARE_string(i);
+DECLARE_string(valid);
+DECLARE_string(evaluator);
+
 
 TEST(fastrank_train, func)
 {
 	auto trainer = TrainerFactory::CreateTrainer("fastrank");
 	CHECK_NE((trainer == nullptr), true);
-	auto instances = create_instances(FLAGS_in);
-	trainer->Train(instances);
+	auto instances = create_instances(FLAGS_i);
+
+	if (FLAGS_valid.empty())
+	{
+		trainer->Train(instances);
+	}
+	else
+	{
+		dynamic_pointer_cast<ValidatingTrainer>(trainer)->Train(instances, 
+			vector < Instances > {create_instances(FLAGS_valid)}, 
+			EvaluatorUtils::CreateEvaluators(FLAGS_evaluator));
+	}
 }
 
 int main(int argc, char *argv[])
