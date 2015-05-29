@@ -16,9 +16,11 @@
 
 #include "common_util.h"
 #include "Trainers/FastRank/FastRank.h"
+#include "Trainers/FastRank/BinaryClassificationFastRank.h"
 
 DECLARE_bool(calibrate);
 DECLARE_string(calibrator);
+DECLARE_uint64(numCali);
 
 DECLARE_uint64(rs);
 DECLARE_int32(iter);
@@ -37,6 +39,8 @@ DEFINE_int32(bag, 0, "Number of trees in each bag (0 for disabling bagging)");
 DEFINE_double(bagfrac, 0.7, "Percentage of training queries used in each bag");
 //bagging 应该还是有问题。。。 关键是TrainSet的问题？ NumDocs 等等 scores等等
 DEFINE_int32(nbag, 1, "NumBags|if nbag > 1 then we actually has nbag * numtress = totalTrees  @FIXME");
+DEFINE_bool(bstrap, false, "BootStrap|wether to use bootstrap full sampling with replacement or each samping use bagfrac");
+DEFINE_double(bsfrac, 1.0, "BootStrapFraction|traditional bootstrap sampling will use all data");
 
 DEFINE_int32(maxfs, 0, "maxFeaturesShow| max print feature num");
 
@@ -44,7 +48,7 @@ namespace gezi {
 
 	void FastRank::ParseArgs()
 	{
-		_args = GetArguments();
+		_args = CreateArguments();
 
 		_args->calibrateOutput = FLAGS_calibrate; //@TODO to Trainer deal
 		_args->calibratorName = FLAGS_calibrator;
@@ -77,6 +81,9 @@ namespace gezi {
 		_args->baggingTrainFraction = FLAGS_bagfrac;
 		_args->numBags = FLAGS_nbag;
 
+		_args->boostStrap = FLAGS_bstrap;
+		_args->bootStrapFraction = FLAGS_bsfrac;
+
 		if (_args->baggingSize != 0)
 		{
 			CHECK_EQ(_args->numTrees % _args->baggingSize, 0) << "numTrees must be n * baggingSize";
@@ -97,6 +104,11 @@ namespace gezi {
 		}
 
 		_args->maxFeaturesShow = FLAGS_maxfs;
+	}
+
+	void BinaryClassificationFastRank::ParseClassificationArgs()
+	{
+		_args->maxCalibrationExamples = FLAGS_numCali;
 	}
 }
 
