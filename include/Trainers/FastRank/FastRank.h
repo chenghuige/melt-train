@@ -30,6 +30,7 @@
 #include "BaggingProvider.h"
 #include "Predictors/FastRankPredictor.h"
 #include "Prediction/Calibrate/CalibratorFactory.h"
+#include "Prediction/Instances/instances_util.h"
 namespace gezi {
 
 	class FastRank : public ValidatingTrainer
@@ -174,6 +175,7 @@ namespace gezi {
 			_optimizationAlgorithm = ConstructOptimizationAlgorithm();
 		}
 
+		//step means 第几个bagging
 		void TrainCore(int step = 1)
 		{
 			int numTotalTrees = step * _args->numTrees;
@@ -231,14 +233,6 @@ namespace gezi {
 				}
 			}
 			_optimizationAlgorithm->FinalizeLearning(GetBestIteration());
-
-			if (_args->numBags > 1)
-			{
-				for (int t = 0; t < _ensemble.NumTrees(); t++)
-				{
-					_ensemble.Tree(t).ScaleOutputsBy(1.0 / ((double)_args->numBags));
-				}
-			}
 		}
 
 		void FeatureGainPrint(int level = 1)
@@ -255,21 +249,6 @@ namespace gezi {
 		{
 			InnerTrain(instances);
 			Finalize(instances);
-		}
-
-		//@TODO move to instances util
-		Instances GenPartionInstances(Instances& instances, Random& rand)
-		{
-			Instances partitionInstaces;
-			partitionInstaces.CopySchema(instances.schema);
-			for (auto& instance : instances)
-			{
-				if (rand.NextDouble() < _args->baggingTrainFraction)
-				{
-					partitionInstaces.push_back(instance);
-				}
-			}
-			return partitionInstaces;
 		}
 
 		virtual void InnerTrain(Instances& instances) override
@@ -289,10 +268,18 @@ namespace gezi {
 				//当然也可以将bagging的支持移动到外围方便并行 统一ensemble框架即可
 				for (int i = 1; i <= _args->numBags; i++)
 				{
-					Instances partionInstances = GenPartionInstances(instances, rand);
+					Instances partionInstances = _args->boostStrap ?
+						InstancesUtil::GenBootstrapInstances(instances, rand, _args->bootStrapFraction) :
+						InstancesUtil::GenPartionInstances(instances, rand, _args->baggingTrainFraction);
+					ValidatingTrainer::SetSelfEvaluateInstances(partionInstances);
 					ConvertData(partionInstances); //modify TrainSet
 					Initialize(i);
+					ValidatingTrainer::SetScale((double)i);
 					TrainCore(i);
+				}
+				for (int t = 0; t < _ensemble.NumTrees(); t++)
+				{
+					_ensemble.Tree(t).ScaleOutputsBy(1.0 / ((double)_args->numBags));
 				}
 			}
 			FeatureGainPrint();
