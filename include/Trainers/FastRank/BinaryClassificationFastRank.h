@@ -58,12 +58,19 @@ namespace gezi {
 				if (_calibrator != nullptr)
 				{
 					/*	_calibrator->Train(GetTrainSetScores(), TrainSetLabels, TrainSet.SampleWeights);*/
-					//如果不是bagging 有sampling fraq 完全正确 并且最快，如果有sampling那么最后记录的数据 不是最终输出的output对应的。。
-					if (_args->numBags == 1 || _args->baggingTrainFraction >= 1.0)
+					if (_args->numBags == 1)
 					{
 						_calibrator->Train(TrainScores, TrainSetLabels, TrainSet.SampleWeights);
 					}
-					else
+					else if(_selfEvaluate)
+                                        {
+                                                for (auto& item : Scores.back())
+                                                {
+                                                    item /= (double)_args->numBags;
+                                                }
+                                                _calibrator->Train(Scores.back(), *InputInstances);
+                                        }
+                                        else
 					{
 						_calibrator->Train(*InputInstances,
 							[&](InstancePtr instance) { return _ensemble.GetOutput(instance); },
@@ -72,7 +79,6 @@ namespace gezi {
 							/*			include / c++ / 4.8.2 / bits / shared_ptr.h:449 : 50 : error : cannot dynamic_cast '(& __r)->std::shared_ptr<gezi::FastRankArguments>::<anonymous>.std::__shared_ptr<_Tp, _Lp>::get<gezi::FastRankArguments, (__gnu_cxx::_Lock_policy)2u>()' (of type 'struct gezi::FastRankArguments*') to type 'struct gezi::BinaryClassificationFastRankArguments*' (source type is not polymorphic)
 										if (_Tp* __p = dynamic_cast<_Tp*>(__r.get()))*/
 										//dynamic_pointer_cast<BinaryClassificationFastRankArguments>(_args)->maxCalibrationExamples);
-						//@TODO 看上去 还是有自己的_args比较好 不要用继承 分开
 					}
 				}
 			}
