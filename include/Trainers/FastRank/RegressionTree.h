@@ -76,6 +76,11 @@ namespace gezi {
 			Pvector(_leafValue);
 		}
 
+		using OnlineRegressionTree::Print;
+		void Print(const FeatureBin& features, int node = 0, int depth = 0, string suffix = "$")
+		{
+			Print(features, RegressionTree::_threshold, node, depth, suffix);
+		}
 		//void Finalize()
 		//{
 		//	//Reset(NumLeaves); //@TODO do not need this?
@@ -133,7 +138,7 @@ namespace gezi {
 		Float GetOutput(const T& featureBin)
 		{
 			if (_lteChild[0] == 0)
-			{
+			{ //training may has this case? @TODO
 				return 0.0;
 			}
 			int leaf = GetLeaf(featureBin);
@@ -281,29 +286,6 @@ namespace gezi {
 		const int NumNodes() const
 		{
 			return NumLeaves - 1;
-		}
-	protected:
-		template<typename T, typename U>
-		int GetLeaf_(const T& featureBin, const U& threshold)
-		{
-			if (NumLeaves == 1)
-			{
-				return 0;
-			}
-			int node = 0;
-
-			while (node >= 0)
-			{
-				if (featureBin[_splitFeature[node]] <= threshold[node])
-				{
-					node = _lteChild[node];
-				}
-				else
-				{
-					node = _gtChild[node];
-				}
-			}
-			return ~node; //~ means -node - 1 (~-3) --- [2]
 		}
 
 	private:

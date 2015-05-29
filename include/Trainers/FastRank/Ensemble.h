@@ -14,6 +14,7 @@
 #ifndef ENSEMBLE_H_
 #define ENSEMBLE_H_
 #include "common_util.h"
+#include "stl_util.h"
 #include "RegressionTree.h"
 #include "Dataset.h"
 namespace gezi {
@@ -57,7 +58,20 @@ namespace gezi {
 			_trees.emplace(_trees.begin() + index, tree);
 		}
 
-		Float GetOutput(const FeatureBin& featureBins, int prefix)
+		template<typename T>
+		Float GetOutput(const T& featureBins)
+		{
+			Float output = 0.0;
+#pragma omp parallel for reduction(+: output)
+			for (int h = 0; h < NumTrees(); h++)
+			{
+				output += _trees[h].GetOutput(featureBins);
+			}
+			return output;
+		}
+
+		template<typename T>
+		Float GetOutput(const T& featureBins, int prefix)
 		{
 			Float output = 0.0;
 #pragma omp parallel for reduction(+: output)
@@ -68,12 +82,14 @@ namespace gezi {
 			return output;
 		}
 
-		void GetOutputs(Dataset& dataset, Fvec& outputs)
+		template<typename T>
+		void GetOutputs(T& dataset, Fvec& outputs)
 		{
 			GetOutputs(dataset, outputs, -1);
 		}
 
-		void GetOutputs(Dataset& dataset, Fvec& outputs, int prefix)
+		template<typename T>
+		void GetOutputs(T& dataset, Fvec& outputs, int prefix)
 		{
 			if ((prefix > _trees.size()) || (prefix < 0))
 			{
@@ -145,7 +161,7 @@ namespace gezi {
 
 			if (normalize)
 			{
-				for (auto item : m)
+				for (auto& item : m)
 				{
 					item.second /= (Float)NumTrees();
 				}
@@ -154,47 +170,52 @@ namespace gezi {
 			return m;
 		}
 
+		vector<Float> ToGainVec(vector<Feature>& featureList, int prefix = -1, bool normalize = true)
+		{
+			map<int, Float> m = GainMap(prefix, normalize);
+			vector<Float> gains(featureList.size(), 0);
+			for (const auto& item : m)
+			{
+				gains[item.first] += item.second;
+			}
+			if (normalize)
+			{
+				gezi::normalize_vec(gains);
+			}
+			return gains;
+		}
 
 		string ToGainSummary(vector<Feature>& featureList, int maxNum = 0, int prefix = -1, bool includeZeroGainFeatures = true, bool normalize = true)
 		{
-			map<int, Float> m = GainMap(prefix, normalize);
-			if (includeZeroGainFeatures)
-			{
-				for (size_t k = 0; k < featureList.size(); k++)
-				{
-					add_value(m, k, 0.0);
-				}
-			}
+			//map<int, Float> m = GainMap(prefix, normalize);
+			//if (includeZeroGainFeatures)
+			//{
+			//	for (size_t k = 0; k < featureList.size(); k++)
+			//	{
+			//		add_value(m, k, 0.0);
+			//	}
+			//}
 
-			// @TODO
-			//vector<pair<int, Float> > sortedByGain = sort_map_by_value_reverse(m);
-			//auto sortedByGain = sort_map_by_value_reverse(m);
-			vector<pair<int, Float> > sortedByGain;
-			sort_map_by_value_reverse(m, sortedByGain);
-			Float maxValue = sortedByGain[0].second;
-			Float normalizingFactor = (normalize && (maxValue != 0.0)) ? std::sqrt(maxValue) : 1.0;
-			Float power = normalize ? 0.5 : 1.0;
+			//// @TODO
+			////vector<pair<int, Float> > sortedByGain = sort_map_by_value_reverse(m);
+			////auto sortedByGain = sort_map_by_value_reverse(m);
+			//vector<pair<int, Float> > sortedByGain;
+			//sort_map_by_value_reverse(m, sortedByGain);
+			//Float maxValue = sortedByGain[0].second;
+			//Float normalizingFactor = (normalize && (maxValue != 0.0)) ? std::sqrt(maxValue) : 1.0;
+			//Float power = normalize ? 0.5 : 1.0;
+
+			vector<Float> gains = ToGainVec(featureList, prefix, normalize);
+			int maxLen = maxNum == 0 || maxNum > featureList.size() ? featureList.size() : maxNum;
+			ivec indexVec = gezi::index_sort(gains, std::greater<Float>(), maxLen);
 
 			stringstream ss;
-			int id = 0;
-			for (auto item : sortedByGain)
+			for (int i = 0; i < maxLen; i++)
 			{
-				/*	ss << "f_" << STR(id++) << ":"  << item.first << ":"
-						<< featureList[item.first].Name
-						<< setiosflags(ios::left) << setfill(' ') << setw(40)
-						<< " " << std::pow(item.second, power) / normalizingFactor << endl;*/
-				/*	ss << setiosflags(ios::left) << setfill(' ') << setw(40)
-						<< "f_" + STR(id++) + ":" + STR(item.first) + ":" + featureList[item.first].Name
-						<< " " << std::pow(item.second, power) / normalizingFactor << endl;*/
-
-				ss << setiosflags(ios::left) << setfill(' ') << setw(40)
-					<< STR(id++) + ":" + featureList[item.first].Name
-					<< " " << std::pow(item.second, power) / normalizingFactor << endl;
-
-				if (maxNum > 0 && id >= maxNum)
-				{
-					break;
-				}
+				int idx = indexVec[i];
+				ss << setiosflags(ios::left) << setfill(' ') << setw(60)
+					<< STR(i) + STR(":") + featureList[idx].Name
+					<< gains[idx] << endl;
 			}
 			return ss.str();
 		}

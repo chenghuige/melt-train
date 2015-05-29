@@ -41,7 +41,7 @@ namespace gezi {
 		//因为c++的构造函数中不能有虚函数 ConstructScoreTracker 单独提出 和c#不一样  @TODO check好像gcc支持构造函数有虚函数类似c#？
 		virtual void Initialize(const Dataset& trainData, Fvec& initTrainScores)
 		{
-			TrainingScores = ConstructScoreTracker("train", trainData, initTrainScores);
+			TrainingScores = ConstructScoreTracker("itrain", trainData, initTrainScores);
 			TrackedScores.push_back(TrainingScores);
 		}
 
@@ -64,6 +64,8 @@ namespace gezi {
 			}
 		}
 
+		//当前设计有一点乱 如果bagging nbag > 1那么 会重新对每个test set再生成tracker 但是由于引用的score不变 所以整体效果一样 继续累积score
+		//或者外围手动move一下 TrackedScores,不过性能意义几乎没有
 		ScoreTrackerPtr GetScoreTracker(string name, const Instances& set, Fvec& InitScores)
 		{
 			for (ScoreTrackerPtr st : TrackedScores)

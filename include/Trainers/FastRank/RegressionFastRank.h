@@ -35,15 +35,27 @@ namespace gezi {
 			return PredictionKind::Regression;
 		}
 
-		virtual PredictorPtr CreatePredictor() override
+		virtual LossKind GetLossKind() override
 		{
-			vector<OnlineRegressionTree> trees = _ensemble.GetOnlineRegressionTrees();
-			return make_shared<FastRankRegressionPredictor>(trees, TrainSet.FeatureNames());
+			return LossKind::Squared;
+		}
+
+		virtual PredictorPtr CreatePredictor(vector<OnlineRegressionTree>& trees) override
+		{
+			auto predictor = make_shared<FastRankRegressionPredictor>(trees);
+			return predictor;
 		}
 
 		virtual void ParseArgs() override
 		{
 			FastRank::ParseArgs();
+			_args = static_cast<RegressionFastRankArguments*>(FastRank::_args.get());
+			ParseRegressionArgs();
+		}
+
+		void ParseRegressionArgs()
+		{
+
 		}
 
 		virtual void Finalize(Instances& instances) override
@@ -56,14 +68,15 @@ namespace gezi {
 			TrainSetLabels = &TrainSet.Ratings;
 		}
 
-		virtual FastRankArgumentsPtr GetArguments() override
+		virtual FastRankArgumentsPtr CreateArguments() override
 		{
 			return make_shared<RegressionFastRankArguments>();
 		}
 
 		virtual ObjectiveFunctionPtr ConstructObjFunc() override
 		{
-			return make_shared<RegressionObjectiveFunction>(TrainSet, *TrainSetLabels, *(((RegressionFastRankArguments*)(_args.get()))));
+			/*return make_shared<RegressionObjectiveFunction>(TrainSet, *TrainSetLabels, *(((RegressionFastRankArguments*)(_args.get()))));*/
+			return make_shared<RegressionObjectiveFunction>(TrainSet, *TrainSetLabels, *_args);
 		}
 
 		//virtual void InitializeTests() override
@@ -71,6 +84,7 @@ namespace gezi {
 
 		//}
 	private:
+		RegressionFastRankArguments* _args = NULL;
 	};
 
 

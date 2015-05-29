@@ -30,7 +30,7 @@ namespace gezi {
 	protected:
 		int _numDocs;
 
-	public: 
+	public:
 		ScoreTracker(ScoreTracker&&) = default;
 		ScoreTracker& operator = (ScoreTracker&&) = default;
 		ScoreTracker(const ScoreTracker&) = default;
@@ -83,7 +83,8 @@ namespace gezi {
 		{
 			if (Scores.size() != _numDocs)
 			{
-				Scores.resize(_numDocs, 0);
+				//Scores.resize(_numDocs, 0); //注意resize容易误导。。 不是等于调整大小 然后清零
+				gezi::reset_vec(Scores, _numDocs, 0);
 			}
 			SendScoresUpdatedMessage();
 		}
@@ -112,8 +113,28 @@ namespace gezi {
 
 	};
 
-
 	typedef shared_ptr<ScoreTracker> ScoreTrackerPtr;
+
+	//--类似下面的设计更优雅 但是后续有其它继承ScoreTracker会比较麻烦 比如  RankScoreTracker 那么又得有DataSetRank..,InsatncesRank..  OverDesign
+	//class DatSetScoreTracker : public ScoreTracker
+	//{
+	//public:
+	//	ScoreTracker(string datasetName, const gezi::Dataset& set, Fvec& initScores)
+	//		:Dataset(&set), DatasetName(datasetName), Scores(initScores), _numDocs(set.size())
+	//	{
+	//		InitScores();
+	//	}
+	//};
+
+	//class InstancesScoreTracker : public ScoreTracker
+	//{
+	//public:
+	//	ScoreTracker(string datasetName, const gezi::Dataset& set, Fvec& initScores)
+	//		:Dataset(&set), DatasetName(datasetName), Scores(initScores), _numDocs(set.size())
+	//	{
+	//		InitScores();
+	//	}
+	//};
 }  //----end of namespace gezi
 
 #endif  //----end of SCORE_TRACKER_H_

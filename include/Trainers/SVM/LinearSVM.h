@@ -146,6 +146,11 @@ namespace gezi {
 			return ss.str();
 		}
 
+		virtual LossKind GetLossKind() override
+		{
+			return LossKind::Hinge;
+		}
+
 		virtual void ParseArgs() override;
 		virtual void Init() override
 		{
@@ -289,6 +294,11 @@ namespace gezi {
 					//ProcessDataInstance(_currentInstance);
 					ProcessDataInstance(posInstance, negInstance);
 				}
+
+				if (_validating && ((iter + 1) % _testFrequency == 0 || iter + 1 == _args.numIterations))
+				{
+					Evaluate(iter + 1);
+				}
 			}
 		}
 
@@ -367,6 +377,18 @@ namespace gezi {
 					//_bias = _bias * normalizer; //@TODO tlc注释了这个？ sofia用统一向量 貌似都有*吧 需要看论文确认
 				}
 			}
+		}
+
+		//For validating trainer
+		virtual void GenPredicts() override
+		{
+			DoGenPredicts([&](InstancePtr instance) {
+				if (_normalizer != nullptr)
+				{//Train的时候做validating强制要求可以Normalize改变输入的Instances
+					_normalizer->Normalize(instance);
+				}
+				return Margin(instance->features);
+			});
 		}
 
 		/// Observe an example and update weights if necessary

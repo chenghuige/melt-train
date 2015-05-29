@@ -20,6 +20,7 @@ struct BinaryClassificationFastRankArguments : public FastRankArguments
 {
 	short smallestPositive = 1; //pos|The smallest HRS label that maps to a positive (default: 1)
 	bool unbalancedSets = false; //us|Should we use derivatives optimized for unbalanced sets
+	int maxCalibrationExamples = 1000000;
 };
 
 }  //----end of namespace gezi

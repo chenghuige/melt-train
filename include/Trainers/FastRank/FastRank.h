@@ -36,6 +36,7 @@ namespace gezi {
 	{
 	public:
 		Dataset TrainSet;
+		Instances* InputInstances = NULL;
 	public:
 		FastRank()
 		{
@@ -119,6 +120,18 @@ namespace gezi {
 			}
 			}*/
 
+		virtual PredictorPtr CreatePredictor() override
+		{
+			vector<Float> featureGainVec = _ensemble.ToGainVec(TrainSet.Features); //must before CreatePredictor for trees will move to predictor instead
+			vector<OnlineRegressionTree> trees = _ensemble.GetOnlineRegressionTrees();
+			auto predictor = CreatePredictor(trees);
+			predictor->SetFeatureNames(InputInstances->FeatureNames());
+			predictor->SetFeatureGainVec(move(featureGainVec));
+			return predictor;
+		}
+
+		virtual PredictorPtr CreatePredictor(vector<OnlineRegressionTree>& trees) = 0;
+
 		virtual void CustomizedTrainingIteration()
 		{
 
@@ -193,8 +206,18 @@ namespace gezi {
 				CustomizedTrainingIteration();
 				if (_validating && (_ensemble.NumTrees() % _testFrequency == 0 || _ensemble.NumTrees() == numTotalTrees))
 				{
-					std::cerr << "NumTrees: " << _ensemble.NumTrees() << " NumLeaves: " << _ensemble.Back().NumLeaves << std::endl;
-					Evaluate();
+					std::cerr << "Trees: " << _ensemble.NumTrees() << " Leaves: " << _ensemble.Back().NumLeaves << " |\n";
+					//if (_ensemble.NumTrees() == 197)
+					//{
+					//	FeatureNamesVector fnv(TrainSet.FeatureNames());
+					//	_ensemble.Back().SetFeatureNames(fnv);
+					//	//_ensemble.Back().SetFeatureNames(TrainSet.FeatureNames()); //注意错误！ 因为内部是指针 而临时变量析构了。。 野的指针了。。
+					//	std::cerr << "Print Instances\n";
+					//	_ensemble.Back().Print(_validationSets[0][1323]->features);
+					//	std::cerr << "Print DataSet\n";
+					//	_ensemble.Back().Print(TrainSet[1323]);
+					//}
+					Evaluate(_ensemble.NumTrees());
 				}
 				if (revertRandomStart)
 				{
@@ -220,9 +243,12 @@ namespace gezi {
 
 		void FeatureGainPrint(int level = 1)
 		{
-			VLOG(level) << "Per_feature_gain:\n" <<
-				_ensemble.ToGainSummary(TrainSet.Features, _args->maxFeaturesShow);
-			VLOG(level) << "Per_feature_gain_end";
+			if (VLOG_IS_ON(level))
+			{
+				std::cerr << "Per_feature_gain" << std::endl;
+				std::cerr << _ensemble.ToGainSummary(TrainSet.Features, _args->maxFeaturesShow);
+				std::cerr << "Per_feature_gain_end";
+			}
 		}
 
 		virtual void Train(Instances& instances) override
@@ -231,6 +257,7 @@ namespace gezi {
 			Finalize(instances);
 		}
 
+		//@TODO move to instances util
 		Instances GenPartionInstances(Instances& instances, Random& rand)
 		{
 			Instances partitionInstaces;
@@ -248,6 +275,7 @@ namespace gezi {
 		virtual void InnerTrain(Instances& instances) override
 		{
 			ParseArgs();
+			InputInstances = &instances;
 			if (_args->numBags == 1)
 			{
 				ConvertData(instances);
@@ -257,12 +285,12 @@ namespace gezi {
 			else
 			{
 				Random rand(_args->randSeed);
-				//如果每个内部只有一个树 随机森林 , @TODO 可并行
+				//如果每个内部只有一个树 随机森林 , @TODO 可并行  目前公用一个TrainSet TrainScores等等还不能并行
+				//当然也可以将bagging的支持移动到外围方便并行 统一ensemble框架即可
 				for (int i = 1; i <= _args->numBags; i++)
 				{
 					Instances partionInstances = GenPartionInstances(instances, rand);
-					Pval2_2(partionInstances.size(), (partionInstances.size() / (double)instances.size()));
-					ConvertData(partionInstances);
+					ConvertData(partionInstances); //modify TrainSet
 					Initialize(i);
 					TrainCore(i);
 				}
@@ -272,7 +300,8 @@ namespace gezi {
 
 		virtual OptimizationAlgorithmPtr ConstructOptimizationAlgorithm()
 		{ //Scores.back() is TrainingScores
-			_optimizationAlgorithm = make_shared<GradientDescent>(_ensemble, TrainSet, Scores.back(), MakeGradientWrapper());
+			//@TODO 这个构造函数里面的TrainScores其实没有用。。。
+			_optimizationAlgorithm = make_shared<GradientDescent>(_ensemble, TrainSet, TrainScores, MakeGradientWrapper());
 			//_optimizationAlgorithm->Initialize(TrainSet, Scores.back()); //move it after InitalizeTests hack!
 			_optimizationAlgorithm->TreeLearner = ConstructTreeLearner();
 			_optimizationAlgorithm->ObjectiveFunction = ConstructObjFunc();
@@ -281,14 +310,14 @@ namespace gezi {
 		}
 
 		ScoreTrackerPtr ConstructScoreTracker(const Instances& set, int index)
-		{
+		{ //如果bagging 后续再次调用 没有再生产新的ScoreTracer 而是在之前基础上继续
 			return _optimizationAlgorithm->GetScoreTracker(format("tes[{}]", index), _validationSets[index], Scores[index]);
 		}
 
 	protected:
 		void ConstructValidatingScoreTrackers()
 		{
-			for (int i = 0; i < _numValidationsExcludeSelf; i++)
+			for (int i = 0; i < _validationSets.size(); i++)
 			{
 				ConstructScoreTracker(_validationSets[i], i);
 			}
@@ -397,32 +426,19 @@ namespace gezi {
 			PrepareLabels();
 			_optimizationAlgorithm = ConstructOptimizationAlgorithm();
 			InitializeTests();
-			_optimizationAlgorithm->Initialize(TrainSet, Scores.back());
+			//gezi::zeroset(TrainScores); //对应Bagging 一上来就值不对了 是因为采样的原因。。 原因在于bagfraction 如果是1 ok
+			gezi::reset_vec(TrainScores, TrainSet.NumDocs, 0.0);
+			_optimizationAlgorithm->Initialize(TrainSet, TrainScores);
 		}
 
 		void Initialize(int step)
 		{
-			if (step == 1)
-			{
-				_rand = make_shared<Random>(random_engine(_args->randSeed));
-			}
-			else
+			if (step != 1)
 			{
 				_args->randSeed += step * 1024;
 			}
 
-			_activeFeatures.resize(TrainSet.Features.size(), true);
-			for (size_t i = 0; i < TrainSet.Features.size(); i++)
-			{
-				if (TrainSet.Features[i].NumBins() <= 1)
-				{
-					_activeFeatures[i] = false;
-				}
-			}
-
-			PrepareLabels();
-			_optimizationAlgorithm = ConstructOptimizationAlgorithm();
-			InitializeTests();
+			Initialize();
 		}
 
 		virtual void PrepareLabels() = 0;
@@ -486,12 +502,14 @@ namespace gezi {
 		//	}
 		//}
 
+		//@FIXME for bagging with sampling fraction might better use orginal TrainSet/InoputInstances and their tracing score
+		//如果没有validate 原始的Instance 可以再做一次计算？ ScoreTracker没有记录
 		Fvec& GetTrainSetScores()
 		{
-			return Scores.back();
+			return TrainScores;
 		}
 
-		virtual FastRankArgumentsPtr GetArguments() = 0;
+		virtual FastRankArgumentsPtr CreateArguments() = 0;
 	protected:
 		FastRankArgumentsPtr _args;
 
