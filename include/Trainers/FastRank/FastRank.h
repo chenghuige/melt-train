@@ -191,7 +191,8 @@ namespace gezi {
 			DocumentPartitioning currentOutOfBagPartition;
 			while (_ensemble.NumTrees() < numTotalTrees)
 			{
-				if (_args->numBags == 1 && _args->baggingSize != 0 && _ensemble.NumTrees() % _args->baggingSize == 0)
+				//if (_args->numBags == 1 && _args->baggingSize != 0 && _ensemble.NumTrees() % _args->baggingSize == 0)
+				if (_args->baggingSize != 0 && _ensemble.NumTrees() % _args->baggingSize == 0)
 				{
 					baggingProvider.GenPartion(_optimizationAlgorithm->TreeLearner->Partitioning, currentOutOfBagPartition);
 				}
@@ -199,7 +200,8 @@ namespace gezi {
 				BitArray activeFeatures;
 				BitArray* pactiveFeatures = GetActiveFeatures(activeFeatures);
 				_optimizationAlgorithm->TrainingIteration(*pactiveFeatures);
-				if (_args->numBags == 1 && _args->baggingSize > 0)
+				//if (_args->numBags == 1 && _args->baggingSize > 0)
+				if (_args->baggingSize > 0)
 				{
 					_ensemble.LastTree().AddOutputsToScores(*_optimizationAlgorithm->TrainingScores->Dataset,
 						_optimizationAlgorithm->TrainingScores->Scores,
@@ -264,13 +266,14 @@ namespace gezi {
 			else
 			{
 				Random rand(_args->randSeed);
-				//如果每个内部只有一个树 随机森林 , @TODO 可并行  目前公用一个TrainSet TrainScores等等还不能并行
-				//当然也可以将bagging的支持移动到外围方便并行 统一ensemble框架即可
+				//如果每个内部只有一个树 随机森林 , @TODO可并行  目前公用一个TrainSet TrainScores等等还不能并行
+				//当然也可以将bagging的支持移动到外围方便并行 统一ensemble框架即可 @TODO
+				//使用rabit每个机器运行一个 @TODO
 				for (int i = 1; i <= _args->numBags; i++)
 				{
 					Instances partionInstances = _args->boostStrap ?
 						InstancesUtil::GenBootstrapInstances(instances, rand, _args->bootStrapFraction) :
-						InstancesUtil::GenPartionInstances(instances, rand, _args->baggingTrainFraction);
+						InstancesUtil::GenPartionInstances(instances, rand, _args->nbaggingTrainFraction);
 					ValidatingTrainer::SetSelfEvaluateInstances(partionInstances);
 					ConvertData(partionInstances); //modify TrainSet
 					Initialize(i);

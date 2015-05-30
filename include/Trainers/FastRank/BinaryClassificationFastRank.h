@@ -62,23 +62,23 @@ namespace gezi {
 					{
 						_calibrator->Train(TrainScores, TrainSetLabels, TrainSet.SampleWeights);
 					}
-					else if(_selfEvaluate)
-                                        {
-                                                for (auto& item : Scores.back())
-                                                {
-                                                    item /= (double)_args->numBags;
-                                                }
-                                                _calibrator->Train(Scores.back(), *InputInstances);
-                                        }
-                                        else
+					else if (_selfEvaluate)
+					{
+						for (auto& item : Scores.back())
+						{
+							item /= (double)_args->numBags;
+						}
+						_calibrator->Train(Scores.back(), *InputInstances);
+					}
+					else
 					{
 						_calibrator->Train(*InputInstances,
 							[&](InstancePtr instance) { return _ensemble.GetOutput(instance); },
 							_args->maxCalibrationExamples);
-							/*((BinaryClassificationFastRankArguments*)(_args.get()))->maxCalibrationExamples);*/
-							/*			include / c++ / 4.8.2 / bits / shared_ptr.h:449 : 50 : error : cannot dynamic_cast '(& __r)->std::shared_ptr<gezi::FastRankArguments>::<anonymous>.std::__shared_ptr<_Tp, _Lp>::get<gezi::FastRankArguments, (__gnu_cxx::_Lock_policy)2u>()' (of type 'struct gezi::FastRankArguments*') to type 'struct gezi::BinaryClassificationFastRankArguments*' (source type is not polymorphic)
-										if (_Tp* __p = dynamic_cast<_Tp*>(__r.get()))*/
-										//dynamic_pointer_cast<BinaryClassificationFastRankArguments>(_args)->maxCalibrationExamples);
+						/*((BinaryClassificationFastRankArguments*)(_args.get()))->maxCalibrationExamples);*/
+						/*			include / c++ / 4.8.2 / bits / shared_ptr.h:449 : 50 : error : cannot dynamic_cast '(& __r)->std::shared_ptr<gezi::FastRankArguments>::<anonymous>.std::__shared_ptr<_Tp, _Lp>::get<gezi::FastRankArguments, (__gnu_cxx::_Lock_policy)2u>()' (of type 'struct gezi::FastRankArguments*') to type 'struct gezi::BinaryClassificationFastRankArguments*' (source type is not polymorphic)
+									if (_Tp* __p = dynamic_cast<_Tp*>(__r.get()))*/
+						//dynamic_pointer_cast<BinaryClassificationFastRankArguments>(_args)->maxCalibrationExamples);
 					}
 				}
 			}
@@ -105,7 +105,7 @@ namespace gezi {
 		{
 			/*return make_shared<BinaryClassificationObjectiveFunction>(TrainSet, TrainSetLabels, *(dynamic_pointer_cast<BinaryClassificationFastRankArguments>(_args)));*/
 
-	/*		return make_shared<BinaryClassificationObjectiveFunction>(TrainSet, TrainSetLabels, *(((BinaryClassificationFastRankArguments*)(_args.get()))));*/
+			/*		return make_shared<BinaryClassificationObjectiveFunction>(TrainSet, TrainSetLabels, *(((BinaryClassificationFastRankArguments*)(_args.get()))));*/
 			return make_shared<BinaryClassificationObjectiveFunction>(TrainSet, TrainSetLabels, *_args);
 		}
 
