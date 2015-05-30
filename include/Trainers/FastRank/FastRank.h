@@ -270,7 +270,7 @@ namespace gezi {
 				//当然也可以将bagging的支持移动到外围方便并行 统一ensemble框架即可 @TODO
 				//使用rabit每个机器运行一个 @TODO
 				for (int i = 1; i <= _args->numBags; i++)
-				{
+				{//boostStrap貌似效果不好没什么用处
 					Instances partionInstances = _args->boostStrap ?
 						InstancesUtil::GenBootstrapInstances(instances, rand, _args->bootStrapFraction) :
 						InstancesUtil::GenPartionInstances(instances, rand, _args->nbaggingTrainFraction);
