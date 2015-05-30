@@ -1,0 +1,1 @@
+保留使用toolchain动态的用法 因为mpi集群还是gcc3环境

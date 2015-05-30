@@ -154,7 +154,7 @@ CCP_FLAGS=
 
 
 #COMAKE UUID
-COMAKE_MD5=a26e249db8c8b4b803bb62e43d720960  COMAKE
+COMAKE_MD5=83aebef84a80655af110d98bff88c61c  COMAKE
 
 
 .PHONY:all
@@ -183,6 +183,7 @@ clean:ccpclean
 	rm -rf melt
 	rm -rf ./output/bin/melt
 	rm -rf melt_melt.o
+	rm -rf ../src/Trainers/melt_EnsembleTrainer.o
 	rm -rf ../src/Trainers/melt_FastRank.o
 	rm -rf ../src/Trainers/melt_LibLinearTrainer.o
 	rm -rf ../src/Trainers/melt_LibSVMTrainer.o
@@ -212,9 +213,10 @@ love:
 
 .copy-so:
 	@echo "[[1;32;40mCOMAKE:BUILD[0m][Target:'[1;32;40m.copy-so[0m']"
-	ln -s ../../../../../../ps/se/toolchain/x86_64-unknown-linux-gnu-4.8.1-2.9-2.20-2.6.32/x86_64-unknown-linux-gnu/lib//ld-linux-x86-64.so.2 ld-linux-x86-64.so.2
+	ln -s ../../../../../../ps/se/toolchain/x86_64-unknown-linux-gnu-4.8.1-2.9-2.20-2.6.32./lib//ld-linux-x86-64.so.2 ld-linux-x86-64.so.2
 
 melt:melt_melt.o \
+  ../src/Trainers/melt_EnsembleTrainer.o \
   ../src/Trainers/melt_FastRank.o \
   ../src/Trainers/melt_LibLinearTrainer.o \
   ../src/Trainers/melt_LibSVMTrainer.o \
@@ -226,6 +228,7 @@ melt:melt_melt.o \
   ../src/Trainers/melt_VWTrainer.o
 	@echo "[[1;32;40mCOMAKE:BUILD[0m][Target:'[1;32;40mmelt[0m']"
 	$(CXX) melt_melt.o \
+  ../src/Trainers/melt_EnsembleTrainer.o \
   ../src/Trainers/melt_FastRank.o \
   ../src/Trainers/melt_LibLinearTrainer.o \
   ../src/Trainers/melt_LibSVMTrainer.o \
@@ -322,16 +325,19 @@ melt:melt_melt.o \
   -rdynamic \
   -lgomp \
   -rdynamic \
-  -Wl,-rpath=../../../../../../ps/se/toolchain/x86_64-unknown-linux-gnu-4.8.1-2.9-2.20-2.6.32/x86_64-unknown-linux-gnu/lib/ \
-  -lgomp \
+  -Wl,-rpath=./lib/ \
   -Wl,--dynamic-linker=./ld-linux-x86-64.so.2 \
-  -L../../../../../../ps/se/toolchain/x86_64-unknown-linux-gnu-4.8.1-2.9-2.20-2.6.32/x86_64-unknown-linux-gnu/lib/ -Xlinker "-)" -o melt
+  -L../../../../../../ps/se/toolchain/x86_64-unknown-linux-gnu-4.8.1-2.9-2.20-2.6.32./lib/ -Xlinker "-)" -o melt
 	mkdir -p ./output/bin
 	cp -f --link melt ./output/bin
 
 melt_melt.o:melt.cc
 	@echo "[[1;32;40mCOMAKE:BUILD[0m][Target:'[1;32;40mmelt_melt.o[0m']"
 	$(CXX) -c $(INCPATH) $(DEP_INCPATH) $(CPPFLAGS) $(CXXFLAGS)  -o melt_melt.o melt.cc
+
+../src/Trainers/melt_EnsembleTrainer.o:../src/Trainers/EnsembleTrainer.cpp
+	@echo "[[1;32;40mCOMAKE:BUILD[0m][Target:'[1;32;40m../src/Trainers/melt_EnsembleTrainer.o[0m']"
+	$(CXX) -c $(INCPATH) $(DEP_INCPATH) $(CPPFLAGS) $(CXXFLAGS)  -o ../src/Trainers/melt_EnsembleTrainer.o ../src/Trainers/EnsembleTrainer.cpp
 
 ../src/Trainers/melt_FastRank.o:../src/Trainers/FastRank.cpp
 	@echo "[[1;32;40mCOMAKE:BUILD[0m][Target:'[1;32;40m../src/Trainers/melt_FastRank.o[0m']"
