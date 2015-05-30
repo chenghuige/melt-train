@@ -93,7 +93,7 @@ namespace gezi {
 		_pFeatureSpace->name = 'a';
 		if (instances[0]->line.empty())
 		{
-			_pFeatureSpace->fs = new feature[instances.NumFeatures()];
+			_pFeatureSpace->fs = new feature[instances.NumFeatures()]; //@FIXME where delete ?
 		}
 	}
 

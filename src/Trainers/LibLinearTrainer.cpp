@@ -227,7 +227,8 @@ namespace gezi {
 		elements = 0;
 		for (InstancePtr instance : instances)
 		{
-			elements += instance->features.NumNonZeros();
+			//elements += instance->features.NumNonZeros(); //没太大必要吧，直接都用Count就好了吧 更安全
+			elements += instance->features.Count();
 			elements++; //for bias
 			prob.l++;
 		}
@@ -236,7 +237,7 @@ namespace gezi {
 		prob.y = Malloc(double, prob.l);
 		prob.x = Malloc(struct feature_node *, prob.l);
 		x_space = Malloc(struct feature_node, elements + prob.l); // = prob.l for end index of -1
-
+		//Pval3(elements, prob.l, (elements + prob.l));
 		max_index = 0;
 		j = 0;
 		for (i = 0; i < prob.l; i++)
@@ -246,6 +247,7 @@ namespace gezi {
 			prob.y[i] = instances[i]->label;
 
 			instances[i]->features.ForEachNonZero([&](int index, Float value) { 
+				//CHECK_LT(j, elements + prob.l) << i;
 				x_space[j].index = index + 1;
 				if (x_space[j].index > inst_max_index)
 				{

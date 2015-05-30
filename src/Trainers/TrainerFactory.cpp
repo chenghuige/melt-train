@@ -133,6 +133,10 @@ namespace gezi {
 			VLOG(0) << "Creating LibSVM trainer";
 			return make_shared<LibSVMTrainer>();
 			break;
+		case TrainerType::Ensemble:
+			VLOG(0) << "Creating ensemble trainer";
+			return make_shared<EnsembleTrainer>();
+			break;
 			//----------------------Regression
 		case  TrainerType::FastRankRegression:
 			VLOG(0) << "Creating FastRank/GBDT trainer for regression";

@@ -229,7 +229,8 @@ namespace gezi {
 		elements = 0;
 		for (InstancePtr instance : instances)
 		{
-			elements += instance->features.NumNonZeros();
+			//elements += instance->features.NumNonZeros();
+			elements += instance->features.Count();
 			elements++; //for end index of -1
 			prob.l++;
 		}
