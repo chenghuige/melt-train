@@ -15,7 +15,8 @@
 #define TRAINERS__ENSEMBLE_TRAINER_H_
 
 #include "MLCore/Trainer.h"
-#include "Predictors/RandomPredictor.h"
+#include "MLCore/TrainerFactory.h"
+#include "Predictors/EnsemblePredictor.h"
 namespace gezi {
 
 	//当前先只考虑多个相同类型的分类器训练，主要问题解析命令行的设计 都是按照运行时候只有一个tranier设计 多个可能冲突 @TODO
@@ -24,11 +25,30 @@ namespace gezi {
 	public:
 		virtual PredictorPtr CreatePredictor() override
 		{
-			return make_shared<RandomPredictor>();
+			vector<PredictorPtr> predictors;
+			for (auto& trainer : _trainers)
+			{
+				predictors.push_back(trainer->CreatePredictor());
+			}
+			return make_shared<EnsemblePredictor>(move(predictors));
+		}
+
+	protected:
+		virtual void Init()
+		{
+			for (size_t i = 0; i < _trainerNames.size(); i++)
+			{
+				for (int j = 0; j < _numTrainers[i]; j++)
+				{
+					_trainers.push_back(TrainerFactory::CreateTrainer(_trainerNames[i]));
+				}
+			}
 		}
 	protected:
+		vector<string> _trainerNames;  //有几种trainer
+		vector<int> _numTrainers; //每种trainer的数目
+		vector<TrainerPtr> _trainers;
 	private:
-
 	};
 
 }  //----end of namespace gezi
