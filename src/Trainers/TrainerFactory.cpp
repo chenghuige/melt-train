@@ -10,58 +10,58 @@
 #include "Trainers/EnsembleTrainer.h"
 #include "Trainers/FastRank/RegressionFastRank.h"
 namespace gezi {
-
-	enum class TrainerType
-	{
-		Unknown,
-		//----------------------Binary Classification
-		Random,
-		LinearSVM,
-		BaseLineLinearSVM,
-		FastRankBinaryClassification,
-		LogisticRegression,
-		RandomForest,
-		DecisionTree,
-		KernalSVM,
-		BinaryNeuralNetwork,
-		VW,
-		Sofia,
-		LibLinear,
-		LibSVM,
-		Ensemble,
-		//----------------------Regression
-		FastRankRegression,
-	};
-	//TrainerFactory的另外一种设计方式是每个Trainer自己处理 而不是统一放到这个cpp, 这样这里不需要应用这么多.h 利用类似REGISTER(NAME,TYPE)的方式,
-	//存储到map<string,TrainerPtr>中  map是个好东西
-	//http://stackoverflow.com/questions/4357500/c-abstract-factory-using-templates
-	//https://gist.github.com/pkrusche/5501253
-	//http://www.mass-communicating.com/code/2013/05/01/generic_factories_cpp.html
-	//这样每个Trainer需要一个.cpp来 register 如果编译的时候去掉这个cpp 那么 就等于没有注册  但是这样一种类型的Trainer只能有一个实例？
-	//这个模式可以进一步泛化 使用模板类统一表述
-	map<string, TrainerType> _trainerTypes
-	{
-		//----------------------Binary Classification
-		{ "random", TrainerType::Random },
-		{ "baselinelinearsvm", TrainerType::BaseLineLinearSVM },
-		{ "baselinesvm", TrainerType::BaseLineLinearSVM },
-		{ "linearsvm", TrainerType::LinearSVM },
-		{ "svm", TrainerType::LinearSVM },
-		{ "fastrank", TrainerType::FastRankBinaryClassification },
-		{ "gbdt", TrainerType::FastRankBinaryClassification },
-		{ "fr", TrainerType::FastRankBinaryClassification },
-		{ "vw", TrainerType::VW },
-		{ "sofia", TrainerType::Sofia },
-		{ "liblinear", TrainerType::LibLinear },
-		{ "libsvm", TrainerType::LibSVM },
-		{ "ensemble", TrainerType::Ensemble },
-		//----------------------Regression
-		{ "fastrankregression", TrainerType::FastRankRegression },
-		{ "gbdtregression", TrainerType::FastRankRegression },
-		{ "frr", TrainerType::FastRankRegression },
-		{ "gbrt", TrainerType::FastRankRegression },
-	};
-
+	namespace {
+		enum class TrainerType
+		{
+			Unknown,
+			//----------------------Binary Classification
+			Random,
+			LinearSVM,
+			BaseLineLinearSVM,
+			FastRankBinaryClassification,
+			LogisticRegression,
+			RandomForest,
+			DecisionTree,
+			KernalSVM,
+			BinaryNeuralNetwork,
+			VW,
+			Sofia,
+			LibLinear,
+			LibSVM,
+			Ensemble,
+			//----------------------Regression
+			FastRankRegression,
+		};
+		//TrainerFactory的另外一种设计方式是每个Trainer自己处理 而不是统一放到这个cpp, 这样这里不需要应用这么多.h 利用类似REGISTER(NAME,TYPE)的方式,
+		//存储到map<string,TrainerPtr>中  map是个好东西
+		//http://stackoverflow.com/questions/4357500/c-abstract-factory-using-templates
+		//https://gist.github.com/pkrusche/5501253
+		//http://www.mass-communicating.com/code/2013/05/01/generic_factories_cpp.html
+		//这样每个Trainer需要一个.cpp来 register 如果编译的时候去掉这个cpp 那么 就等于没有注册  但是这样一种类型的Trainer只能有一个实例？
+		//这个模式可以进一步泛化 使用模板类统一表述
+		map<string, TrainerType> _trainerTypes
+		{
+			//----------------------Binary Classification
+			{ "random", TrainerType::Random },
+			{ "baselinelinearsvm", TrainerType::BaseLineLinearSVM },
+			{ "baselinesvm", TrainerType::BaseLineLinearSVM },
+			{ "linearsvm", TrainerType::LinearSVM },
+			{ "svm", TrainerType::LinearSVM },
+			{ "fastrank", TrainerType::FastRankBinaryClassification },
+			{ "gbdt", TrainerType::FastRankBinaryClassification },
+			{ "fr", TrainerType::FastRankBinaryClassification },
+			{ "vw", TrainerType::VW },
+			{ "sofia", TrainerType::Sofia },
+			{ "liblinear", TrainerType::LibLinear },
+			{ "libsvm", TrainerType::LibSVM },
+			{ "ensemble", TrainerType::Ensemble },
+			//----------------------Regression
+			{ "fastrankregression", TrainerType::FastRankRegression },
+			{ "gbdtregression", TrainerType::FastRankRegression },
+			{ "frr", TrainerType::FastRankRegression },
+			{ "gbrt", TrainerType::FastRankRegression },
+		};
+	} //------------- anoymous namespace
 	void TrainerFactory::PrintTrainersInfo()
 	{
 		VLOG(0) << "---BinaryClassification Trainers";
@@ -149,7 +149,6 @@ namespace gezi {
 		LOG(WARNING) << name << " is not supported now, return nullptr";
 		return nullptr;
 	}
-
 
 }  //----end of namespace gezi
 

@@ -113,7 +113,7 @@ namespace gezi {
 		}
 
 
-		_args->randomStart = FLAGS_rs;
+		_args->randomStart = FLAGS_rstart;
 
 		_args->maxFeaturesShow = FLAGS_maxfs;
 	}
