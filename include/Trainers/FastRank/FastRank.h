@@ -208,9 +208,9 @@ namespace gezi {
 						currentOutOfBagPartition.Documents());
 				}
 				CustomizedTrainingIteration();
-				if (_validating && (_ensemble.NumTrees() % _testFrequency == 0 || _ensemble.NumTrees() == numTotalTrees))
+				if (_validating && (_ensemble.NumTrees() % _evaluateFrequency == 0 || _ensemble.NumTrees() == numTotalTrees))
 				{
-					std::cerr << "Trees: " << _ensemble.NumTrees() << " Leaves: " << _ensemble.Back().NumLeaves << " |\n";
+					std::cerr << "Trees: " << _ensemble.NumTrees() << " Leaves: " << _ensemble.Back().NumLeaves << " \n";
 					//if (_ensemble.NumTrees() == 197)
 					//{
 					//	FeatureNamesVector fnv(TrainSet.FeatureNames());
@@ -221,7 +221,10 @@ namespace gezi {
 					//	std::cerr << "Print DataSet\n";
 					//	_ensemble.Back().Print(TrainSet[1323]);
 					//}
-					Evaluate(_ensemble.NumTrees());
+				}
+				if (Evaluate(_ensemble.NumTrees(), _ensemble.NumTrees() == numTotalTrees))
+				{
+					break;
 				}
 				if (revertRandomStart)
 				{
@@ -249,6 +252,7 @@ namespace gezi {
 
 		virtual void Train(Instances& instances) override
 		{
+			VLOG(5) << "Train in gbdt";
 			InnerTrain(instances);
 			Finalize(instances);
 		}
@@ -392,11 +396,11 @@ namespace gezi {
 		virtual int GetBestIteration()
 		{
 			int bestIteration = _ensemble.NumTrees();
-			//@TODO
-			/*if (!cmd.writeLastEnsemble && (EarlyStoppingTest != null))
+			if (_earlyStop)
 			{
-			bestIteration = EarlyStoppingTest.BestIteration;
-			}*/
+				bestIteration = ValidatingTrainer::BestIteration();
+				VLOG(0) << "Final tree num will be " << bestIteration;
+			}
 			return bestIteration;
 		}
 

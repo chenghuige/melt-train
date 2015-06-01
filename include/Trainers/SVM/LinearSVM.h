@@ -294,10 +294,9 @@ namespace gezi {
 					//ProcessDataInstance(_currentInstance);
 					ProcessDataInstance(posInstance, negInstance);
 				}
-
-				if (_validating && ((iter + 1) % _testFrequency == 0 || iter + 1 == _args.numIterations))
+				if (Evaluate(iter + 1, iter + 1 == _args.numIterations))
 				{
-					Evaluate(iter + 1);
+					break;
 				}
 			}
 		}
