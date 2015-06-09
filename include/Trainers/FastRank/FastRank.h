@@ -222,7 +222,7 @@ namespace gezi {
 					//	_ensemble.Back().Print(TrainSet[1323]);
 					//}
 				}
-				if (Evaluate(_ensemble.NumTrees(), _ensemble.NumTrees() == numTotalTrees))
+				if (ValidatingTrainer::Evaluate(_ensemble.NumTrees(), _ensemble.NumTrees() == numTotalTrees))
 				{
 					break;
 				}
@@ -396,7 +396,7 @@ namespace gezi {
 		virtual int GetBestIteration()
 		{
 			int bestIteration = _ensemble.NumTrees();
-			if (_earlyStop)
+			if (_earlyStop && _useBestStage)
 			{
 				bestIteration = ValidatingTrainer::BestIteration();
 				VLOG(0) << "Final tree num will be " << bestIteration;

@@ -294,7 +294,7 @@ namespace gezi {
 					//ProcessDataInstance(_currentInstance);
 					ProcessDataInstance(posInstance, negInstance);
 				}
-				if (Evaluate(iter + 1, iter + 1 == _args.numIterations))
+				if (ValidatingTrainer::Evaluate(iter + 1, iter + 1 == _args.numIterations))
 				{
 					break;
 				}
@@ -594,6 +594,18 @@ namespace gezi {
 			ScaleWeightsSampled();
 		}
 
+		virtual void StoreBestStage()
+		{
+			_bestWeights = _weights;
+			_bestBias = _bias;
+		}
+
+		virtual void RestoreBestStage()
+		{
+			_weights = _bestWeights;
+			_bias = _bestBias;
+		}
+
 	private:
 		Arguments _args;
 
@@ -605,6 +617,10 @@ namespace gezi {
 		/// TODO: Note, I changed this also to mean the averaged bias. Should probably have two functions to
 		///  make explicit whether you want the averaged or last bias. Same for weights.
 		Float _bias = 0.; //应该是0,这里只是<f,w>+bias 可以去掉显示bias融合到f或者w(liblinear在f最后添加bias,而sofia选择w的0位置放置bias)
+
+		//--------for early stop
+		WeightVector _bestWeights;
+		Float _bestBias;
 
 		int _sampleSize = 1;
 

@@ -18,6 +18,7 @@
 #include "MLCore/TrainerFactory.h"
 #include "Predictors/EnsemblePredictor.h"
 #include "Prediction/Instances/instances_util.h"
+#include "rabit_util.h"
 DECLARE_uint64(rs);
 namespace gezi {
 
@@ -36,52 +37,68 @@ namespace gezi {
 		//@TODO 采样需要别的方法吗 比如不放回随机的随机分给几个trainer 感觉没啥用
 		virtual void Train(Instances& instances)  override
 		{
-                        VLOG(5) << "Ensemble train"; 
 			Init();
-                        Random rand(_randSeed);
 			for (size_t i = 0; i < _trainers.size(); i++)
 			{
-                                VLOG(2) << "Ensemble train with trainer " << i;
-				Instances partionInstances = InstancesUtil::GenPartionInstances(instances, rand, _sampleRate);
-				_trainers[i]->Train(partionInstances); //@TODO 也可以考虑内部trainer也validate Train(instance, {}, {}),似乎意义不大
-                                _predictors.push_back(_trainers[i]->CreatePredictor());
-                                ValidatingTrainer::SetScale(i + 1);
-                                ValidatingTrainer::Evaluate(i + 1);
+				if (!Rabit::Choose(i))
+				{
+					continue;
+				}
+				VLOG(0) << "Ensemble train with trainer " << i << " rank " << rabit::GetRank();
+				Random rand(_trainers[i]->GetRandSeed());
+
+				Instances partionInstances = _bootStrap ?
+					InstancesUtil::GenBootstrapInstances(instances, rand, _sampleRate) :
+					InstancesUtil::GenPartionInstances(instances, rand, _sampleRate);
+
+				//@TODO 也可以考虑内部trainer也validate Train(instance, {}, {}),似乎意义不大 
+				_trainers[i]->Train(partionInstances);
+				_predictors[i] = _trainers[i]->CreatePredictor();
+
+				ValidatingTrainer::SetScale(i + 1);
+				if (ValidatingTrainer::Evaluate(i + 1, true))
+				{
+					break;
+				}
+			}
+			if (rabit::GetWorldSize() > 1)
+			{
+				Rabit::Broadcast(_predictors);
 			}
 			Finalize(instances);
 		}
 
 		virtual void GenPredicts() override
-                {
-                    DoAddPredicts([&](InstancePtr instance) {
-                            return _predictors.back()->Output(instance);
-                        });
-                }
+		{
+			DoAddPredicts([&](InstancePtr instance) {
+				return _predictors[_round - 1]->Output(instance);
+			});
+		}
 
 		virtual void Finalize(Instances& instances) override
 		{
 			if (_calibrator != nullptr)
 			{
-				VLOG(0) << "Calirate once for the final ensemble model";
-                                if (!_selfEvaluate)
-                                {
-                                    VLOG(0) << "Normal calibrate for all instances";
-				    _calibrator->Train(instances, [this](InstancePtr instance) {
-					return Margin(instance); },
-                                        _maxCalibrationExamples); 
-			        }
-                                else 
-                                {
-                                    VLOG(0) << "Quick calibrate since has done self evaluate";
-                                    for (auto& item : Scores.back())
-                                    {
-                                        item /= (double)_predictors.size();    
-                                    }
-                                    _calibrator->Train(Scores.back(), instances);    
-                                }
-		        } 
-                
-                }
+				VLOG(0) << "Calibrate once for the final ensemble model";
+				if (!_selfEvaluate)
+				{
+					VLOG(0) << "Normal calibrate for all instances";
+					_calibrator->Train(instances, [this](InstancePtr instance) {
+						return Margin(instance); },
+							_maxCalibrationExamples);
+				}
+				else
+				{
+					VLOG(0) << "Quick calibrate since has done self evaluate";
+					for (auto& item : Scores.back())
+					{
+						item /= (double)_predictors.size();
+					}
+					_calibrator->Train(Scores.back(), instances);
+				}
+			}
+
+		}
 
 	protected:
 		virtual void Init()
@@ -91,16 +108,18 @@ namespace gezi {
 			{
 				for (int j = 0; j < _numTrainers[i]; j++)
 				{
-                                        FLAGS_rs += 1024; //确保每隔一trainer的起始randseed不同
 					_trainers.push_back(TrainerFactory::CreateTrainer(_trainerNames[i]));
+					_trainers.back()->SetRandSeed(FLAGS_rs);
+					FLAGS_rs += 1024; //确保每隔一trainer的起始randseed不同
 				}
 			}
+			_predictors.resize(_trainers.size(), nullptr);
 		}
 
 		virtual Float Margin(InstancePtr instance)
 		{
 			double output = 0;
-//#pragma omp parallel for reduction(+: output)
+			//#pragma omp parallel for reduction(+: output)
 			for (size_t i = 0; i < _predictors.size(); i++)
 			{
 				output += _predictors[i]->Output(instance);
@@ -114,11 +133,13 @@ namespace gezi {
 
 		double _sampleRate = 0.7;
 		size_t _maxCalibrationExamples = 1000000;
-                unsigned _randSeed = 0x7b;
+		unsigned _randSeed = 0x7b;
+
+		bool _bootStrap = false;
 
 		vector<PredictorPtr> _predictors;
 	private:
-    };
+	};
 
 }  //----end of namespace gezi
 
