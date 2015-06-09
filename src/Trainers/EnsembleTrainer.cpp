@@ -19,6 +19,9 @@
 DEFINE_string(trainers, "gbdt", "trainerNames|like gbdt,linearsvm");
 DEFINE_string(numTrainers, "5", "numTrainers|like 2,1, with -trainer gbdt,linearsvm means train 2 gbdt and 1 linearsvm");
 DEFINE_double(srate, 0.7, "sampleRate|replace sampling rate");
+
+DECLARE_bool(bstrap);
+
 DECLARE_uint64(rs);
 DECLARE_uint64(numCali);
 DECLARE_bool(calibrate);
@@ -35,6 +38,8 @@ namespace gezi {
 		_rand = make_shared<Random>(random_engine(FLAGS_rs));
 		_randSeed = FLAGS_rs;
 		_maxCalibrationExamples = FLAGS_numCali;
+
+		_bootStrap = FLAGS_bstrap;
 
 		if (_trainerNames.size() == 1)
 		{
