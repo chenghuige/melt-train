@@ -83,6 +83,10 @@ DEP_INCPATH=-I../../../../../../app/search/sep/anti-spam/gezi \
   -I../../../../../../lib2-64/wordseg/include \
   -I../../../../../../lib2-64/wordseg/output \
   -I../../../../../../lib2-64/wordseg/output/include \
+  -I../../../../../../other/rabit \
+  -I../../../../../../other/rabit/include \
+  -I../../../../../../other/rabit/output \
+  -I../../../../../../other/rabit/output/include \
   -I../../../../../../public/comlog-plugin \
   -I../../../../../../public/comlog-plugin/include \
   -I../../../../../../public/comlog-plugin/output \
@@ -154,11 +158,11 @@ CCP_FLAGS=
 
 
 #COMAKE UUID
-COMAKE_MD5=83aebef84a80655af110d98bff88c61c  COMAKE
+COMAKE_MD5=f447e6e3659d00dd4d078d9765884b70  COMAKE
 
 
 .PHONY:all
-all:comake2_makefile_check .copy-so melt 
+all:comake2_makefile_check .copy-so melt test_openmp hello 
 	@echo "[[1;32;40mCOMAKE:BUILD[0m][Target:'[1;32;40mall[0m']"
 	@echo "make all done"
 
@@ -182,6 +186,10 @@ clean:ccpclean
 	rm -rf ld-linux-x86-64.so.2
 	rm -rf melt
 	rm -rf ./output/bin/melt
+	rm -rf test_openmp
+	rm -rf ./bin/test_openmp
+	rm -rf hello
+	rm -rf ./output/bin/hello
 	rm -rf melt_melt.o
 	rm -rf ../src/Trainers/melt_EnsembleTrainer.o
 	rm -rf ../src/Trainers/melt_FastRank.o
@@ -193,6 +201,18 @@ clean:ccpclean
 	rm -rf ../src/Trainers/melt_Trainer.o
 	rm -rf ../src/Trainers/melt_TrainerFactory.o
 	rm -rf ../src/Trainers/melt_VWTrainer.o
+	rm -rf test_openmp_test_openmp.o
+	rm -rf ../src/Trainers/test_openmp_EnsembleTrainer.o
+	rm -rf ../src/Trainers/test_openmp_FastRank.o
+	rm -rf ../src/Trainers/test_openmp_LibLinearTrainer.o
+	rm -rf ../src/Trainers/test_openmp_LibSVMTrainer.o
+	rm -rf ../src/Trainers/test_openmp_LinearSVM.o
+	rm -rf ../src/Trainers/test_openmp_SofiaTrainer.o
+	rm -rf ../src/Trainers/test_openmp_ThirdTrainer.o
+	rm -rf ../src/Trainers/test_openmp_Trainer.o
+	rm -rf ../src/Trainers/test_openmp_TrainerFactory.o
+	rm -rf ../src/Trainers/test_openmp_VWTrainer.o
+	rm -rf hello_hello.o
 
 .PHONY:dist
 dist:
@@ -213,7 +233,7 @@ love:
 
 .copy-so:
 	@echo "[[1;32;40mCOMAKE:BUILD[0m][Target:'[1;32;40m.copy-so[0m']"
-	ln -s ../../../../../../ps/se/toolchain/x86_64-unknown-linux-gnu-4.8.1-2.9-2.20-2.6.32./lib//ld-linux-x86-64.so.2 ld-linux-x86-64.so.2
+	cp ../../../../../../ps/se/toolchain/x86_64-unknown-linux-gnu-4.8.1-2.9-2.20-2.6.32./lib//ld-linux-x86-64.so.2 ld-linux-x86-64.so.2
 
 melt:melt_melt.o \
   ../src/Trainers/melt_EnsembleTrainer.o \
@@ -268,6 +288,9 @@ melt:melt_melt.o \
   ../../../../../../lib2-64/postag/lib/libpostag.a \
   ../../../../../../lib2-64/ullib/lib/libullib.a \
   ../../../../../../lib2-64/wordseg/libsegment.a \
+  ../../../../../../other/rabit/lib/librabit.a \
+  ../../../../../../other/rabit/lib/librabit_base.a \
+  ../../../../../../other/rabit/lib/librabit_mock.a \
   ../../../../../../public/comlog-plugin/libcomlog.a \
   ../../../../../../public/comlog-plugin/output/lib/libdfsappender.a \
   ../../../../../../public/configure/libconfig.a \
@@ -331,6 +354,224 @@ melt:melt_melt.o \
 	mkdir -p ./output/bin
 	cp -f --link melt ./output/bin
 
+test_openmp:test_openmp_test_openmp.o \
+  ../src/Trainers/test_openmp_EnsembleTrainer.o \
+  ../src/Trainers/test_openmp_FastRank.o \
+  ../src/Trainers/test_openmp_LibLinearTrainer.o \
+  ../src/Trainers/test_openmp_LibSVMTrainer.o \
+  ../src/Trainers/test_openmp_LinearSVM.o \
+  ../src/Trainers/test_openmp_SofiaTrainer.o \
+  ../src/Trainers/test_openmp_ThirdTrainer.o \
+  ../src/Trainers/test_openmp_Trainer.o \
+  ../src/Trainers/test_openmp_TrainerFactory.o \
+  ../src/Trainers/test_openmp_VWTrainer.o
+	@echo "[[1;32;40mCOMAKE:BUILD[0m][Target:'[1;32;40mtest_openmp[0m']"
+	$(CXX) test_openmp_test_openmp.o \
+  ../src/Trainers/test_openmp_EnsembleTrainer.o \
+  ../src/Trainers/test_openmp_FastRank.o \
+  ../src/Trainers/test_openmp_LibLinearTrainer.o \
+  ../src/Trainers/test_openmp_LibSVMTrainer.o \
+  ../src/Trainers/test_openmp_LinearSVM.o \
+  ../src/Trainers/test_openmp_SofiaTrainer.o \
+  ../src/Trainers/test_openmp_ThirdTrainer.o \
+  ../src/Trainers/test_openmp_Trainer.o \
+  ../src/Trainers/test_openmp_TrainerFactory.o \
+  ../src/Trainers/test_openmp_VWTrainer.o -Xlinker "-("  ../../../../../../app/search/sep/anti-spam/gezi/libgezi_common.a \
+  ../../../../../../app/search/sep/anti-spam/gezi/libgezi_cppformat.a \
+  ../../../../../../app/search/sep/anti-spam/gezi/libgezi_json.a \
+  ../../../../../../app/search/sep/anti-spam/gezi/output/lib/libPYNotation.a \
+  ../../../../../../app/search/sep/anti-spam/melt/libblas.a \
+  ../../../../../../app/search/sep/anti-spam/melt/liblinear.a \
+  ../../../../../../app/search/sep/anti-spam/melt/libmelt.a \
+  ../../../../../../app/search/sep/anti-spam/melt/libmelt_predict.a \
+  ../../../../../../app/search/sep/anti-spam/melt/libsofia.a \
+  ../../../../../../app/search/sep/anti-spam/melt/libsvm.a \
+  ../../../../../../app/search/sep/anti-spam/melt/libvw.a \
+  ../../../../../../com/btest/gtest/output/lib/libgtest.a \
+  ../../../../../../com/btest/gtest/output/lib/libgtest_main.a \
+  ../../../../../../lib2-64/bsl/lib/libbsl.a \
+  ../../../../../../lib2-64/bsl/lib/libbsl_ResourcePool.a \
+  ../../../../../../lib2-64/bsl/lib/libbsl_archive.a \
+  ../../../../../../lib2-64/bsl/lib/libbsl_buffer.a \
+  ../../../../../../lib2-64/bsl/lib/libbsl_check_cast.a \
+  ../../../../../../lib2-64/bsl/lib/libbsl_exception.a \
+  ../../../../../../lib2-64/bsl/lib/libbsl_pool.a \
+  ../../../../../../lib2-64/bsl/lib/libbsl_utils.a \
+  ../../../../../../lib2-64/bsl/lib/libbsl_var.a \
+  ../../../../../../lib2-64/bsl/lib/libbsl_var_implement.a \
+  ../../../../../../lib2-64/bsl/lib/libbsl_var_utils.a \
+  ../../../../../../lib2-64/ccode/lib/libulccode.a \
+  ../../../../../../lib2-64/dict/lib/libuldict.a \
+  ../../../../../../lib2-64/libcrf/lib/libcrf.a \
+  ../../../../../../lib2-64/others-ex/lib/libullib_ex.a \
+  ../../../../../../lib2-64/postag/lib/libpostag.a \
+  ../../../../../../lib2-64/ullib/lib/libullib.a \
+  ../../../../../../lib2-64/wordseg/libsegment.a \
+  ../../../../../../other/rabit/lib/librabit.a \
+  ../../../../../../other/rabit/lib/librabit_base.a \
+  ../../../../../../other/rabit/lib/librabit_mock.a \
+  ../../../../../../public/comlog-plugin/libcomlog.a \
+  ../../../../../../public/comlog-plugin/output/lib/libdfsappender.a \
+  ../../../../../../public/configure/libconfig.a \
+  ../../../../../../public/connectpool/libconnectpool.a \
+  ../../../../../../public/odict/libodict.a \
+  ../../../../../../public/spreg/libspreg.a \
+  ../../../../../../public/uconv/libuconv.a \
+  ../../../../../../quality/autotest/reportlib/cpp/libautotest.a \
+  ../../../../../../third-64/boost/lib/libboost_atomic.a \
+  ../../../../../../third-64/boost/lib/libboost_chrono.a \
+  ../../../../../../third-64/boost/lib/libboost_context.a \
+  ../../../../../../third-64/boost/lib/libboost_date_time.a \
+  ../../../../../../third-64/boost/lib/libboost_exception.a \
+  ../../../../../../third-64/boost/lib/libboost_filesystem.a \
+  ../../../../../../third-64/boost/lib/libboost_graph.a \
+  ../../../../../../third-64/boost/lib/libboost_locale.a \
+  ../../../../../../third-64/boost/lib/libboost_math_c99.a \
+  ../../../../../../third-64/boost/lib/libboost_math_c99f.a \
+  ../../../../../../third-64/boost/lib/libboost_math_c99l.a \
+  ../../../../../../third-64/boost/lib/libboost_math_tr1.a \
+  ../../../../../../third-64/boost/lib/libboost_math_tr1f.a \
+  ../../../../../../third-64/boost/lib/libboost_math_tr1l.a \
+  ../../../../../../third-64/boost/lib/libboost_prg_exec_monitor.a \
+  ../../../../../../third-64/boost/lib/libboost_program_options.a \
+  ../../../../../../third-64/boost/lib/libboost_python.a \
+  ../../../../../../third-64/boost/lib/libboost_random.a \
+  ../../../../../../third-64/boost/lib/libboost_regex.a \
+  ../../../../../../third-64/boost/lib/libboost_serialization.a \
+  ../../../../../../third-64/boost/lib/libboost_signals.a \
+  ../../../../../../third-64/boost/lib/libboost_system.a \
+  ../../../../../../third-64/boost/lib/libboost_test_exec_monitor.a \
+  ../../../../../../third-64/boost/lib/libboost_thread.a \
+  ../../../../../../third-64/boost/lib/libboost_timer.a \
+  ../../../../../../third-64/boost/lib/libboost_unit_test_framework.a \
+  ../../../../../../third-64/boost/lib/libboost_wave.a \
+  ../../../../../../third-64/boost/lib/libboost_wserialization.a \
+  ../../../../../../third-64/gflags/lib/libgflags.a \
+  ../../../../../../third-64/gflags/lib/libgflags_nothreads.a \
+  ../../../../../../third-64/glog/lib/libglog.a \
+  ../../../../../../third-64/gtest/lib/libgtest.a \
+  ../../../../../../third-64/gtest/lib/libgtest_main.a \
+  ../../../../../../third-64/libcurl/lib/libcurl.a \
+  ../../../../../../third-64/pcre/lib/libpcre.a \
+  ../../../../../../third-64/pcre/lib/libpcrecpp.a \
+  ../../../../../../third-64/pcre/lib/libpcreposix.a \
+  ../../../../../../third-64/tcmalloc/lib/libprofiler.a \
+  ../../../../../../third-64/tcmalloc/lib/libtcmalloc.a \
+  ../../../../../../third-64/tcmalloc/lib/libtcmalloc_and_profiler.a \
+  ../../../../../../third-64/tcmalloc/lib/libtcmalloc_debug.a \
+  ../../../../../../third-64/tcmalloc/lib/libtcmalloc_minimal.a \
+  ../../../../../../third-64/tcmalloc/lib/libtcmalloc_minimal_debug.a \
+  ../../../../../../third-64/zlib/lib/libz.a -lpthread \
+  -lrt \
+  -ldl \
+  -rdynamic \
+  -lgomp \
+  -rdynamic \
+  -Wl,-rpath=./lib/ \
+  -Wl,--dynamic-linker=./ld-linux-x86-64.so.2 \
+  -L../../../../../../ps/se/toolchain/x86_64-unknown-linux-gnu-4.8.1-2.9-2.20-2.6.32./lib/ -Xlinker "-)" -o test_openmp
+	mkdir -p ./bin
+	cp -f --link test_openmp ./bin
+
+hello:hello_hello.o
+	@echo "[[1;32;40mCOMAKE:BUILD[0m][Target:'[1;32;40mhello[0m']"
+	$(CXX) hello_hello.o -Xlinker "-("  ../../../../../../app/search/sep/anti-spam/gezi/libgezi_common.a \
+  ../../../../../../app/search/sep/anti-spam/gezi/libgezi_cppformat.a \
+  ../../../../../../app/search/sep/anti-spam/gezi/libgezi_json.a \
+  ../../../../../../app/search/sep/anti-spam/gezi/output/lib/libPYNotation.a \
+  ../../../../../../app/search/sep/anti-spam/melt/libblas.a \
+  ../../../../../../app/search/sep/anti-spam/melt/liblinear.a \
+  ../../../../../../app/search/sep/anti-spam/melt/libmelt.a \
+  ../../../../../../app/search/sep/anti-spam/melt/libmelt_predict.a \
+  ../../../../../../app/search/sep/anti-spam/melt/libsofia.a \
+  ../../../../../../app/search/sep/anti-spam/melt/libsvm.a \
+  ../../../../../../app/search/sep/anti-spam/melt/libvw.a \
+  ../../../../../../com/btest/gtest/output/lib/libgtest.a \
+  ../../../../../../com/btest/gtest/output/lib/libgtest_main.a \
+  ../../../../../../lib2-64/bsl/lib/libbsl.a \
+  ../../../../../../lib2-64/bsl/lib/libbsl_ResourcePool.a \
+  ../../../../../../lib2-64/bsl/lib/libbsl_archive.a \
+  ../../../../../../lib2-64/bsl/lib/libbsl_buffer.a \
+  ../../../../../../lib2-64/bsl/lib/libbsl_check_cast.a \
+  ../../../../../../lib2-64/bsl/lib/libbsl_exception.a \
+  ../../../../../../lib2-64/bsl/lib/libbsl_pool.a \
+  ../../../../../../lib2-64/bsl/lib/libbsl_utils.a \
+  ../../../../../../lib2-64/bsl/lib/libbsl_var.a \
+  ../../../../../../lib2-64/bsl/lib/libbsl_var_implement.a \
+  ../../../../../../lib2-64/bsl/lib/libbsl_var_utils.a \
+  ../../../../../../lib2-64/ccode/lib/libulccode.a \
+  ../../../../../../lib2-64/dict/lib/libuldict.a \
+  ../../../../../../lib2-64/libcrf/lib/libcrf.a \
+  ../../../../../../lib2-64/others-ex/lib/libullib_ex.a \
+  ../../../../../../lib2-64/postag/lib/libpostag.a \
+  ../../../../../../lib2-64/ullib/lib/libullib.a \
+  ../../../../../../lib2-64/wordseg/libsegment.a \
+  ../../../../../../other/rabit/lib/librabit.a \
+  ../../../../../../other/rabit/lib/librabit_base.a \
+  ../../../../../../other/rabit/lib/librabit_mock.a \
+  ../../../../../../public/comlog-plugin/libcomlog.a \
+  ../../../../../../public/comlog-plugin/output/lib/libdfsappender.a \
+  ../../../../../../public/configure/libconfig.a \
+  ../../../../../../public/connectpool/libconnectpool.a \
+  ../../../../../../public/odict/libodict.a \
+  ../../../../../../public/spreg/libspreg.a \
+  ../../../../../../public/uconv/libuconv.a \
+  ../../../../../../quality/autotest/reportlib/cpp/libautotest.a \
+  ../../../../../../third-64/boost/lib/libboost_atomic.a \
+  ../../../../../../third-64/boost/lib/libboost_chrono.a \
+  ../../../../../../third-64/boost/lib/libboost_context.a \
+  ../../../../../../third-64/boost/lib/libboost_date_time.a \
+  ../../../../../../third-64/boost/lib/libboost_exception.a \
+  ../../../../../../third-64/boost/lib/libboost_filesystem.a \
+  ../../../../../../third-64/boost/lib/libboost_graph.a \
+  ../../../../../../third-64/boost/lib/libboost_locale.a \
+  ../../../../../../third-64/boost/lib/libboost_math_c99.a \
+  ../../../../../../third-64/boost/lib/libboost_math_c99f.a \
+  ../../../../../../third-64/boost/lib/libboost_math_c99l.a \
+  ../../../../../../third-64/boost/lib/libboost_math_tr1.a \
+  ../../../../../../third-64/boost/lib/libboost_math_tr1f.a \
+  ../../../../../../third-64/boost/lib/libboost_math_tr1l.a \
+  ../../../../../../third-64/boost/lib/libboost_prg_exec_monitor.a \
+  ../../../../../../third-64/boost/lib/libboost_program_options.a \
+  ../../../../../../third-64/boost/lib/libboost_python.a \
+  ../../../../../../third-64/boost/lib/libboost_random.a \
+  ../../../../../../third-64/boost/lib/libboost_regex.a \
+  ../../../../../../third-64/boost/lib/libboost_serialization.a \
+  ../../../../../../third-64/boost/lib/libboost_signals.a \
+  ../../../../../../third-64/boost/lib/libboost_system.a \
+  ../../../../../../third-64/boost/lib/libboost_test_exec_monitor.a \
+  ../../../../../../third-64/boost/lib/libboost_thread.a \
+  ../../../../../../third-64/boost/lib/libboost_timer.a \
+  ../../../../../../third-64/boost/lib/libboost_unit_test_framework.a \
+  ../../../../../../third-64/boost/lib/libboost_wave.a \
+  ../../../../../../third-64/boost/lib/libboost_wserialization.a \
+  ../../../../../../third-64/gflags/lib/libgflags.a \
+  ../../../../../../third-64/gflags/lib/libgflags_nothreads.a \
+  ../../../../../../third-64/glog/lib/libglog.a \
+  ../../../../../../third-64/gtest/lib/libgtest.a \
+  ../../../../../../third-64/gtest/lib/libgtest_main.a \
+  ../../../../../../third-64/libcurl/lib/libcurl.a \
+  ../../../../../../third-64/pcre/lib/libpcre.a \
+  ../../../../../../third-64/pcre/lib/libpcrecpp.a \
+  ../../../../../../third-64/pcre/lib/libpcreposix.a \
+  ../../../../../../third-64/tcmalloc/lib/libprofiler.a \
+  ../../../../../../third-64/tcmalloc/lib/libtcmalloc.a \
+  ../../../../../../third-64/tcmalloc/lib/libtcmalloc_and_profiler.a \
+  ../../../../../../third-64/tcmalloc/lib/libtcmalloc_debug.a \
+  ../../../../../../third-64/tcmalloc/lib/libtcmalloc_minimal.a \
+  ../../../../../../third-64/tcmalloc/lib/libtcmalloc_minimal_debug.a \
+  ../../../../../../third-64/zlib/lib/libz.a -lpthread \
+  -lrt \
+  -ldl \
+  -rdynamic \
+  -lgomp \
+  -rdynamic \
+  -Wl,-rpath=./lib/ \
+  -Wl,--dynamic-linker=./ld-linux-x86-64.so.2 \
+  -L../../../../../../ps/se/toolchain/x86_64-unknown-linux-gnu-4.8.1-2.9-2.20-2.6.32./lib/ -Xlinker "-)" -o hello
+	mkdir -p ./output/bin
+	cp -f --link hello ./output/bin
+
 melt_melt.o:melt.cc
 	@echo "[[1;32;40mCOMAKE:BUILD[0m][Target:'[1;32;40mmelt_melt.o[0m']"
 	$(CXX) -c $(INCPATH) $(DEP_INCPATH) $(CPPFLAGS) $(CXXFLAGS)  -o melt_melt.o melt.cc
@@ -374,6 +615,54 @@ melt_melt.o:melt.cc
 ../src/Trainers/melt_VWTrainer.o:../src/Trainers/VWTrainer.cpp
 	@echo "[[1;32;40mCOMAKE:BUILD[0m][Target:'[1;32;40m../src/Trainers/melt_VWTrainer.o[0m']"
 	$(CXX) -c $(INCPATH) $(DEP_INCPATH) $(CPPFLAGS) $(CXXFLAGS)  -o ../src/Trainers/melt_VWTrainer.o ../src/Trainers/VWTrainer.cpp
+
+test_openmp_test_openmp.o:test_openmp.cc
+	@echo "[[1;32;40mCOMAKE:BUILD[0m][Target:'[1;32;40mtest_openmp_test_openmp.o[0m']"
+	$(CXX) -c $(INCPATH) $(DEP_INCPATH) $(CPPFLAGS) $(CXXFLAGS)  -o test_openmp_test_openmp.o test_openmp.cc
+
+../src/Trainers/test_openmp_EnsembleTrainer.o:../src/Trainers/EnsembleTrainer.cpp
+	@echo "[[1;32;40mCOMAKE:BUILD[0m][Target:'[1;32;40m../src/Trainers/test_openmp_EnsembleTrainer.o[0m']"
+	$(CXX) -c $(INCPATH) $(DEP_INCPATH) $(CPPFLAGS) $(CXXFLAGS)  -o ../src/Trainers/test_openmp_EnsembleTrainer.o ../src/Trainers/EnsembleTrainer.cpp
+
+../src/Trainers/test_openmp_FastRank.o:../src/Trainers/FastRank.cpp
+	@echo "[[1;32;40mCOMAKE:BUILD[0m][Target:'[1;32;40m../src/Trainers/test_openmp_FastRank.o[0m']"
+	$(CXX) -c $(INCPATH) $(DEP_INCPATH) $(CPPFLAGS) $(CXXFLAGS)  -o ../src/Trainers/test_openmp_FastRank.o ../src/Trainers/FastRank.cpp
+
+../src/Trainers/test_openmp_LibLinearTrainer.o:../src/Trainers/LibLinearTrainer.cpp
+	@echo "[[1;32;40mCOMAKE:BUILD[0m][Target:'[1;32;40m../src/Trainers/test_openmp_LibLinearTrainer.o[0m']"
+	$(CXX) -c $(INCPATH) $(DEP_INCPATH) $(CPPFLAGS) $(CXXFLAGS)  -o ../src/Trainers/test_openmp_LibLinearTrainer.o ../src/Trainers/LibLinearTrainer.cpp
+
+../src/Trainers/test_openmp_LibSVMTrainer.o:../src/Trainers/LibSVMTrainer.cpp
+	@echo "[[1;32;40mCOMAKE:BUILD[0m][Target:'[1;32;40m../src/Trainers/test_openmp_LibSVMTrainer.o[0m']"
+	$(CXX) -c $(INCPATH) $(DEP_INCPATH) $(CPPFLAGS) $(CXXFLAGS)  -o ../src/Trainers/test_openmp_LibSVMTrainer.o ../src/Trainers/LibSVMTrainer.cpp
+
+../src/Trainers/test_openmp_LinearSVM.o:../src/Trainers/LinearSVM.cpp
+	@echo "[[1;32;40mCOMAKE:BUILD[0m][Target:'[1;32;40m../src/Trainers/test_openmp_LinearSVM.o[0m']"
+	$(CXX) -c $(INCPATH) $(DEP_INCPATH) $(CPPFLAGS) $(CXXFLAGS)  -o ../src/Trainers/test_openmp_LinearSVM.o ../src/Trainers/LinearSVM.cpp
+
+../src/Trainers/test_openmp_SofiaTrainer.o:../src/Trainers/SofiaTrainer.cpp
+	@echo "[[1;32;40mCOMAKE:BUILD[0m][Target:'[1;32;40m../src/Trainers/test_openmp_SofiaTrainer.o[0m']"
+	$(CXX) -c $(INCPATH) $(DEP_INCPATH) $(CPPFLAGS) $(CXXFLAGS)  -o ../src/Trainers/test_openmp_SofiaTrainer.o ../src/Trainers/SofiaTrainer.cpp
+
+../src/Trainers/test_openmp_ThirdTrainer.o:../src/Trainers/ThirdTrainer.cpp
+	@echo "[[1;32;40mCOMAKE:BUILD[0m][Target:'[1;32;40m../src/Trainers/test_openmp_ThirdTrainer.o[0m']"
+	$(CXX) -c $(INCPATH) $(DEP_INCPATH) $(CPPFLAGS) $(CXXFLAGS)  -o ../src/Trainers/test_openmp_ThirdTrainer.o ../src/Trainers/ThirdTrainer.cpp
+
+../src/Trainers/test_openmp_Trainer.o:../src/Trainers/Trainer.cpp
+	@echo "[[1;32;40mCOMAKE:BUILD[0m][Target:'[1;32;40m../src/Trainers/test_openmp_Trainer.o[0m']"
+	$(CXX) -c $(INCPATH) $(DEP_INCPATH) $(CPPFLAGS) $(CXXFLAGS)  -o ../src/Trainers/test_openmp_Trainer.o ../src/Trainers/Trainer.cpp
+
+../src/Trainers/test_openmp_TrainerFactory.o:../src/Trainers/TrainerFactory.cpp
+	@echo "[[1;32;40mCOMAKE:BUILD[0m][Target:'[1;32;40m../src/Trainers/test_openmp_TrainerFactory.o[0m']"
+	$(CXX) -c $(INCPATH) $(DEP_INCPATH) $(CPPFLAGS) $(CXXFLAGS)  -o ../src/Trainers/test_openmp_TrainerFactory.o ../src/Trainers/TrainerFactory.cpp
+
+../src/Trainers/test_openmp_VWTrainer.o:../src/Trainers/VWTrainer.cpp
+	@echo "[[1;32;40mCOMAKE:BUILD[0m][Target:'[1;32;40m../src/Trainers/test_openmp_VWTrainer.o[0m']"
+	$(CXX) -c $(INCPATH) $(DEP_INCPATH) $(CPPFLAGS) $(CXXFLAGS)  -o ../src/Trainers/test_openmp_VWTrainer.o ../src/Trainers/VWTrainer.cpp
+
+hello_hello.o:hello.cc
+	@echo "[[1;32;40mCOMAKE:BUILD[0m][Target:'[1;32;40mhello_hello.o[0m']"
+	$(CXX) -c $(INCPATH) $(DEP_INCPATH) $(CPPFLAGS) $(CXXFLAGS)  -o hello_hello.o hello.cc
 
 endif #ifeq ($(shell uname -m),x86_64)
 

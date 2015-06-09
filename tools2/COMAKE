@@ -90,8 +90,8 @@ if GCC_HIGH  == 1:
 		#GCC_LDFLAGS += ' -lgomp'
 		if GCC_LOCAL != 1:
 			GCC_LDFLAGS += ' -Wl,--dynamic-linker=./ld-linux-x86-64.so.2 -L%s'%(LIBS_DIR)
-		TARGET('.copy-so', ShellCommands('ln -s %s/ld-linux-x86-64.so.2 ld-linux-x86-64.so.2'%(LIBS_DIR)), 
-          CleanCommands('rm -rf ld-linux-x86-64.so.2')) 
+		#TARGET('.copy-so', ShellCommands('cp %s/ld-linux-x86-64.so.2 ld-linux-x86-64.so.2'%(LIBS_DIR)), 
+          #CleanCommands('rm -rf ld-linux-x86-64.so.2')) 
 	else: 
 		GCC_LDFLAGS  += ' -static-libgcc -static-libstdc++'
 
@@ -110,3 +110,7 @@ ImportConfigsFrom('../')
 srcs=''
 srcs=GLOB('./src/*.cpp ./src/Trainers/*.cpp'.replace('./',RELATIVE_PATH))
 Application('melt',Sources('melt.cc',srcs))
+Application('test_openmp',Sources('test_openmp.cc',srcs), OutputPath('./bin'))
+#Application('hello',Sources('hello.cc',srcs, ENV.CppFlags()+CppFlags('-O3 -DNDEBUG')))
+srcs=''
+Application('hello',Sources('hello.cc',srcs))
