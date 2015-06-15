@@ -33,7 +33,7 @@ DEFINE_double(sp, 0.1, "Sparsity level needed to use sparse feature representati
 DEFINE_double(ff, 1, "The fraction of features (chosen randomly) to use on each iteration");
 DEFINE_double(sf, 1, "The fraction of features (chosen randomly) to use on each split");
 DEFINE_int32(mb, 255, "Maximum number of distinct values (bins) per feature");
-DEFINE_int32(ps, -1, "The number of histograms in the pool (between 2 and numLeaves)");
+DEFINE_int32(ps, -1, "The number of histograms in the pool (between 2 and numLeaves - 1)");
 DEFINE_bool(psc, false, "Wether first randomly select a subset of features and then pick the feature that maximizes gain or post do this: @FIXME");
 
 DEFINE_int32(bag, 0, "Number of trees in each bag (0 for disabling bagging)");
@@ -111,7 +111,6 @@ namespace gezi {
 		{
 			_args->histogramPoolSize = _args->numLeaves - 1;
 		}
-
 
 		_args->randomStart = FLAGS_rstart;
 

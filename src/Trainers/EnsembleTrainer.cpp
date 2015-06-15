@@ -19,6 +19,7 @@
 DEFINE_string(trainers, "gbdt", "trainerNames|like gbdt,linearsvm");
 DEFINE_string(numTrainers, "5", "numTrainers|like 2,1, with -trainer gbdt,linearsvm means train 2 gbdt and 1 linearsvm");
 DEFINE_double(srate, 0.7, "sampleRate|replace sampling rate");
+DEFINE_bool(distribute, false, "AllowDistribute: now only for ensemble trainer when distibute is set to false will not train different trainer parallel, if parallel train and the sub trainer parallel train it's self may cause error");
 
 DECLARE_bool(bstrap);
 
@@ -40,6 +41,8 @@ namespace gezi {
 		_maxCalibrationExamples = FLAGS_numCali;
 
 		_bootStrap = FLAGS_bstrap;
+
+		_allowDistribute = FLAGS_distribute;
 
 		if (_trainerNames.size() == 1)
 		{
