@@ -17,13 +17,14 @@
 #include "common_util.h"
 #include "RegressionTree.h"
 #include "Dataset.h"
+#include "rabit_util.h"
 namespace gezi {
 
 	class DocumentPartitioning
 	{
 	public:
 		//暂时没有用到
-		DocumentPartitioning(RegressionTree& tree, Dataset& dataset)
+		DocumentPartitioning(const RegressionTree& tree, const Dataset& dataset)
 			: DocumentPartitioning(dataset.NumDocs, tree.NumLeaves)
 		{
 			vector<ivec> perLeafDocumentLists(tree.NumLeaves);
@@ -33,7 +34,7 @@ namespace gezi {
 				int leaf = tree.GetLeaf(dataset[d]);
 #pragma omp critical
 				{
-					perLeafDocumentLists[leaf].push_back(d); //注意可能并行造成无序 @TODO 需要再排序？
+					perLeafDocumentLists[leaf].push_back(d);
 				}
 			}
 
@@ -68,13 +69,7 @@ namespace gezi {
 		DocumentPartitioning(const ivec& documents, int numDocuments, int maxLeaves)
 			: DocumentPartitioning(numDocuments, maxLeaves)
 		{
-			//@TODO will below ok?
-			//_initialDocuments.assign(documents.begin(), documents.end());
-			_initialDocuments.resize(numDocuments);
-			for (int d = 0; d < numDocuments; d++)
-			{
-				_initialDocuments[d] = documents[d];
-			}
+			_initialDocuments.assign(documents.begin(), documents.end());
 		}
 
 		void Initialize()
@@ -100,11 +95,11 @@ namespace gezi {
 
 		int GetLeafDocuments(int leaf, ivec& documents)
 		{
-			fill_range(documents.begin(), _documents.begin() + _leafBegin[leaf], _leafCount[leaf]);
+			gezi::copy_range(documents.begin(), _documents.begin() + _leafBegin[leaf], _leafCount[leaf]);
 			return _leafCount[leaf];
 		}
 
-		void Split(int leaf, IntArray& indexer, uint threshold, int gtChildIndex)
+		void Split(int leaf, const IntArray& indexer, uint threshold, int gtChildIndex)
 		{
 			if (_tempDocuments.empty())
 			{
@@ -128,13 +123,13 @@ namespace gezi {
 			}
 			int newCount = newEnd - begin;
 			int gtCount = tempEnd - begin;
-			fill_range(_documents.begin() + newEnd, _tempDocuments.begin() + begin, gtCount);
+			gezi::copy_range(_documents.begin() + newEnd, _tempDocuments.begin() + begin, gtCount);
 			_leafCount[leaf] = newCount;
 			_leafBegin[gtChildIndex] = newEnd;
 			_leafCount[gtChildIndex] = gtCount;
 		}
 
-		Float Mean(Fvec& weights, int leaf, bool filterZeros)
+		Float Mean(const Fvec& weights, int leaf, bool filterZeros)
 		{
 			Float mean = 0.0;
 			int end = _leafBegin[leaf] + _leafCount[leaf];
@@ -164,11 +159,11 @@ namespace gezi {
 			return (mean / ((Float)count));
 		}
 
-		Float Mean(Fvec& weights, Fvec& sampleWeights, int leaf, bool filterZeros)
+		Float Mean(const Fvec& weights, const Fvec& sampleWeights, int leaf, bool filterZeros)
 		{
 			if (sampleWeights.empty())
 			{
-				return Mean(weights, leaf, filterZeros);  //@?
+				return Mean(weights, leaf, filterZeros);
 			}
 			Float mean = 0.0;
 			int end = _leafBegin[leaf] + _leafCount[leaf];
@@ -214,7 +209,7 @@ namespace gezi {
 		{
 			return _leafCount[leaf];
 		}
-		
+
 		ivec& Documents()
 		{
 			return _documents;
@@ -224,12 +219,32 @@ namespace gezi {
 		{
 			return _documents;
 		}
+
+		ivec& LeafBegin()
+		{
+			return _leafBegin;
+		}
+
+		ivec& LeafCount()
+		{
+			return _leafCount;
+		}
+
+		friend class cereal::access;
+		template<class Archive>
+		void serialize(Archive &ar, const unsigned int version)
+		{
+			ar & _documents;
+			ar & _leafBegin;
+			ar & _leafCount;
+		}
 	protected:
 	private:
-		ivec _documents; //doc id按照叶子顺序0-NumLeaves从新排列 leaf内部的doc id可否不排序 应该可以?@TODO
-		ivec _initialDocuments; //初始doc id排列
+		ivec _documents; //doc id按照叶子顺序0-NumLeaves从新排列 
 		ivec _leafBegin;  //每个叶子对应doc 数目累加 比如 3 4 5 -> 3 7 12
 		ivec _leafCount; //每个叶子对应的doc数目
+
+		ivec _initialDocuments; //初始doc id排列
 		ivec _tempDocuments;
 	};
 

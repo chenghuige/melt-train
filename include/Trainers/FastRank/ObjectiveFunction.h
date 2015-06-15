@@ -81,8 +81,6 @@ namespace gezi {
 			return _gradient;
 		}
 	};
-
-
 	
 }  //----end of namespace gezi
 

@@ -16,6 +16,7 @@
 #include "Prediction/Instances/Instances.h"
 #include "Trainers/FastRank/Dataset.h"
 #include "Numeric/BinFinder.h"
+#include "rabit_util.h"
 namespace gezi {
 
 	//输入Instances也就是行表达的FeatureVectors 
@@ -30,22 +31,24 @@ namespace gezi {
 	public:
 		static IntArray GetBinValues(Vector& values, Fvec& upperBounds)
 		{
-			int zeroBin = first_ge(upperBounds, 0);
+			int zeroBin = gezi::first_ge(upperBounds, 0);
 			IntArray bins(zeroBin, values.Length());
 			values.ForEach([&](int idx, Float val) {
-				bins.Add(idx, first_ge(upperBounds, val));
+				bins.Add(idx, gezi::first_ge(upperBounds, val));
 			});
 			return bins;
 		}
 
 		//用于将Insatnces转换为trainset,首先计算分桶的BinUpperBounds等确定分桶的界限，然后所有特征值归一到桶序号
+		//注意将会清空Instances
 		static Dataset Convert(Instances& instances, int maxBins = 255, Float sparsifyRatio = 0.3)
 		{
 			//-------------- 行转换为列
 			int numFeatures = instances.NumFeatures();
+			int numDocs = instances.size();
 			Fvec ratings, weights;
 			bool useWeight = false;
-			vector<Vector> valuesVec(numFeatures, Vector(instances.size()));
+			vector<Vector> valuesVec(numFeatures, Vector(numDocs));
 			{
 				//ProgressBar pb(instances.size(), "Converting from row format to column format");
 				AutoTimer timer("Converting from row format to column format", 2);
@@ -54,7 +57,8 @@ namespace gezi {
 				{
 					//++pb;
 					(instance->features).ForEach([&](int idx, Float val) {
-						valuesVec[idx].Add(numInstancesProcessed, val);
+						if (Rabit::Choose(idx))
+							valuesVec[idx].Add(numInstancesProcessed, val);
 					});
 
 					ratings.push_back(instance->label);
@@ -65,8 +69,10 @@ namespace gezi {
 						useWeight = true;
 					}
 					numInstancesProcessed++;
+					instance.reset();
 				}
 			}
+			instances.clear();
 
 			//------------- 分桶 获取 bin upperbounds 和 medians
 			vector<Feature> features(numFeatures);
@@ -79,10 +85,17 @@ namespace gezi {
 #pragma omp parallel for firstprivate(pb) firstprivate(binFinder)
 					for (int i = 0; i < numFeatures; i++)
 					{
+						if (!Rabit::Choose(i))
+							continue;
 						++pb;
 						Fvec values = valuesVec[i].Values(); //做一份copy
 						binFinder.FindBins(values, valuesVec[i].Length(), maxBins,
 							features[i].BinUpperBounds, features[i].BinMedians);
+
+						//------------- 计算各个instance对应各个feature分到的桶号 bin 
+						features[i].Bins = GetBinValues(valuesVec[i], features[i].BinUpperBounds);
+						valuesVec[i].clear();
+						features[i].Bins.Densify(sparsifyRatio);
 
 						features[i].Name = instances.FeatureNames()[i];
 					}
@@ -94,9 +107,16 @@ namespace gezi {
 #pragma omp parallel for firstprivate(binFinder)
 					for (int i = 0; i < numFeatures; i++)
 					{
+						if (!Rabit::Choose(i))
+							continue;
 						Fvec values = valuesVec[i].Values(); //做一份copy
 						binFinder.FindBins(values, valuesVec[i].Length(), maxBins,
 							features[i].BinUpperBounds, features[i].BinMedians);
+
+						//------------- 计算各个instance对应各个feature分到的桶号 bin 
+						features[i].Bins = GetBinValues(valuesVec[i], features[i].BinUpperBounds);
+						valuesVec[i].clear();
+						features[i].Bins.Densify(sparsifyRatio);
 
 						features[i].Name = instances.FeatureNames()[i];
 					}
@@ -104,32 +124,40 @@ namespace gezi {
 
 			}
 
-			//------------- 计算各个instance对应各个feature分到的桶号 bin 
-			{
-				//ProgressBar pb(numFeatures, "Get bin number for values");
-				AutoTimer timer("Get bin number for values", 2);
-				//#pragma omp parallel for firstprivate(pb) 
-				for (int i = 0; i < numFeatures; i++)
-				{
-					//++pb;
-					features[i].Bins = GetBinValues(valuesVec[i], features[i].BinUpperBounds);
-
-					//PVAL3(i, features[i].Bins.Length(), features[i].BinUpperBounds.size());
-					//PVECTOR(features[i].BinUpperBounds);
-
-					features[i].Bins.Densify(sparsifyRatio);
-					//features[i].Bins.ToDense();
-				}
-			}
+			////------------- 计算各个instance对应各个feature分到的桶号 bin 
+			//{
+			//	//ProgressBar pb(numFeatures, "Get bin number for values");
+			//	AutoTimer timer("Get bin number for values", 2);
+			//	//#pragma omp parallel for firstprivate(pb) 
+			//	for (int i = 0; i < numFeatures; i++)
+			//	{
+			//		if (!Rabit::Choose(i))
+			//			continue;
+			//		//++pb;
+			//		features[i].Bins = GetBinValues(valuesVec[i], features[i].BinUpperBounds);
+			//		valuesVec[i].clear();
+			//		features[i].Bins.Densify(sparsifyRatio);
+			//		//features[i].Bins.ToDense();
+			//	}
+			//}
 
 			if (!useWeight)
 			{
 				weights.clear();
 			}
 			PVAL(useWeight);
-			return Dataset(features, ratings, weights);
+			//如果是分布式按照feature切割 最后feature信息还要聚合 因为在RegressionTree::ToOnline还是需要全局信息的
+			//@TODO 当前第一个分布式版本 只考虑并行加速 按feature分割 但是内存占用和单机版本是一样的
+			//if (rabit::GetWorldSize() > 1)
+			//{
+			//	//@TODO Feature里面不都是基础类型
+			//	//Rabit::Allreduce(features);
+			//	gezi::Notifer notifer("Broadcast for features");
+			//	Rabit::Broadcast(features);
+			//}
+			return Dataset(numDocs, features, ratings, weights);
 		}
-	
+
 	protected:
 	private:
 

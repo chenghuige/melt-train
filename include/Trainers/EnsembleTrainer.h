@@ -40,10 +40,8 @@ namespace gezi {
 			Init();
 			for (size_t i = 0; i < _trainers.size(); i++)
 			{
-				if (!Rabit::Choose(i))
-				{
+				if (_allowDistribute && !Rabit::Choose(i))
 					continue;
-				}
 				VLOG(0) << "Ensemble train with trainer " << i << " rank " << rabit::GetRank();
 				Random rand(_trainers[i]->GetRandSeed());
 
@@ -61,7 +59,7 @@ namespace gezi {
 					break;
 				}
 			}
-			if (rabit::GetWorldSize() > 1)
+			if (_allowDistribute && rabit::GetWorldSize() > 1)
 			{
 				Rabit::Broadcast(_predictors);
 			}
@@ -136,6 +134,7 @@ namespace gezi {
 		unsigned _randSeed = 0x7b;
 
 		bool _bootStrap = false;
+		bool _allowDistribute = false;
 
 		vector<PredictorPtr> _predictors;
 	private:

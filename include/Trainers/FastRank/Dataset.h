@@ -43,14 +43,13 @@ namespace gezi {
 		Dataset(const Dataset&) = default;
 		Dataset& operator = (const Dataset&) = default;
 
-		Dataset(vector<Feature>& features, vector<Float>& ratings, Fvec& weights)
-			:Features(features), Ratings(ratings), SampleWeights(weights)
+		Dataset(int numDocs, vector<Feature>& features, vector<Float>& ratings, Fvec& weights)
+			:NumDocs(numDocs), Features(move(features)), Ratings(move(ratings)), SampleWeights(move(weights))
 		{
 			for (auto feature : Features)
 			{
 				FeatureBinMedians.push_back(&feature.BinMedians);
 			}
-			NumDocs = features[0].Bins.Length();
 			NumFeatures = Features.size();
 		}
 

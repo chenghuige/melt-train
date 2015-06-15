@@ -15,9 +15,11 @@
 #define TRAINERS__FAST_RANK__FEATURE_H_
 #include "common_util.h"
 #include "Numeric/Vector/TVector.h"
+#include "rabit_util.h"
 namespace gezi {
 
-	class Feature
+	//class Feature : public RabitObject
+	class Feature 
 	{
 	public:
 		Feature() = default;
@@ -45,6 +47,18 @@ namespace gezi {
 		{
 			return BinUpperBounds.size();
 		}
+
+		friend class cereal::access;
+		template<class Archive>
+		void serialize(Archive &ar, const unsigned int version)
+		{
+			ar & Name;
+			ar & BinUpperBounds;
+			ar & BinMedians;
+			ar & Bins;
+			ar & Trust;
+		}
+
 	public:
 		string Name;
 		Fvec BinUpperBounds; //@TODO 如果多个DataSet的话 需要共享BinUpperBounds和BinMedians 需要shared_ptr 当然拷贝代价也不大。。

@@ -17,18 +17,30 @@
 #include "Trainers/FastRank/OnlineRegressionTree.h"
 #include "Dataset.h"
 #include "Feature.h"
+#include "rabit_util.h"
 namespace gezi {
 
 	class RegressionTree : public OnlineRegressionTree
 	{
 	protected:
 		vector<uint> _threshold; //online是Float离线训练其实是uint 覆盖掉基类中的_threashold
+		const Feature* _features = NULL;
 	public:
-		RegressionTree(int maxLeaves)
+		friend class cereal::access;
+		template<class Archive>
+		void serialize(Archive &ar, const unsigned int version)
+		{
+			ar & CEREAL_BASE_OBJECT_NVP(OnlineRegressionTree);
+			ar & CEREAL_NVP(_threshold);
+			ar & CEREAL_NVP(_features);
+		}
+
+		RegressionTree(int maxLeaves, const vector<Feature>& features)
 		{
 			_weight = 1.0;
 			Reset(maxLeaves);
 			NumLeaves = 1;
+			_features = gezi::begin_ptr(features);
 		}
 
 		void Reset(int maxLeaves)
@@ -38,6 +50,7 @@ namespace gezi {
 			_gainPValue.resize(maxLeaves - 1);
 			_previousLeafValue.resize(maxLeaves - 1);
 			_threshold.resize(maxLeaves - 1); //online是Float离线训练其实是uint 
+			OnlineRegressionTree::_threshold.resize(_threshold.size());
 			_lteChild.resize(maxLeaves - 1);
 			_gtChild.resize(maxLeaves - 1);
 			_leafValue.resize(maxLeaves);
@@ -86,9 +99,9 @@ namespace gezi {
 		//	//Reset(NumLeaves); //@TODO do not need this?
 		//}
 
+		//转换放到每一次split的过程中 该函数废弃
 		void ToOnline(const vector<Feature>& features)
 		{
-			OnlineRegressionTree::_threshold.resize(_threshold.size());
 			for (size_t i = 0; i < _threshold.size(); i++)
 			{
 				OnlineRegressionTree::_threshold[i] = features[_splitFeature[i]].BinUpperBounds[_threshold[i]];
@@ -238,6 +251,18 @@ namespace gezi {
 			_splitGain[indexOfNewInternal] = gain;
 			_gainPValue[indexOfNewInternal] = gainPValue;
 			_threshold[indexOfNewInternal] = threshold;
+			//每轮都立即处理而不是最后统一处理主要为了eval的需要
+			if (rabit::GetWorldSize() == 1)
+			{
+			OnlineRegressionTree::_threshold[indexOfNewInternal] = _features[feature].BinUpperBounds[threshold];
+			}
+			else
+			{
+				gezi::Notifer notifer("Broadcast upperThreShold", 2);
+				Float upperThreShold = Rabit::Choose(feature) ? _features[feature].BinUpperBounds[threshold] : 0;
+				ufo::Broadcast(upperThreShold, feature % rabit::GetWorldSize());
+				OnlineRegressionTree::_threshold[indexOfNewInternal] = upperThreShold;
+			}
 			_lteChild[indexOfNewInternal] = ~leaf;
 			_previousLeafValue[indexOfNewInternal] = _leafValue[leaf];
 			_leafValue[leaf] = LTEValue;

@@ -82,7 +82,7 @@ namespace gezi {
 
 		void SetTrainingData(const Dataset& trainData, Fvec& initTrainScores)
 		{
-			TrainingScores = ConstructScoreTracker("train", trainData, initTrainScores);
+			TrainingScores = ConstructScoreTracker("itrain", trainData, initTrainScores);
 			TrackedScores[0] = TrainingScores;
 		}
 

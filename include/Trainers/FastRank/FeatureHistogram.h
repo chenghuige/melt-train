@@ -14,6 +14,7 @@
 #ifndef FEATURE_HISTOGRAM_H_
 #define FEATURE_HISTOGRAM_H_
 #include "Feature.h"
+#include "rabit_util.h"
 namespace gezi {
 
 	class FeatureHistogram
@@ -35,7 +36,7 @@ namespace gezi {
 		FeatureHistogram(const FeatureHistogram&) = default;
 		FeatureHistogram& operator = (const FeatureHistogram&) = default;
 
-		FeatureHistogram(gezi::Feature& feature, bool useWeights = false)
+		FeatureHistogram(const gezi::Feature& feature, bool useWeights = false)
 			:Feature(&feature), NumFeatureValues(feature.NumBins())
 		{
 			SumTargetsByBin.resize(NumFeatureValues);
@@ -46,7 +47,7 @@ namespace gezi {
 			}
 		}
 
-		void Initialize(gezi::Feature& feature, bool useWeights = false)
+		void Initialize(const gezi::Feature& feature, bool useWeights = false)
 		{
 			Feature = &feature;
 			NumFeatureValues = feature.NumBins();
@@ -59,17 +60,12 @@ namespace gezi {
 		}
 
 		//并行处理@TODO 可能用到 注意swap是否ok 还是需要用shared_ptr
+		//@TODO 如果内部只是swap move只提供 int,Fvec&&,ivec&&这样的接口更好  调用显示指出 FeatureHistogram(255, move(sumTarget), move(binCount))更清晰
 		FeatureHistogram(int numBins, Fvec& sumTarget, ivec& binCount)
 			:NumFeatureValues(numBins)
 		{
-			if (sumTarget.size() != binCount.size())
-			{
-				THROW("length of input arrays is inconsistent");
-			}
-			if (numBins > (int)sumTarget.size())
-			{
-				THROW("number of bins is greater than length of input array");
-			}
+			CHECK_EQ(sumTarget.size(), binCount.size()) << "length of input arrays is inconsistent";
+			CHECK_LE(numBins, (int)sumTarget.size()) << "number of bins is greater than length of input array";
 			SumTargetsByBin.swap(sumTarget);
 			CountByBin.swap(binCount);
 		}
@@ -79,22 +75,16 @@ namespace gezi {
 			return (((40 + (4 * numBins)) + (8 * numBins)) + (hasWeights ? (8 * numBins) : 0));
 		}
 
-		void ReassignFeature(gezi::Feature& feature)
+		void ReassignFeature(const gezi::Feature& feature)
 		{
-			if (feature.NumBins() > CountByBin.size())
-			{
-				THROW("new feature's bin number is larger than existing array size");
-			}
+			CHECK_LE(feature.NumBins(), (int)CountByBin.size()) << "new feature's bin number is larger than existing array size";
 			Feature = &feature;
 			NumFeatureValues = feature.NumBins();
 		}
 
 		void Subtract(FeatureHistogram& child)
 		{
-			if (child.NumFeatureValues != NumFeatureValues)
-			{
-				THROW("cannot subtract FeatureHistograms of different lengths");
-			}
+			CHECK_EQ(child.NumFeatureValues, NumFeatureValues) << "cannot subtract FeatureHistograms of different lengths";
 			if (SumWeightsByBin.empty())
 			{
 				for (int i = 0; i < NumFeatureValues; i++)
@@ -125,7 +115,8 @@ namespace gezi {
 			int TotalCount;
 			SumupInputData(int totalCount, Float sumTargets, Float sumWeights, Fvec& outputs,
 				Fvec& weights, ivec& docIndices, Fvec& binMedians)
-				:TotalCount(totalCount), SumTargets(sumTargets), SumWeights(sumWeights), Outputs(outputs), Weights(weights), DocIndices(docIndices), BinMedians(binMedians)
+				:TotalCount(totalCount), SumTargets(sumTargets), SumWeights(sumWeights), Outputs(outputs), 
+				Weights(weights), DocIndices(docIndices), BinMedians(binMedians)
 			{
 			}
 		};
@@ -142,12 +133,12 @@ namespace gezi {
 			Fvec& outputs, Fvec& weights, ivec& docIndices)
 		{
 			SumupInputData input(numDocsInLeaf, sumTargets, sumWeights, outputs, weights, docIndices, Feature->BinMedians);
-			zeroset(SumTargetsByBin);
+			gezi::zeroset(SumTargetsByBin);
 			if (!SumWeightsByBin.empty())
 			{
-				zeroset(SumWeightsByBin);
+				gezi::zeroset(SumWeightsByBin);
 			}
-			zeroset(CountByBin);
+			gezi::zeroset(CountByBin);
 			SumMedians = SumSquaredMedians = SumMedianTargetProducts = std::numeric_limits<Float>::quiet_NaN();
 			Sumup(Feature->Bins, input);
 		}
@@ -155,7 +146,6 @@ namespace gezi {
 	protected:
 		inline void Sumup(IntArray& bins, SumupInputData& input)
 		{
-			//AutoTimer timer("Sumup");
 			if (input.DocIndices.empty())
 			{
 				if (SumWeightsByBin.empty())
@@ -182,7 +172,6 @@ namespace gezi {
 
 		inline void SumupRoot(IntArray& bins, SumupInputData& input)
 		{
-			//VLOG(2) << "SumupRoot";
 			if (bins.IsDense())
 			{
 				SumupRootDense(bins, input);
