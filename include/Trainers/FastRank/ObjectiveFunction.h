@@ -43,7 +43,13 @@ namespace gezi {
 			_gradient.resize(Dataset.NumDocs);
 			_weights.resize(Dataset.NumDocs);
 		}
+
 		Fvec& Weights()
+		{
+			return _weights;
+		}
+
+		const Fvec& Weights() const
 		{
 			return _weights;
 		}

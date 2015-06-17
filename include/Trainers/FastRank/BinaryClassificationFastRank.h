@@ -17,6 +17,8 @@
 #include "FastRank.h"
 #include "BinaryClassificationFastRankArguments.h"
 #include "BinaryClassificationObjectiveFunction.h"
+#include "rabit_util.h"
+DECLARE_int32(distributeMode);
 namespace gezi {
 
 	class BinaryClassificationFastRank : public FastRank
@@ -60,6 +62,12 @@ namespace gezi {
 					/*	_calibrator->Train(GetTrainSetScores(), TrainSetLabels, TrainSet.SampleWeights);*/
 					if (_args->numBags == 1)
 					{
+						if (Rabit::GetWorldSize() > 1 && FLAGS_distributeMode == 2)
+						{
+							Rabit::Allgather(TrainScores);
+							Rabit::Allgather(TrainSet.SampleWeights);
+							Rabit::Allgather(TrainSetLabels);
+						}
 						_calibrator->Train(TrainScores, TrainSetLabels, TrainSet.SampleWeights);
 					}
 					else if (_selfEvaluate)

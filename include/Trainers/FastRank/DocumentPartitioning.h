@@ -18,6 +18,7 @@
 #include "RegressionTree.h"
 #include "Dataset.h"
 #include "rabit_util.h"
+DECLARE_int32(distributeMode);
 namespace gezi {
 
 	class DocumentPartitioning
@@ -129,6 +130,21 @@ namespace gezi {
 			_leafCount[gtChildIndex] = gtCount;
 		}
 
+		void Split(int leaf, const IntArray& indexer, uint threshold, int gtChildIndex, int feature)
+		{
+			int begin = _leafBegin[leaf];
+			int len = _leafCount[leaf];
+			Split(leaf, indexer, threshold, gtChildIndex);
+			{
+				gezi::Notifer notifer("Broadcast documentpartitioning", 2);
+				int root = feature % Rabit::GetWorldSize();
+				Rabit::Broadcast(_leafCount[leaf], root);
+				Rabit::Broadcast(_leafBegin[gtChildIndex], root);
+				Rabit::Broadcast(_leafCount[gtChildIndex], root);
+				rabit::Broadcast(&_documents[begin], len * sizeof(int), root);
+			}
+		}
+
 		Float Mean(const Fvec& weights, int leaf, bool filterZeros)
 		{
 			Float mean = 0.0;
@@ -155,7 +171,13 @@ namespace gezi {
 					mean += weights[_documents[i]];
 				}
 			}
-			//PVAL2(mean, count);
+
+			if (Rabit::GetWorldSize() > 1 && FLAGS_distributeMode > 1)
+			{
+				Rabit::Allreduce<op::Sum>(mean);
+				Rabit::Allreduce<op::Sum>(count);
+			}
+
 			return (mean / ((Float)count));
 		}
 
@@ -190,6 +212,16 @@ namespace gezi {
 					sumWeight += weight;
 				}
 			}
+
+			if (Rabit::GetWorldSize() > 1 && FLAGS_distributeMode > 2)
+			{
+#pragma omp critical
+				{
+					Rabit::Allreduce<op::Sum>(mean);
+					Rabit::Allreduce<op::Sum>(sumWeight);
+				}
+			}
+
 			return (mean / sumWeight);
 		}
 

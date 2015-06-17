@@ -43,7 +43,7 @@ namespace gezi {
 			Bins = bins_;
 		}
 
-		int NumBins()
+		int NumBins() const
 		{
 			return BinUpperBounds.size();
 		}

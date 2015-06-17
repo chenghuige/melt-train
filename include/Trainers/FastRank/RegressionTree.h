@@ -18,6 +18,7 @@
 #include "Dataset.h"
 #include "Feature.h"
 #include "rabit_util.h"
+DECLARE_int32(distributeMode); //@TODO
 namespace gezi {
 
 	class RegressionTree : public OnlineRegressionTree
@@ -252,16 +253,16 @@ namespace gezi {
 			_gainPValue[indexOfNewInternal] = gainPValue;
 			_threshold[indexOfNewInternal] = threshold;
 			//每轮都立即处理而不是最后统一处理主要为了eval的需要
-			if (rabit::GetWorldSize() == 1)
+			//OnlineRegressionTree::_threshold[indexOfNewInternal] = _features[feature].BinUpperBounds[threshold];
+			if (Rabit::GetWorldSize() == 1 || FLAGS_distributeMode != 1)
 			{
-			OnlineRegressionTree::_threshold[indexOfNewInternal] = _features[feature].BinUpperBounds[threshold];
+				OnlineRegressionTree::_threshold[indexOfNewInternal] = _features[feature].BinUpperBounds[threshold];
 			}
 			else
 			{
 				gezi::Notifer notifer("Broadcast upperThreShold", 2);
-				Float upperThreShold = Rabit::Choose(feature) ? _features[feature].BinUpperBounds[threshold] : 0;
-				ufo::Broadcast(upperThreShold, feature % rabit::GetWorldSize());
-				OnlineRegressionTree::_threshold[indexOfNewInternal] = upperThreShold;
+				OnlineRegressionTree::_threshold[indexOfNewInternal] = Rabit::Choose(feature) ? _features[feature].BinUpperBounds[threshold] : 0;
+				Rabit::Broadcast(OnlineRegressionTree::_threshold[indexOfNewInternal], feature % Rabit::GetWorldSize());
 			}
 			_lteChild[indexOfNewInternal] = ~leaf;
 			_previousLeafValue[indexOfNewInternal] = _leafValue[leaf];

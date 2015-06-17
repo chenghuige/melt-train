@@ -31,6 +31,7 @@
 #include "Predictors/FastRankPredictor.h"
 #include "Prediction/Calibrate/CalibratorFactory.h"
 #include "Prediction/Instances/instances_util.h"
+#include "rabit_util.h"
 namespace gezi {
 
 	class FastRank : public ValidatingTrainer
@@ -311,7 +312,7 @@ namespace gezi {
 	protected:
 		void ConstructValidatingScoreTrackers()
 		{
-			for (int i = 0; i < _validationSets.size(); i++)
+			for (size_t i = 0; i < _validationSets.size(); i++)
 			{
 				ConstructScoreTracker(_validationSets[i], i);
 			}

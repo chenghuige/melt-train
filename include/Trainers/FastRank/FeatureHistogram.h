@@ -28,7 +28,7 @@ namespace gezi {
 		Fvec SumTargetsByBin;
 		Fvec SumWeightsByBin;
 		int NumFeatureValues = 0;
-		Feature* Feature = NULL;
+		const Feature* Feature = NULL;
 
 		FeatureHistogram() = default;
 		FeatureHistogram(FeatureHistogram&&) = default;
@@ -106,15 +106,15 @@ namespace gezi {
 
 		struct SumupInputData
 		{
-			Fvec& BinMedians;
-			ivec& DocIndices;
-			Fvec& Outputs;
-			Fvec& Weights;
+			const Fvec& BinMedians;
+			const ivec& DocIndices;
+			const Fvec& Outputs;
+			const Fvec& Weights;
 			Float SumTargets;
 			Float SumWeights;
 			int TotalCount;
-			SumupInputData(int totalCount, Float sumTargets, Float sumWeights, Fvec& outputs,
-				Fvec& weights, ivec& docIndices, Fvec& binMedians)
+			SumupInputData(int totalCount, Float sumTargets, Float sumWeights, const Fvec& outputs,
+				const Fvec& weights, const ivec& docIndices, const Fvec& binMedians)
 				:TotalCount(totalCount), SumTargets(sumTargets), SumWeights(sumWeights), Outputs(outputs), 
 				Weights(weights), DocIndices(docIndices), BinMedians(binMedians)
 			{
@@ -130,7 +130,7 @@ namespace gezi {
 
 		//这里对于当前featureIndex统计了它对应bins的每个bin的累加target值 也就是计算直方图了
 		inline void SumupWeighted(int featureIndex, int numDocsInLeaf, Float sumTargets, Float sumWeights,
-			Fvec& outputs, Fvec& weights, ivec& docIndices)
+			const Fvec& outputs, const Fvec& weights, const ivec& docIndices)
 		{
 			SumupInputData input(numDocsInLeaf, sumTargets, sumWeights, outputs, weights, docIndices, Feature->BinMedians);
 			gezi::zeroset(SumTargetsByBin);
@@ -144,7 +144,7 @@ namespace gezi {
 		}
 
 	protected:
-		inline void Sumup(IntArray& bins, SumupInputData& input)
+		inline void Sumup(const IntArray& bins, const SumupInputData& input)
 		{
 			if (input.DocIndices.empty())
 			{
@@ -170,7 +170,7 @@ namespace gezi {
 			}
 		}
 
-		inline void SumupRoot(IntArray& bins, SumupInputData& input)
+		inline void SumupRoot(const IntArray& bins, const SumupInputData& input)
 		{
 			if (bins.IsDense())
 			{
@@ -182,7 +182,7 @@ namespace gezi {
 			}
 		}
 
-		inline void SumupRootDense(IntArray& bins, SumupInputData& input)
+		inline void SumupRootDense(const IntArray& bins, const SumupInputData& input)
 		{
 			bins.ForEachDense([&, this](int index, int featureBin)
 			{
@@ -192,7 +192,7 @@ namespace gezi {
 			});
 		}
 
-		inline void SumupRootSparse(IntArray& bins, SumupInputData& input)
+		inline void SumupRootSparse(const IntArray& bins, const SumupInputData& input)
 		{
 			Float totalOutput = 0.0;
 			bins.ForEachSparse([&, this](int index, int featureBin)
@@ -207,7 +207,7 @@ namespace gezi {
 			CountByBin[bins.ZeroValue()] += input.TotalCount - bins.Count();
 		}
 
-		void SumupRootWeighted(IntArray& bins, SumupInputData& input)
+		void SumupRootWeighted(const IntArray& bins, const SumupInputData& input)
 		{
 			if (bins.IsDense())
 			{
@@ -241,7 +241,7 @@ namespace gezi {
 			}
 		}
 
-		inline void SumupLeaf(IntArray& bins, SumupInputData& input)
+		inline void SumupLeaf(const IntArray& bins, const SumupInputData& input)
 		{
 			//VLOG(2) << "SumupLeaf";
 			if (bins.IsDense())
@@ -255,7 +255,7 @@ namespace gezi {
 		}
 
 		//@TODO 貌似还是比tlc慢一些 是因为tlc的IntArray不同设置吗bit4 bit8?
-		inline void SumupLeafDense(IntArray& bins, SumupInputData& input)
+		inline void SumupLeafDense(const IntArray& bins, const SumupInputData& input)
 		{
 			for (int iDocIndices = 0; iDocIndices < input.TotalCount; iDocIndices++)
 			{
@@ -267,7 +267,7 @@ namespace gezi {
 			}
 		}
 
-		inline void SumupLeafSparse(IntArray& bins, SumupInputData& input)
+		inline void SumupLeafSparse(const IntArray& bins, const SumupInputData& input)
 		{
 			int iDocIndices = 0;
 			int totalCount = 0;
@@ -301,7 +301,7 @@ namespace gezi {
 			CountByBin[bins.ZeroValue()] += input.TotalCount - totalCount;
 		}
 
-		void SumupLeafWeighted(IntArray& bins, SumupInputData& input)
+		void SumupLeafWeighted(const IntArray& bins, const SumupInputData& input)
 		{
 			if (bins.IsDense())
 			{

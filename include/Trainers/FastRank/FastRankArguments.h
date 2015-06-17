@@ -15,7 +15,12 @@
 #define FAST_RANK_ARGUMENTS_H_
 
 namespace gezi {
-
+	enum class DistributeMode
+	{
+		FeaturesSplit = 0,
+		RealFeaturesSplit,
+		InstancesSplit
+	};
 struct FastRankArguments 
 {
 	int numTrees = 100;
@@ -68,6 +73,8 @@ struct FastRankArguments
 	Float gainConfidenceLevel = 0;
 
 	int maxFeaturesShow = 0; //maxfs| max print feature num
+
+	DistributeMode distributeMode = DistributeMode::FeaturesSplit;
 };
 
 typedef shared_ptr<FastRankArguments> FastRankArgumentsPtr;

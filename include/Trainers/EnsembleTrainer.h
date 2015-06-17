@@ -40,7 +40,7 @@ namespace gezi {
 			Init();
 			for (size_t i = 0; i < _trainers.size(); i++)
 			{
-				if (_allowDistribute && !Rabit::Choose(i))
+				if (_allowDistribute && !Rabit::SimpleChoose(i))
 					continue;
 				VLOG(0) << "Ensemble train with trainer " << i << " rank " << rabit::GetRank();
 				Random rand(_trainers[i]->GetRandSeed());
@@ -61,7 +61,7 @@ namespace gezi {
 			}
 			if (_allowDistribute && rabit::GetWorldSize() > 1)
 			{
-				Rabit::Broadcast(_predictors);
+				Rabit::BroadcastAsString(_predictors);
 			}
 			Finalize(instances);
 		}
@@ -109,6 +109,10 @@ namespace gezi {
 					_trainers.push_back(TrainerFactory::CreateTrainer(_trainerNames[i]));
 					_trainers.back()->SetRandSeed(FLAGS_rs);
 					FLAGS_rs += 1024; //确保每隔一trainer的起始randseed不同
+				}
+				if (_allowDistribute)
+				{//如果ensemble采用distribute train 那么各个trainer禁止distribute
+					Rabit::AllowDistribute() = false;
 				}
 			}
 			_predictors.resize(_trainers.size(), nullptr);
