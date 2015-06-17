@@ -50,6 +50,8 @@ DEFINE_bool(rstart, false, "randomStart|Initialize with one random tree");
 
 DEFINE_int32(maxfs, 0, "maxFeaturesShow| max print feature num");
 
+DEFINE_int32(distributeMode, 0, "0:feature spliting, each use full feature space mem but calculating only on sub feature 1:feature spliting, each use only sub feature space  2:instance spliting");
+
 namespace gezi {
 
 	void FastRank::ParseArgs()
@@ -115,6 +117,8 @@ namespace gezi {
 		_args->randomStart = FLAGS_rstart;
 
 		_args->maxFeaturesShow = FLAGS_maxfs;
+
+		_args->distributeMode = static_cast<DistributeMode>(FLAGS_distributeMode);
 	}
 
 	void BinaryClassificationFastRank::ParseClassificationArgs()
