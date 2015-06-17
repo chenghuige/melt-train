@@ -158,11 +158,11 @@ CCP_FLAGS=
 
 
 #COMAKE UUID
-COMAKE_MD5=f447e6e3659d00dd4d078d9765884b70  COMAKE
+COMAKE_MD5=658c3b94222a9d2e33447c421a3f1094  COMAKE
 
 
 .PHONY:all
-all:comake2_makefile_check .copy-so melt test_openmp hello 
+all:comake2_makefile_check melt test_openmp hello 
 	@echo "[[1;32;40mCOMAKE:BUILD[0m][Target:'[1;32;40mall[0m']"
 	@echo "make all done"
 
@@ -182,8 +182,6 @@ ccpclean:
 .PHONY:clean
 clean:ccpclean
 	@echo "[[1;32;40mCOMAKE:BUILD[0m][Target:'[1;32;40mclean[0m']"
-	rm -rf .copy-so
-	rm -rf ld-linux-x86-64.so.2
 	rm -rf melt
 	rm -rf ./output/bin/melt
 	rm -rf test_openmp
@@ -230,10 +228,6 @@ distclean:clean
 love:
 	@echo "[[1;32;40mCOMAKE:BUILD[0m][Target:'[1;32;40mlove[0m']"
 	@echo "make love done"
-
-.copy-so:
-	@echo "[[1;32;40mCOMAKE:BUILD[0m][Target:'[1;32;40m.copy-so[0m']"
-	cp ../../../../../../ps/se/toolchain/x86_64-unknown-linux-gnu-4.8.1-2.9-2.20-2.6.32./lib//ld-linux-x86-64.so.2 ld-linux-x86-64.so.2
 
 melt:melt_melt.o \
   ../src/Trainers/melt_EnsembleTrainer.o \
