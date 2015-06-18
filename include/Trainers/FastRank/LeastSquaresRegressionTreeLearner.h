@@ -553,6 +553,13 @@ namespace gezi {
 			return ((starget * starget) / sweight);
 		}
 
+		vector<Float> GetGains(const vector<SplitInfo>& infos)
+		{
+			return from(infos)
+				>> select([](const SplitInfo& a) { return a.Gain; })
+				>> to_vector();
+		}
+
 		void FindBestSplitOfRoot(Fvec& targets)
 		{
 			if (Partitioning.NumDocs() == TrainData.NumDocs)
@@ -573,29 +580,15 @@ namespace gezi {
 			_histogramArrayPool.Get(0, _smallerChildHistogramArray); //从pool中抽取一个histogram位置
 			_largerChildSplitCandidates.Initialize(); //larger clear也就是不处理 LeafIndex =-1
 
-			//if (Rabit::GetWorldSize() > 1 && FLAGS_distributeMode > 1)
-			//{
-			//	FindBestThresholdForFeatures();
-			//}
-			//else
-			//{
-#pragma omp parallel for ordered
-			for (int featureIndex = 0; featureIndex < TrainData.NumFeatures; featureIndex++)
+			if (Rabit::GetWorldSize() > 1 && FLAGS_distributeMode > 1)
 			{
-				if (IsFeatureOk(featureIndex))
-				{
-					FindBestThresholdForFeature(featureIndex);
-				}
+				FindBestThresholdForFeaturesStepByStep();
 			}
-			//}
+			else
+			{
+				FindBestThresholdForFeatures();
+			}
 			FindAndSetBestFeatureForLeaf(_smallerChildSplitCandidates);
-		}
-
-		vector<Float> GetGains(const vector<SplitInfo>& infos)
-		{
-			return from(infos)
-				>> select([](const SplitInfo& a) { return a.Gain; })
-				>> to_vector();
 		}
 
 		//简单速度慢的发现best split用于对比验证快速实现的正确性  废弃 只支持单机测试
@@ -648,8 +641,6 @@ namespace gezi {
 
 			if ((numDocsInGTChild < (_minDocsInLeaf * 2)) && (numDocsInLTEChild < (_minDocsInLeaf * 2)))
 			{//左右叶子都无法再分裂 否则违背叶子中最小instance数目限制
-				/*	_bestSplitInfoPerLeaf[LTEChild]->Gain = -std::numeric_limits<Float>::infinity();
-				_bestSplitInfoPerLeaf[GTChild]->Gain = -std::numeric_limits<Float>::infinity();*/
 				_bestSplitInfoPerLeaf[LTEChild].Gain = -std::numeric_limits<Float>::infinity();
 				_bestSplitInfoPerLeaf[GTChild].Gain = -std::numeric_limits<Float>::infinity();
 			}
@@ -686,21 +677,14 @@ namespace gezi {
 					AllreduceSum(_largerChildSplitCandidates);
 				}
 
-				//if (Rabit::GetWorldSize() > 1 && FLAGS_distributeMode > 1)
-				//{
-				//	FindBestThresholdForFeatures();
-				//}
-				//else
-				//{
-#pragma omp parallel for ordered
-				for (int featureIndex = 0; featureIndex < TrainData.NumFeatures; featureIndex++)
+				if (Rabit::GetWorldSize() > 1 && FLAGS_distributeMode > 1)
 				{
-					if (IsFeatureOk(featureIndex))
-					{
-						FindBestThresholdForFeature(featureIndex);
-					}
+					FindBestThresholdForFeaturesStepByStep();
 				}
-				//}
+				else
+				{
+					FindBestThresholdForFeatures();
+				}
 				FindAndSetBestFeatureForLeaf(_smallerChildSplitCandidates);
 				FindAndSetBestFeatureForLeaf(_largerChildSplitCandidates);
 			}
@@ -728,69 +712,6 @@ namespace gezi {
 				histogram.SumupWeighted(featureIndex,
 					candidates.NumDocsInLeaf, candidates.SumTargets, candidates.SumWeights,
 					candidates.Targets, candidates.Weights, candidates.DocIndices);
-			}
-		}
-
-		void CalculateHistogram(int featureIndex)
-		{
-			if (_parentHistogramArray && !(*_parentHistogramArray)[featureIndex].IsSplittable)
-			{
-				//VLOG(4) << "set smaller is splittable false";
-				(*_smallerChildHistogramArray)[featureIndex].IsSplittable = false;
-			}
-			else
-			{
-				FeatureHistogram& smallerChildHistogram = (*_smallerChildHistogramArray)[featureIndex];
-				//--Histogram统计这个特征对应_smallerChildSplitCandidates输入的总分桶直方图信息
-				SumupWeighted(smallerChildHistogram, _smallerChildSplitCandidates, featureIndex);
-
-				//--查找对应_smallerChildSplitCandidates输入,对应该featureIndex,各个分裂点(桶数目决定)的分裂收益,
-				//最终在_smallerChildSplitCandidates中保存该featureIndex的最佳分裂信息
-
-				if (Rabit::GetWorldSize() > 1 && FLAGS_distributeMode > 1)
-				{ //@TODO reduce(histogram) one line only  FLAGS_distributeMode > 1 应该被DistributeMode::IsInstanceSplit() DistributeMode::IsFeatureSplit() 等等static func取代
-					FeatureHistogram& histogram = smallerChildHistogram;
-#pragma omp critical
-					{
-						rabit::Allreduce<rabit::op::Sum>(&histogram.SumTargetsByBin[0], histogram.SumTargetsByBin.size());
-						rabit::Allreduce<rabit::op::Sum>(&histogram.CountByBin[0], histogram.CountByBin.size());
-						if (!histogram.SumWeightsByBin.empty())
-						{
-							rabit::Allreduce<rabit::op::Sum>(&histogram.SumWeightsByBin[0], histogram.SumWeightsByBin.size());
-						}
-					}
-				}
-				FindBestThresholdFromHistogram(smallerChildHistogram, _smallerChildSplitCandidates, featureIndex);
-
-				if (_largerChildSplitCandidates.LeafIndex >= 0) //FindBestSplitOfRoot的时候这里是-1,不处理
-				{
-					FeatureHistogram& largerChildHistogram = (*_largerChildHistogramArray)[featureIndex];
-					//or affine tree
-					if (!_parentHistogramArray)
-					{ //如果pool足够大 不会走这里 就是说parent Histogram信息没有cache了 那么重新计算
-						SumupWeighted(largerChildHistogram, _largerChildSplitCandidates, featureIndex);
-
-						if (Rabit::GetWorldSize() > 1 && FLAGS_distributeMode > 1)
-						{ //@TODO reduce(histogram) one line only
-							FeatureHistogram& histogram = largerChildHistogram;
-#pragma omp critical
-							{
-								rabit::Allreduce<rabit::op::Sum>(&histogram.SumTargetsByBin[0], histogram.SumTargetsByBin.size());
-								rabit::Allreduce<rabit::op::Sum>(&histogram.CountByBin[0], histogram.CountByBin.size());
-								if (!histogram.SumWeightsByBin.empty())
-								{
-									rabit::Allreduce<rabit::op::Sum>(&histogram.SumWeightsByBin[0], histogram.SumWeightsByBin.size());
-								}
-							}
-						}
-
-					}
-					else
-					{ //优化技巧通过减法直接得到节点较多的叶子的Histogram信息
-						largerChildHistogram.Subtract(smallerChildHistogram);
-					}
-					FindBestThresholdFromHistogram(largerChildHistogram, _largerChildSplitCandidates, featureIndex);
-				}
 			}
 		}
 
@@ -828,16 +749,23 @@ namespace gezi {
 			}
 		}
 
-		//本来想用这个把交互转到单线程区域 本地 2个机器测试结果和完全一致。。 但是在集群上面多线程的时候会hang.. 单线程结果ok...
-		//[06 - 18 02:26 : 44] [0] Thu Jun 18 02:26 : 44 2015[1, 0]<stderr> : 6e-06 s) 33 % | **************
-		//	[06 - 18 02:26 : 44][0] Thu Jun 18 02:26 : 44 2015[1, 0]<stderr> : |
-		//	[06 - 18 02:26 : 45][0] Thu Jun 18 02 : 26 : 45 2015[1, 0]<stderr> : AssertError : TryDecideRouting
-		//具体原因未知 @FIMXE @TODO 比较奇怪 无法本地复现暂时 另外考虑到单机多机更好的可复用性尽量小的改动 还是用
-		// FindBestThresholdForFeature(int featureIndex) 走统一的接口更好,而使用这个ok 也证明Instance2DaSet和这里并行+ordered是可行的
 		void FindBestThresholdForFeatures()
 		{
-			vector<bool> needMoreStep(TrainData.NumFeatures, false);
-#pragma omp parallel for
+#pragma omp parallel for ordered
+			for (int featureIndex = 0; featureIndex < TrainData.NumFeatures; featureIndex++)
+			{
+				if (IsFeatureOk(featureIndex))
+				{
+					FindBestThresholdForFeature(featureIndex);
+				}
+			}
+		}
+
+		//不一致的原因是vector<bool>不是线程安全 改用bvec
+		bvec CalculateSamllerChildHistogram()
+		{
+			bvec needMoreStep(TrainData.NumFeatures, false);
+#pragma omp parallel for 
 			for (int featureIndex = 0; featureIndex < TrainData.NumFeatures; featureIndex++)
 			{
 				if (IsFeatureOk(featureIndex))
@@ -845,7 +773,11 @@ namespace gezi {
 					needMoreStep[featureIndex] = CalculateSamllerChildHistogram(featureIndex);
 				}
 			}
+			return needMoreStep;
+		}
 
+		void AllReduceSumSmallerChildHistogramArray(const bvec& needMoreStep)
+		{
 			if (Rabit::GetWorldSize() > 1 && FLAGS_distributeMode > 1)
 			{
 				for (int featureIndex = 0; featureIndex < TrainData.NumFeatures; featureIndex++)
@@ -853,10 +785,14 @@ namespace gezi {
 					if (IsFeatureOk(featureIndex) && needMoreStep[featureIndex])
 					{
 						AllreduceSum((*_smallerChildHistogramArray)[featureIndex]);
+						VLOG(3) << "Finish AllreduceSum  _smallerChildHistogramArray with feature " << featureIndex << " " << Rabit::GetRank();
 					}
 				}
 			}
+		}
 
+		void CalculateLargerChildHistogram(const bvec& needMoreStep)
+		{
 #pragma omp parallel for
 			for (int featureIndex = 0; featureIndex < TrainData.NumFeatures; featureIndex++)
 			{
@@ -865,7 +801,10 @@ namespace gezi {
 					CalculateLargerChildHistogram(featureIndex);
 				}
 			}
+		}
 
+		void AllReduceSumLargerChildHistogramArray(const bvec& needMoreStep)
+		{
 			if (Rabit::GetWorldSize() > 1 && FLAGS_distributeMode > 1)
 			{
 				if (!_parentHistogramArray && _largerChildSplitCandidates.LeafIndex >= 0)
@@ -875,25 +814,41 @@ namespace gezi {
 						if (IsFeatureOk(featureIndex) && needMoreStep[featureIndex])
 						{
 							AllreduceSum((*_largerChildHistogramArray)[featureIndex]);
+							VLOG(3) << "Finish AllreduceSum  _largerChildHistogramArray with feature " << featureIndex << " " << Rabit::GetRank();
 						}
 					}
 				}
 			}
+		}
 
-#pragma omp parallel for
+		void FindBestThresholdFromHistogram(const bvec& needMoreStep)
+		{
+#pragma omp parallel for 
 			for (int featureIndex = 0; featureIndex < TrainData.NumFeatures; featureIndex++)
 			{
 				if (IsFeatureOk(featureIndex) && needMoreStep[featureIndex])
 				{
-					FeatureHistogram& smallerChildHistogram = (*_smallerChildHistogramArray)[featureIndex];
-					FindBestThresholdFromHistogram(smallerChildHistogram, _smallerChildSplitCandidates, featureIndex);
+					FindBestThresholdFromHistogram((*_smallerChildHistogramArray)[featureIndex], _smallerChildSplitCandidates, featureIndex);
 					if (_largerChildSplitCandidates.LeafIndex >= 0)
 					{
-						FeatureHistogram& largerChildHistogram = (*_largerChildHistogramArray)[featureIndex];
-						FindBestThresholdFromHistogram(largerChildHistogram, _largerChildSplitCandidates, featureIndex);
+						FindBestThresholdFromHistogram((*_largerChildHistogramArray)[featureIndex], _largerChildSplitCandidates, featureIndex);
 					}
 				}
 			}
+		}
+
+		void FindBestThresholdForFeaturesStepByStep()
+		{
+			bvec needMoreStep = CalculateSamllerChildHistogram();
+			VLOG(2) << "Finlish CalculateSamllerChildHistogram " << Rabit::GetRank();
+			AllReduceSumSmallerChildHistogramArray(needMoreStep);
+			VLOG(2) << "Finish AllreduceSum for _smallerChildHistogramArray " << Rabit::GetRank();
+			CalculateLargerChildHistogram(needMoreStep);
+			VLOG(2) << "Finlish CalculateLargerChildHistogram " << Rabit::GetRank();
+			AllReduceSumLargerChildHistogramArray(needMoreStep);
+			VLOG(2) << "Finish AllreduceSum for _largerChildHistogramArray " << Rabit::GetRank();
+			FindBestThresholdFromHistogram(needMoreStep);
+			VLOG(2) << "Finish FindBestThresholdFromHistogram " << Rabit::GetRank();
 		}
 
 		//计算出这个特征对应的 当前叶子内部的直方图统计,然后根据直方图统计找到最佳分裂阈值
@@ -913,6 +868,7 @@ namespace gezi {
 				{ //@TODO reduce(histogram) one line only  FLAGS_distributeMode > 1 应该被DistributeMode::IsInstanceSplit() DistributeMode::IsFeatureSplit() 等等static func取代
 #pragma omp ordered
 					{
+						VLOG(3) << "Finish AllreduceSum  _smallerChildHistogramArray with feature " << featureIndex << " " << Rabit::GetRank();
 						AllreduceSum(smallerChildHistogram);
 					}
 				}
@@ -1025,10 +981,12 @@ namespace gezi {
 	private:
 		void AllreduceSum(FeatureHistogram& histogram)
 		{
-			gezi::Notifer notifer("AllreduceSum histogram", 2);
+			gezi::Notifer notifer("AllreduceSum histogram", 3);
+			PVAL4(histogram.SumTargetsByBin.size(), histogram.CountByBin.size(), histogram.SumWeightsByBin.size(), Rabit::GetRank());
 			Rabit::Allreduce<op::Sum>(histogram.SumTargetsByBin);
 			Rabit::Allreduce<op::Sum>(histogram.CountByBin);
 			Rabit::Allreduce<op::Sum>(histogram.SumWeightsByBin);
+			PVAL4(histogram.SumTargetsByBin.size(), histogram.CountByBin.size(), histogram.SumWeightsByBin.size(), Rabit::GetRank());
 		}
 
 		void AllreduceSum(LeafSplitCandidates& leafSplitCandidates)

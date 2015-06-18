@@ -14,7 +14,6 @@
 #ifndef FEATURE_HISTOGRAM_H_
 #define FEATURE_HISTOGRAM_H_
 #include "Feature.h"
-#include "rabit_util.h"
 namespace gezi {
 
 	class FeatureHistogram

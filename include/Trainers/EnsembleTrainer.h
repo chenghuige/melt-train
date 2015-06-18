@@ -61,7 +61,7 @@ namespace gezi {
 			}
 			if (_allowDistribute && rabit::GetWorldSize() > 1)
 			{
-				Rabit::BroadcastAsString(_predictors);
+				Rabit::SerializeBroadcast(_predictors);
 			}
 			Finalize(instances);
 		}

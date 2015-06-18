@@ -79,7 +79,7 @@ namespace gezi {
 			//------------- 分桶 获取 bin upperbounds 和 medians
 			vector<Feature> features(numFeatures);
 			{
-				ProgressBar pb(numFeatures, "Instance2Datset-Binning");
+				ProgressBar pb(numFeatures, "InstancesToDatset-Binning");
 				//AutoTimer timer("Binning for bounds and medians", 0);
 				BinFinder binFinder;
 #pragma omp parallel for ordered firstprivate(pb) firstprivate(binFinder)
@@ -98,7 +98,7 @@ namespace gezi {
 						//或者allreduce处理各个BinUpperBounds取最大值,可能会有细微的不一致 @TODO 但是计算量小很多
 #pragma omp ordered
 						{
-							gezi::Notifer notifer("Allgather values", 2);
+							gezi::Notifer notifer("Allgather values", 3);
 							Rabit::Allgather(values);
 							Rabit::Allreduce<rabit::op::Sum>(length);
 						}
@@ -112,7 +112,7 @@ namespace gezi {
 					{ //非精确模式 使用root的结果
 #pragma omp ordered
 						{
-							gezi::Notifer notifer("Broadcast bounds", 2);
+							gezi::Notifer notifer("Broadcast bounds", 3);
 							Rabit::Broadcast(features[i].BinUpperBounds, 0);
 							Rabit::Broadcast(features[i].BinMedians, 0);
 						}
@@ -140,7 +140,7 @@ namespace gezi {
 				gezi::Notifer notifer("BroadcastAsString features", 1);
 				//@TODO Feature里面不都是基础类型
 				//Rabit::Allreduce(features);
-				Rabit::BroadcastAsString(features);
+				Rabit::SerializeBroadcast(features);
 			}
 
 			return Dataset(numDocs, features, ratings, weights);
