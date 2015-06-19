@@ -14,7 +14,7 @@
 #ifndef REGRESSION_TREE_H_
 #define REGRESSION_TREE_H_
 
-#include "Trainers/FastRank/OnlineRegressionTree.h"
+#include "Trainers/Gbdt/OnlineRegressionTree.h"
 #include "Dataset.h"
 #include "Feature.h"
 #include "rabit_util.h"

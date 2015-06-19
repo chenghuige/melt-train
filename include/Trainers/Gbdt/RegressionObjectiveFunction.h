@@ -17,7 +17,7 @@
 #include "Dataset.h"
 #include "ObjectiveFunction.h"
 #include "IStepSearch.h"
-#include "BinaryClassificationFastRankArguments.h"
+#include "BinaryClassificationGbdtArguments.h"
 namespace gezi {
 
 	//GetGradientInOneQuery 如果不想用虚函数或者std::function 也可以利用模板设计模式  泛型和多态是两种思路 可以考虑不同场景怎样更合适
@@ -38,7 +38,7 @@ namespace gezi {
 
 	public:
 		RegressionObjectiveFunction(gezi::Dataset& trainSet, Fvec& trainSetLabels,
-			RegressionFastRankArguments& args)
+			RegressionGbdtArguments& args)
 			: ObjectiveFunctionImpl(trainSet, args.learningRate, args.maxTreeOutput, args.derivativesSampleRate, args.bestStepRankingRegressionTrees, args.randSeed), Labels(trainSetLabels)
 		{
 			//GetGradientInOneQuery = [this](int query, const Fvec& scores)
