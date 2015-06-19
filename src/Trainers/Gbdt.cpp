@@ -1,7 +1,7 @@
 /**
  *  ==============================================================================
  *
- *          \file   FastRank.cpp
+ *          \file   Gbdt.cpp
  *
  *        \author   chenghuige
  *
@@ -11,12 +11,9 @@
  *  ==============================================================================
  */
 
-#ifndef FAST_RANK_CPP_
-#define FAST_RANK_CPP_
-
 #include "common_util.h"
-#include "Trainers/FastRank/FastRank.h"
-#include "Trainers/FastRank/BinaryClassificationFastRank.h"
+#include "Trainers/Gbdt/Gbdt.h"
+#include "Trainers/Gbdt/BinaryClassificationGbdt.h"
 
 DECLARE_bool(calibrate);
 DECLARE_string(calibrator);
@@ -41,7 +38,8 @@ DEFINE_double(bagfrac, 0.7, "Percentage of training queries used in each bag");
 //bagging 应该还是有问题。。。 关键是TrainSet的问题？ NumDocs 等等 scores等等
 DEFINE_int32(nbag, 1, "NumBags|if nbag > 1 then we actually has nbag * numtress = totalTrees  @FIXME"); 
 DEFINE_double(nbagfrac, 0.7, "Percentage of training queries used in each bag");
-DEFINE_bool(bstrap, false, "BootStrap|wether to use bootstrap full sampling with replacement or each sampling use bagfrac");
+DECLARE_bool(bstrap);
+
 DEFINE_double(bsfrac, 1.0, "BootStrapFraction|traditional bootstrap sampling will use all data");
 
 DEFINE_double(entropy, 0, "entropyCoefficient|sets the entropy coefficient, which encourages the algorithm to prefer balanced splits in the tree (splits where an equal number of training documents go in each direction)");
@@ -54,7 +52,7 @@ DEFINE_int32(distributeMode, 0, "0:feature spliting, each use full feature space
 
 namespace gezi {
 
-	void FastRank::ParseArgs()
+	void Gbdt::ParseArgs()
 	{
 		_args = CreateArguments();
 
@@ -121,10 +119,8 @@ namespace gezi {
 		_args->distributeMode = static_cast<DistributeMode>(FLAGS_distributeMode);
 	}
 
-	void BinaryClassificationFastRank::ParseClassificationArgs()
+	void BinaryClassificationGbdt::ParseClassificationArgs()
 	{
 		_args->maxCalibrationExamples = FLAGS_numCali;
 	}
 }
-
-#endif  //----end of FAST_RANK_CPP_

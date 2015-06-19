@@ -17,7 +17,7 @@
 #include "Trainers/EnsembleTrainer.h"
 
 DEFINE_string(trainers, "gbdt", "trainerNames|like gbdt,linearsvm");
-DEFINE_string(numTrainers, "5", "numTrainers|like 2,1, with -trainer gbdt,linearsvm means train 2 gbdt and 1 linearsvm");
+DEFINE_string(ntrainer, "5", "numTrainers|like 2,1, with -trainer gbdt,linearsvm means train 2 gbdt and 1 linearsvm");
 DEFINE_double(srate, 0.7, "sampleRate|replace sampling rate");
 DEFINE_bool(edistribute, false, "AllowEnsembleDistribute: now only for ensemble trainer when distibute is set to false will not train different trainer parallel, if parallel train and the sub trainer parallel train it's self may cause error");
 
@@ -32,7 +32,7 @@ namespace gezi {
 	void EnsembleTrainer::ParseArgs()
 	{
 		_trainerNames = gezi::split(FLAGS_trainers, ',');
-		gezi::convert(gezi::split(FLAGS_numTrainers, ','), _numTrainers);
+		gezi::convert(gezi::split(FLAGS_ntrainer, ','), _numTrainers);
 		gezi::print(_trainerNames, _numTrainers);
 		_sampleRate = FLAGS_srate;
 

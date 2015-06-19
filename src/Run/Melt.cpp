@@ -4,7 +4,7 @@
 
 DEFINE_string(c, "cv", "command: Options are: Train, Test, CV (cross validation), TrainTest, FeatureSelection, CreateInstances, Norm, Check");
 DEFINE_string(ci, "", "commandInput: Some commands need additional input like split data you need to iput like 1:1");
-DEFINE_string(cl, "LinearSVM", "classifierName: Classifier to use");
+DEFINE_string(cl, "LinearSVM", "classifierName: Classifier to use, -cl gb means using gbdt binary classifcation");
 DEFINE_string(cls, "", "classifierSettings: Classifier settings, this is now only used for third part classifers like sofia,vw,liblinear eg.<-cls -B=1,-s=5>");
 
 //---------------cross validation 
