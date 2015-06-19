@@ -1,7 +1,7 @@
 /**
  *  ==============================================================================
  *
- *          \file   Trainers/FastRank/Dataset.h
+ *          \file   Trainers/Gbdt/Dataset.h
  *
  *        \author   chenghuige
  *
@@ -11,9 +11,9 @@
  *  ==============================================================================
  */
 
-#ifndef TRAINERS__FAST_RANK__DATASET_H_
-#define TRAINERS__FAST_RANK__DATASET_H_
-#include "Trainers/FastRank/Feature.h"
+#ifndef TRAINERS__GBDT__DATASET_H_
+#define TRAINERS__GBDT__DATASET_H_
+#include "Trainers/Gbdt/Feature.h"
 namespace gezi {
 
 	//这个地方是否可以空间换时间 如果数据量不够大 单独一个全量二维数组 @TODO 在Feature增加一个DenseBins
@@ -95,4 +95,4 @@ namespace gezi {
 
 }  //----end of namespace gezi
 
-#endif  //----end of TRAINERS__FAST_RANK__DATASET_H_
+#endif  //----end of TRAINERS__GBDT__DATASET_H_

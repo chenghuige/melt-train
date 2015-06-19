@@ -1,7 +1,7 @@
 /**
  *  ==============================================================================
  *
- *          \file   Trainers/FastRank/InstancesToDataSet.h
+ *          \file   Trainer/Gbdt/InstancesToDataSet.h
  *
  *        \author   chenghuige
  *
@@ -11,10 +11,10 @@
  *  ==============================================================================
  */
 
-#ifndef TRAINERS__FAST_RANK__INSTANCES_TO_DATA_SET_H_
-#define TRAINERS__FAST_RANK__INSTANCES_TO_DATA_SET_H_
+#ifndef TRAINERS__GBDT__INSTANCES_TO_DATA_SET_H_
+#define TRAINERS__GBDT__INSTANCES_TO_DATA_SET_H_
 #include "Prediction/Instances/Instances.h"
-#include "Trainers/FastRank/Dataset.h"
+#include "Trainers/Gbdt/Dataset.h"
 #include "Numeric/BinFinder.h"
 #include "rabit_util.h"
 DECLARE_int32(distributeMode);
@@ -153,4 +153,4 @@ namespace gezi {
 
 }  //----end of namespace gezi
 
-#endif  //----end of TRAINERS__FAST_RANK__INSTANCES_TO_DATA_SET_H_
+#endif  //----end of TRAINERS__GBDT__INSTANCES_TO_DATA_SET_H_
