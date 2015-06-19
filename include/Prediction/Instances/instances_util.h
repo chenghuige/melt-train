@@ -55,7 +55,7 @@ namespace gezi {
 			return parts;
 		}
 
-		static	Instances GenPartionInstances(const Instances& instances, Random& rand, double fraction)
+		static	Instances GenPartionInstances(const Instances& instances, const Random& rand, double fraction)
 		{
 			if (fraction >= 1.0)
 			{
@@ -73,7 +73,7 @@ namespace gezi {
 			return partitionInstaces;
 		}
 
-		static Instances GenBootstrapInstances(const Instances& instances, Random& rand, double fraction)
+		static Instances GenBootstrapInstances(const Instances& instances, const Random& rand, double fraction)
 		{
 			size_t nowCount = instances.size();
 			size_t destCount = nowCount * fraction;
@@ -87,7 +87,7 @@ namespace gezi {
 			return destInstaces;
 		}
 
-		static InstancePtr SampleOneInstance(const Instances& instances, Random& rand)
+		static InstancePtr SampleOneInstance(const Instances& instances, const Random& rand)
 		{
 			size_t idx = rand.Next(instances.size());
 			return instances[idx];
