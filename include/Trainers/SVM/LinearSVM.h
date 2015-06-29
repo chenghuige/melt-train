@@ -197,7 +197,7 @@ namespace gezi {
 				// We want a dense vector, to prevent memory creation during training
 				// unless we have a lot of features
 				_weights.SetLength(_numFeatures);
-				if (numFeatures <= _args.featureNumThre)
+				if (_numFeatures <= _args.featureNumThre)
 				{ //强制使用keepDense,其实WeightVector就是强制dense的，这个主要是为了转换回Vector时候使用
 					_weights.keepDense = true;
 				}
