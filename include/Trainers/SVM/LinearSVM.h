@@ -86,7 +86,6 @@ namespace gezi {
 			string initialWeightsString = ""; //initweights|Initial weights and bias, comma-separated
 			bool randomInitialWeights = false; //randweights|Randomize initial weights
 			int featureNumThre = 1000; //fnt|if NumFeatures > featureNumThre use dense format 
-			//暂时不支持streaming 模式
 			bool doStreamingTraining = false; //stream|Streaming instances training
 
 			bool normalizeFeatures = true; //norm|Normalize features
@@ -198,6 +197,10 @@ namespace gezi {
 				// We want a dense vector, to prevent memory creation during training
 				// unless we have a lot of features
 				_weights.SetLength(_numFeatures);
+				if (numFeatures <= _args.featureNumThre)
+				{ //强制使用keepDense,其实WeightVector就是强制dense的，这个主要是为了转换回Vector时候使用
+					_weights.keepDense = true;
+				}
 				_bias = 0;
 
 				// weights may be set to random numbers distributed uniformly on -1,1
