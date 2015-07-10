@@ -443,6 +443,7 @@ namespace gezi {
 		PredictorPtr Train(Instances& instances)
 		{
 			auto trainer = TrainerFactory::CreateTrainer(_cmd.classifierName);
+			gezi::Noticer noticer("Train");
 			CHECK(trainer != nullptr);
 			if (_cmd.selfTest)
 			{
@@ -554,7 +555,6 @@ namespace gezi {
 		{
 			PredictorPtr predictor;
 			{
-				Noticer nt("Train!");
 				instances = create_instances(_cmd.datafile);
 				if (_cmd.trainProportion < 1)
 				{
@@ -568,7 +568,6 @@ namespace gezi {
 					}
 				}
 				CHECK_GT(instances.Count(), 0) << "Read 0 test instances, aborting experiment";
-				VLOG(0) << "Train " << _cmd.datafile << " using " << _cmd.classifierName << " trainer";
 			}
 			predictor = Train(instances);
 			return predictor;
