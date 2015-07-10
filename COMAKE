@@ -2,8 +2,8 @@
 #coding:gbk
 
 #工作路径. 如果高版本gcc 需要修改两个路径 设置好TOOLCHAIN_ROOT
-WORKROOT('../../../../')
-TOOLCHAIN_ROOT='../../../../ps/se/toolchain'
+WORKROOT('../../../../../')
+TOOLCHAIN_ROOT='../../../../../ps/se/toolchain'
 RELATIVE_PATH='./'
 
 LEVEL=5
@@ -109,5 +109,6 @@ CONFIGS('public/configure@base')
 CONFIGS('public/uconv@base')
 CONFIGS('app/search/sep/anti-spam/gezi@base')
 CONFIGS('app/search/sep/anti-spam/melt@base')
-srcs=GLOB('./src/*.cpp ./src/Trainers/*.cpp'.replace('./',RELATIVE_PATH))
+CONFIGS('other/rabit@base')
+srcs=GLOB('./src/*.cpp ./src/Trainers/*.cpp ./src/Run/*.cpp'.replace('./',RELATIVE_PATH))
 StaticLibrary('melt_trainers',Sources(srcs, ENV.CppFlags()+CppFlags('-O3 -DNDEBUG')))
