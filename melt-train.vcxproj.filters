@@ -60,6 +60,48 @@
     <ClCompile Include="src\Trainers\LibSVMTrainer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="test\test_linearsvm_train.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test\test_bin.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Trainers\EnsembleTrainer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="profiling\omp_predict.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test2\rabit\basic.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test2\rabit\basic_witharg.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test\test_seralize.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="tools\melt.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test2\rabit\allreduce.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="test2\rabit\broadcast.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="tools2\melt.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Run\Melt.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Prediction\Instances\InstanceParser.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Trainers\Gbdt.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\Trainers\SVM\LinearSVM.h">
@@ -183,6 +225,111 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\Trainers\FastRank\RegressionObjectiveFunction.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Run\Melt.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Run\MeltArguments.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Prediction\Instances\InstanceParser.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Prediction\Instances\instances_util.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Trainers\Gbdt\BaggingProvider.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Trainers\Gbdt\BestStepRegressionGradientWrapper.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Trainers\Gbdt\BinaryClassificationGbdt.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Trainers\Gbdt\BinaryClassificationGbdtArguments.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Trainers\Gbdt\BinaryClassificationObjectiveFunction.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Trainers\Gbdt\Dataset.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Trainers\Gbdt\DocumentPartitioning.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Trainers\Gbdt\Ensemble.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Trainers\Gbdt\Feature.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Trainers\Gbdt\FeatureHistogram.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Trainers\Gbdt\Gbdt.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Trainers\Gbdt\GbdtArguments.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Trainers\Gbdt\GradientDescent.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Trainers\Gbdt\IGradientAdjuster.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Trainers\Gbdt\InstancesToDataset.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Trainers\Gbdt\IStepSearch.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Trainers\Gbdt\LeastSquaresRegressionTreeLearner.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Trainers\Gbdt\MappedObjectPool.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Trainers\Gbdt\ObjectiveFunction.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Trainers\Gbdt\OptimizationAlgorithm.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Trainers\Gbdt\ProbabilityFunctions.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Trainers\Gbdt\QueryWeightsBestResressionStepGradientWrapper.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Trainers\Gbdt\QueryWeightsGradientWrapper.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Trainers\Gbdt\RankingGbdtArguments.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Trainers\Gbdt\RegressionGbdt.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Trainers\Gbdt\RegressionGbdtArguments.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Trainers\Gbdt\RegressionObjectiveFunction.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Trainers\Gbdt\RegressionTree.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Trainers\Gbdt\ScoreTracker.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Trainers\Gbdt\TreeLearner.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Trainers\Gbdt\TrivialGradientWrapper.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

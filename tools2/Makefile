@@ -158,7 +158,7 @@ CCP_FLAGS=
 
 
 #COMAKE UUID
-COMAKE_MD5=658c3b94222a9d2e33447c421a3f1094  COMAKE
+COMAKE_MD5=ed7765a44caf9403516c055fbce89d28  COMAKE
 
 
 .PHONY:all
@@ -190,7 +190,7 @@ clean:ccpclean
 	rm -rf ./output/bin/hello
 	rm -rf melt_melt.o
 	rm -rf ../src/Trainers/melt_EnsembleTrainer.o
-	rm -rf ../src/Trainers/melt_FastRank.o
+	rm -rf ../src/Trainers/melt_Gbdt.o
 	rm -rf ../src/Trainers/melt_LibLinearTrainer.o
 	rm -rf ../src/Trainers/melt_LibSVMTrainer.o
 	rm -rf ../src/Trainers/melt_LinearSVM.o
@@ -199,9 +199,11 @@ clean:ccpclean
 	rm -rf ../src/Trainers/melt_Trainer.o
 	rm -rf ../src/Trainers/melt_TrainerFactory.o
 	rm -rf ../src/Trainers/melt_VWTrainer.o
+	rm -rf ../src/Run/melt_Melt.o
+	rm -rf ../src/Prediction/Instances/melt_InstanceParser.o
 	rm -rf test_openmp_test_openmp.o
 	rm -rf ../src/Trainers/test_openmp_EnsembleTrainer.o
-	rm -rf ../src/Trainers/test_openmp_FastRank.o
+	rm -rf ../src/Trainers/test_openmp_Gbdt.o
 	rm -rf ../src/Trainers/test_openmp_LibLinearTrainer.o
 	rm -rf ../src/Trainers/test_openmp_LibSVMTrainer.o
 	rm -rf ../src/Trainers/test_openmp_LinearSVM.o
@@ -210,6 +212,8 @@ clean:ccpclean
 	rm -rf ../src/Trainers/test_openmp_Trainer.o
 	rm -rf ../src/Trainers/test_openmp_TrainerFactory.o
 	rm -rf ../src/Trainers/test_openmp_VWTrainer.o
+	rm -rf ../src/Run/test_openmp_Melt.o
+	rm -rf ../src/Prediction/Instances/test_openmp_InstanceParser.o
 	rm -rf hello_hello.o
 
 .PHONY:dist
@@ -231,7 +235,7 @@ love:
 
 melt:melt_melt.o \
   ../src/Trainers/melt_EnsembleTrainer.o \
-  ../src/Trainers/melt_FastRank.o \
+  ../src/Trainers/melt_Gbdt.o \
   ../src/Trainers/melt_LibLinearTrainer.o \
   ../src/Trainers/melt_LibSVMTrainer.o \
   ../src/Trainers/melt_LinearSVM.o \
@@ -239,11 +243,13 @@ melt:melt_melt.o \
   ../src/Trainers/melt_ThirdTrainer.o \
   ../src/Trainers/melt_Trainer.o \
   ../src/Trainers/melt_TrainerFactory.o \
-  ../src/Trainers/melt_VWTrainer.o
+  ../src/Trainers/melt_VWTrainer.o \
+  ../src/Run/melt_Melt.o \
+  ../src/Prediction/Instances/melt_InstanceParser.o
 	@echo "[[1;32;40mCOMAKE:BUILD[0m][Target:'[1;32;40mmelt[0m']"
 	$(CXX) melt_melt.o \
   ../src/Trainers/melt_EnsembleTrainer.o \
-  ../src/Trainers/melt_FastRank.o \
+  ../src/Trainers/melt_Gbdt.o \
   ../src/Trainers/melt_LibLinearTrainer.o \
   ../src/Trainers/melt_LibSVMTrainer.o \
   ../src/Trainers/melt_LinearSVM.o \
@@ -251,7 +257,9 @@ melt:melt_melt.o \
   ../src/Trainers/melt_ThirdTrainer.o \
   ../src/Trainers/melt_Trainer.o \
   ../src/Trainers/melt_TrainerFactory.o \
-  ../src/Trainers/melt_VWTrainer.o -Xlinker "-("  ../../../../../../app/search/sep/anti-spam/gezi/libgezi_common.a \
+  ../src/Trainers/melt_VWTrainer.o \
+  ../src/Run/melt_Melt.o \
+  ../src/Prediction/Instances/melt_InstanceParser.o -Xlinker "-("  ../../../../../../app/search/sep/anti-spam/gezi/libgezi_common.a \
   ../../../../../../app/search/sep/anti-spam/gezi/libgezi_cppformat.a \
   ../../../../../../app/search/sep/anti-spam/gezi/libgezi_json.a \
   ../../../../../../app/search/sep/anti-spam/gezi/output/lib/libPYNotation.a \
@@ -350,7 +358,7 @@ melt:melt_melt.o \
 
 test_openmp:test_openmp_test_openmp.o \
   ../src/Trainers/test_openmp_EnsembleTrainer.o \
-  ../src/Trainers/test_openmp_FastRank.o \
+  ../src/Trainers/test_openmp_Gbdt.o \
   ../src/Trainers/test_openmp_LibLinearTrainer.o \
   ../src/Trainers/test_openmp_LibSVMTrainer.o \
   ../src/Trainers/test_openmp_LinearSVM.o \
@@ -358,11 +366,13 @@ test_openmp:test_openmp_test_openmp.o \
   ../src/Trainers/test_openmp_ThirdTrainer.o \
   ../src/Trainers/test_openmp_Trainer.o \
   ../src/Trainers/test_openmp_TrainerFactory.o \
-  ../src/Trainers/test_openmp_VWTrainer.o
+  ../src/Trainers/test_openmp_VWTrainer.o \
+  ../src/Run/test_openmp_Melt.o \
+  ../src/Prediction/Instances/test_openmp_InstanceParser.o
 	@echo "[[1;32;40mCOMAKE:BUILD[0m][Target:'[1;32;40mtest_openmp[0m']"
 	$(CXX) test_openmp_test_openmp.o \
   ../src/Trainers/test_openmp_EnsembleTrainer.o \
-  ../src/Trainers/test_openmp_FastRank.o \
+  ../src/Trainers/test_openmp_Gbdt.o \
   ../src/Trainers/test_openmp_LibLinearTrainer.o \
   ../src/Trainers/test_openmp_LibSVMTrainer.o \
   ../src/Trainers/test_openmp_LinearSVM.o \
@@ -370,7 +380,9 @@ test_openmp:test_openmp_test_openmp.o \
   ../src/Trainers/test_openmp_ThirdTrainer.o \
   ../src/Trainers/test_openmp_Trainer.o \
   ../src/Trainers/test_openmp_TrainerFactory.o \
-  ../src/Trainers/test_openmp_VWTrainer.o -Xlinker "-("  ../../../../../../app/search/sep/anti-spam/gezi/libgezi_common.a \
+  ../src/Trainers/test_openmp_VWTrainer.o \
+  ../src/Run/test_openmp_Melt.o \
+  ../src/Prediction/Instances/test_openmp_InstanceParser.o -Xlinker "-("  ../../../../../../app/search/sep/anti-spam/gezi/libgezi_common.a \
   ../../../../../../app/search/sep/anti-spam/gezi/libgezi_cppformat.a \
   ../../../../../../app/search/sep/anti-spam/gezi/libgezi_json.a \
   ../../../../../../app/search/sep/anti-spam/gezi/output/lib/libPYNotation.a \
@@ -574,9 +586,9 @@ melt_melt.o:melt.cc
 	@echo "[[1;32;40mCOMAKE:BUILD[0m][Target:'[1;32;40m../src/Trainers/melt_EnsembleTrainer.o[0m']"
 	$(CXX) -c $(INCPATH) $(DEP_INCPATH) $(CPPFLAGS) $(CXXFLAGS)  -o ../src/Trainers/melt_EnsembleTrainer.o ../src/Trainers/EnsembleTrainer.cpp
 
-../src/Trainers/melt_FastRank.o:../src/Trainers/FastRank.cpp
-	@echo "[[1;32;40mCOMAKE:BUILD[0m][Target:'[1;32;40m../src/Trainers/melt_FastRank.o[0m']"
-	$(CXX) -c $(INCPATH) $(DEP_INCPATH) $(CPPFLAGS) $(CXXFLAGS)  -o ../src/Trainers/melt_FastRank.o ../src/Trainers/FastRank.cpp
+../src/Trainers/melt_Gbdt.o:../src/Trainers/Gbdt.cpp
+	@echo "[[1;32;40mCOMAKE:BUILD[0m][Target:'[1;32;40m../src/Trainers/melt_Gbdt.o[0m']"
+	$(CXX) -c $(INCPATH) $(DEP_INCPATH) $(CPPFLAGS) $(CXXFLAGS)  -o ../src/Trainers/melt_Gbdt.o ../src/Trainers/Gbdt.cpp
 
 ../src/Trainers/melt_LibLinearTrainer.o:../src/Trainers/LibLinearTrainer.cpp
 	@echo "[[1;32;40mCOMAKE:BUILD[0m][Target:'[1;32;40m../src/Trainers/melt_LibLinearTrainer.o[0m']"
@@ -610,6 +622,14 @@ melt_melt.o:melt.cc
 	@echo "[[1;32;40mCOMAKE:BUILD[0m][Target:'[1;32;40m../src/Trainers/melt_VWTrainer.o[0m']"
 	$(CXX) -c $(INCPATH) $(DEP_INCPATH) $(CPPFLAGS) $(CXXFLAGS)  -o ../src/Trainers/melt_VWTrainer.o ../src/Trainers/VWTrainer.cpp
 
+../src/Run/melt_Melt.o:../src/Run/Melt.cpp
+	@echo "[[1;32;40mCOMAKE:BUILD[0m][Target:'[1;32;40m../src/Run/melt_Melt.o[0m']"
+	$(CXX) -c $(INCPATH) $(DEP_INCPATH) $(CPPFLAGS) $(CXXFLAGS)  -o ../src/Run/melt_Melt.o ../src/Run/Melt.cpp
+
+../src/Prediction/Instances/melt_InstanceParser.o:../src/Prediction/Instances/InstanceParser.cpp
+	@echo "[[1;32;40mCOMAKE:BUILD[0m][Target:'[1;32;40m../src/Prediction/Instances/melt_InstanceParser.o[0m']"
+	$(CXX) -c $(INCPATH) $(DEP_INCPATH) $(CPPFLAGS) $(CXXFLAGS)  -o ../src/Prediction/Instances/melt_InstanceParser.o ../src/Prediction/Instances/InstanceParser.cpp
+
 test_openmp_test_openmp.o:test_openmp.cc
 	@echo "[[1;32;40mCOMAKE:BUILD[0m][Target:'[1;32;40mtest_openmp_test_openmp.o[0m']"
 	$(CXX) -c $(INCPATH) $(DEP_INCPATH) $(CPPFLAGS) $(CXXFLAGS)  -o test_openmp_test_openmp.o test_openmp.cc
@@ -618,9 +638,9 @@ test_openmp_test_openmp.o:test_openmp.cc
 	@echo "[[1;32;40mCOMAKE:BUILD[0m][Target:'[1;32;40m../src/Trainers/test_openmp_EnsembleTrainer.o[0m']"
 	$(CXX) -c $(INCPATH) $(DEP_INCPATH) $(CPPFLAGS) $(CXXFLAGS)  -o ../src/Trainers/test_openmp_EnsembleTrainer.o ../src/Trainers/EnsembleTrainer.cpp
 
-../src/Trainers/test_openmp_FastRank.o:../src/Trainers/FastRank.cpp
-	@echo "[[1;32;40mCOMAKE:BUILD[0m][Target:'[1;32;40m../src/Trainers/test_openmp_FastRank.o[0m']"
-	$(CXX) -c $(INCPATH) $(DEP_INCPATH) $(CPPFLAGS) $(CXXFLAGS)  -o ../src/Trainers/test_openmp_FastRank.o ../src/Trainers/FastRank.cpp
+../src/Trainers/test_openmp_Gbdt.o:../src/Trainers/Gbdt.cpp
+	@echo "[[1;32;40mCOMAKE:BUILD[0m][Target:'[1;32;40m../src/Trainers/test_openmp_Gbdt.o[0m']"
+	$(CXX) -c $(INCPATH) $(DEP_INCPATH) $(CPPFLAGS) $(CXXFLAGS)  -o ../src/Trainers/test_openmp_Gbdt.o ../src/Trainers/Gbdt.cpp
 
 ../src/Trainers/test_openmp_LibLinearTrainer.o:../src/Trainers/LibLinearTrainer.cpp
 	@echo "[[1;32;40mCOMAKE:BUILD[0m][Target:'[1;32;40m../src/Trainers/test_openmp_LibLinearTrainer.o[0m']"
@@ -653,6 +673,14 @@ test_openmp_test_openmp.o:test_openmp.cc
 ../src/Trainers/test_openmp_VWTrainer.o:../src/Trainers/VWTrainer.cpp
 	@echo "[[1;32;40mCOMAKE:BUILD[0m][Target:'[1;32;40m../src/Trainers/test_openmp_VWTrainer.o[0m']"
 	$(CXX) -c $(INCPATH) $(DEP_INCPATH) $(CPPFLAGS) $(CXXFLAGS)  -o ../src/Trainers/test_openmp_VWTrainer.o ../src/Trainers/VWTrainer.cpp
+
+../src/Run/test_openmp_Melt.o:../src/Run/Melt.cpp
+	@echo "[[1;32;40mCOMAKE:BUILD[0m][Target:'[1;32;40m../src/Run/test_openmp_Melt.o[0m']"
+	$(CXX) -c $(INCPATH) $(DEP_INCPATH) $(CPPFLAGS) $(CXXFLAGS)  -o ../src/Run/test_openmp_Melt.o ../src/Run/Melt.cpp
+
+../src/Prediction/Instances/test_openmp_InstanceParser.o:../src/Prediction/Instances/InstanceParser.cpp
+	@echo "[[1;32;40mCOMAKE:BUILD[0m][Target:'[1;32;40m../src/Prediction/Instances/test_openmp_InstanceParser.o[0m']"
+	$(CXX) -c $(INCPATH) $(DEP_INCPATH) $(CPPFLAGS) $(CXXFLAGS)  -o ../src/Prediction/Instances/test_openmp_InstanceParser.o ../src/Prediction/Instances/InstanceParser.cpp
 
 hello_hello.o:hello.cc
 	@echo "[[1;32;40mCOMAKE:BUILD[0m][Target:'[1;32;40mhello_hello.o[0m']"

@@ -10,7 +10,7 @@ USE_GPROF=0 #是否增加-pg选项 gprof使用
 print 'USE_GPROF: %d'%USE_GPROF
 LEVEL=3
 print 'LEVEL: %d'%(LEVEL)
-GCC_LOCAL=0
+GCC_LOCAL=1
 print 'GCC_LOCAL: %d'%GCC_LOCAL 
 #是否使用高版本gcc 可以直接使用生成的bin文件 如./main 
 GCC_HIGH=1
@@ -33,19 +33,6 @@ CopyUsingHardLink(True)
 
 GCC_BIN='g++'
 GCC_FLAGS = '' 
-TOOLCHAIN=TOOLCHAIN_ROOT
-if GCC_HIGH  == 1:
-	if GCC_DYNAMIC == 1:	
-		TOOLCHAIN += '/x86_64-unknown-linux-gnu-%s-%s-%s-%s'%(GCC_VERSION,GLIBC_VERSION,BINUTILS_VERSION,KERNAL_VERSION)
-		GCC_BIN=TOOLCHAIN + '/bin/x86_64-unknown-linux-gnu-g++'
-	else:
-		TOOLCHAIN += '/gcc_only_%s'%(GCC_VERSION)
-		GCC_BIN=TOOLCHAIN + '/bin/g++'
-#对于static方式 LIBS_DIR不起任何作用
-#LIBS_DIR=TOOLCHAIN + '/x86_64-unknown-linux-gnu/lib/'
-LIBS_DIR=TOOLCHAIN + './lib/'
-
-print 'LIBS_DIR: %s'%LIBS_DIR
 
 if GCC_LOCAL == 1:
 	GCC_BIN = 'g++'
@@ -59,10 +46,11 @@ CXX(GCC_BIN)
 CPPFLAGS('-D_GNU_SOURCE -D__STDC_LIMIT_MACROS -DVERSION=\\\"1.9.8.7\\\"')
 
 #编译参数设置
-COMMON_FLAGS = '-g -O%d -pipe -W -Wall -fPIC -DHAVE_NETINET_IN_H -Wno-unused-parameter -Wno-deprecated'%LEVEL
+#COMMON_FLAGS = '-g -O%d -pipe -W -Wall -fPIC -DHAVE_NETINET_IN_H -Wno-unused-parameter -Wno-deprecated'%LEVEL
+COMMON_FLAGS = '-g -O%d -pipe -W -fPIC -DHAVE_NETINET_IN_H -Wno-unused-parameter -Wno-deprecated'%LEVEL
 
 if GCC_HIGH  == 1:
-	GCC_FLAGS += '-std=c++11 -fpermissive -Wno-write-strings -Wno-literal-suffix -Wno-unused-local-typedefs'
+	GCC_FLAGS += '-std=c++11 -fpermissive -Wno-write-strings -Wno-literal-suffix -Wno-unused-local-typedefs -Wreorder'
 	if GCC_DYNAMIC  == 1:
 		GCC_FLAGS += ' -fopenmp'
 		
@@ -82,23 +70,17 @@ UBRPCFLAGS('--compack')
 GCC_LDFLAGS='-g'
 if USE_GPROF:
 	GCC_LDFLAGS += ' -pg'
-GCC_LDFLAGS=''
 if GCC_HIGH  == 1: 
 	if GCC_DYNAMIC  == 1:
-		GCC_LDFLAGS += ' -lgomp -rdynamic -Wl,-rpath=./lib/'
-		#GCC_LDFLAGS += ' -lgomp -rdynamic -Wl,-rpath=../../../../../../ps/se/toolchain/x86_64-unknown-linux-gnu-4.8.1-2.9-2.20-2.6.32/x86_64-unknown-linux-gnu/lib/'
-		#GCC_LDFLAGS += ' -lgomp'
-		if GCC_LOCAL != 1:
-			GCC_LDFLAGS += ' -Wl,--dynamic-linker=./ld-linux-x86-64.so.2 -L%s'%(LIBS_DIR)
-		#TARGET('.copy-so', ShellCommands('cp %s/ld-linux-x86-64.so.2 ld-linux-x86-64.so.2'%(LIBS_DIR)), 
-          #CleanCommands('rm -rf ld-linux-x86-64.so.2')) 
+		GCC_LDFLAGS += ' -lgomp'
 	else: 
 		GCC_LDFLAGS  += ' -static-libgcc -static-libstdc++'
 
 #链接参数.
 #LDFLAGS('-lpthread -lcrypto -lrt -lssl -lldap -lcurl -ldl -rdynamic', GCC_LDFLAGS)
-LDFLAGS('-lpthread -lrt -ldl -rdynamic', GCC_LDFLAGS)
-
+#LDFLAGS('-lpthread -lcrypto -lrt -ldl -rdynamic', GCC_LDFLAGS)
+#LDFLAGS('-lpthread -lcrypto -lrt -ldl -rdynamic', GCC_LDFLAGS)
+LDFLAGS('-lpthread', GCC_LDFLAGS)
 #头文件路径.
 INCPATHS('./ ./include ./utils'.replace('./', RELATIVE_PATH))
 
@@ -110,7 +92,3 @@ ImportConfigsFrom('../')
 srcs=''
 srcs=GLOB('./src/*.cpp ./src/Trainers/*.cpp ./src/Run/*.cpp ./src/Prediction/Instances/*.cpp'.replace('./',RELATIVE_PATH))
 Application('melt',Sources('melt.cc',srcs))
-Application('test_openmp',Sources('test_openmp.cc',srcs), OutputPath('./bin'))
-#Application('hello',Sources('hello.cc',srcs, ENV.CppFlags()+CppFlags('-O3 -DNDEBUG')))
-srcs=''
-Application('hello',Sources('hello.cc',srcs))

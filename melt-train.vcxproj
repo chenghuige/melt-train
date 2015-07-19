@@ -65,6 +65,10 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="include\Prediction\Instances\InstanceParser.h" />
+    <ClInclude Include="include\Prediction\Instances\instances_util.h" />
+    <ClInclude Include="include\Run\Melt.h" />
+    <ClInclude Include="include\Run\MeltArguments.h" />
     <ClInclude Include="include\Trainers\EnsembleTrainer.h" />
     <ClInclude Include="include\Trainers\FastRank\BaggingProvider.h" />
     <ClInclude Include="include\Trainers\FastRank\BestStepRegressionGradientWrapper.h" />
@@ -98,6 +102,37 @@
     <ClInclude Include="include\Trainers\FastRank\ScoreTracker.h" />
     <ClInclude Include="include\Trainers\FastRank\TreeLearner.h" />
     <ClInclude Include="include\Trainers\FastRank\TrivialGradientWrapper.h" />
+    <ClInclude Include="include\Trainers\Gbdt\BaggingProvider.h" />
+    <ClInclude Include="include\Trainers\Gbdt\BestStepRegressionGradientWrapper.h" />
+    <ClInclude Include="include\Trainers\Gbdt\BinaryClassificationGbdt.h" />
+    <ClInclude Include="include\Trainers\Gbdt\BinaryClassificationGbdtArguments.h" />
+    <ClInclude Include="include\Trainers\Gbdt\BinaryClassificationObjectiveFunction.h" />
+    <ClInclude Include="include\Trainers\Gbdt\Dataset.h" />
+    <ClInclude Include="include\Trainers\Gbdt\DocumentPartitioning.h" />
+    <ClInclude Include="include\Trainers\Gbdt\Ensemble.h" />
+    <ClInclude Include="include\Trainers\Gbdt\Feature.h" />
+    <ClInclude Include="include\Trainers\Gbdt\FeatureHistogram.h" />
+    <ClInclude Include="include\Trainers\Gbdt\Gbdt.h" />
+    <ClInclude Include="include\Trainers\Gbdt\GbdtArguments.h" />
+    <ClInclude Include="include\Trainers\Gbdt\GradientDescent.h" />
+    <ClInclude Include="include\Trainers\Gbdt\IGradientAdjuster.h" />
+    <ClInclude Include="include\Trainers\Gbdt\InstancesToDataset.h" />
+    <ClInclude Include="include\Trainers\Gbdt\IStepSearch.h" />
+    <ClInclude Include="include\Trainers\Gbdt\LeastSquaresRegressionTreeLearner.h" />
+    <ClInclude Include="include\Trainers\Gbdt\MappedObjectPool.h" />
+    <ClInclude Include="include\Trainers\Gbdt\ObjectiveFunction.h" />
+    <ClInclude Include="include\Trainers\Gbdt\OptimizationAlgorithm.h" />
+    <ClInclude Include="include\Trainers\Gbdt\ProbabilityFunctions.h" />
+    <ClInclude Include="include\Trainers\Gbdt\QueryWeightsBestResressionStepGradientWrapper.h" />
+    <ClInclude Include="include\Trainers\Gbdt\QueryWeightsGradientWrapper.h" />
+    <ClInclude Include="include\Trainers\Gbdt\RankingGbdtArguments.h" />
+    <ClInclude Include="include\Trainers\Gbdt\RegressionGbdt.h" />
+    <ClInclude Include="include\Trainers\Gbdt\RegressionGbdtArguments.h" />
+    <ClInclude Include="include\Trainers\Gbdt\RegressionObjectiveFunction.h" />
+    <ClInclude Include="include\Trainers\Gbdt\RegressionTree.h" />
+    <ClInclude Include="include\Trainers\Gbdt\ScoreTracker.h" />
+    <ClInclude Include="include\Trainers\Gbdt\TreeLearner.h" />
+    <ClInclude Include="include\Trainers\Gbdt\TrivialGradientWrapper.h" />
     <ClInclude Include="include\Trainers\LibLinearTrainer.h" />
     <ClInclude Include="include\Trainers\LibSVMTrainer.h" />
     <ClInclude Include="include\Trainers\RandomTrainer.h" />
@@ -108,7 +143,12 @@
     <ClInclude Include="include\Trainers\VWTrainer.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="profiling\omp_predict.cc" />
+    <ClCompile Include="src\Prediction\Instances\InstanceParser.cpp" />
+    <ClCompile Include="src\Run\Melt.cpp" />
+    <ClCompile Include="src\Trainers\EnsembleTrainer.cpp" />
     <ClCompile Include="src\Trainers\FastRank.cpp" />
+    <ClCompile Include="src\Trainers\Gbdt.cpp" />
     <ClCompile Include="src\Trainers\LibLinearTrainer.cpp" />
     <ClCompile Include="src\Trainers\LibSVMTrainer.cpp" />
     <ClCompile Include="src\Trainers\LinearSVM.cpp" />
@@ -118,11 +158,20 @@
     <ClCompile Include="src\Trainers\Trainer.cpp" />
     <ClCompile Include="src\Trainers\TrainerFactory.cpp" />
     <ClCompile Include="src\Trainers\VWTrainer.cpp" />
+    <ClCompile Include="test2\rabit\allreduce.cc" />
+    <ClCompile Include="test2\rabit\basic.cc" />
+    <ClCompile Include="test2\rabit\basic_witharg.cc" />
+    <ClCompile Include="test2\rabit\broadcast.cc" />
+    <ClCompile Include="test\test_bin.cc" />
     <ClCompile Include="test\test_bit.cc" />
     <ClCompile Include="test\test_fastrank_instances2dataset.cc" />
     <ClCompile Include="test\test_fastrank_train.cc" />
+    <ClCompile Include="test\test_linearsvm_train.cc" />
+    <ClCompile Include="test\test_seralize.cc" />
     <ClCompile Include="test\test_train.cc" />
     <ClCompile Include="test\test_train_test.cc" />
+    <ClCompile Include="tools2\melt.cc" />
+    <ClCompile Include="tools\melt.cc" />
   </ItemGroup>
   <ItemGroup>
     <None Include="test\data\test.20140115-0304\feature\feature.def" />

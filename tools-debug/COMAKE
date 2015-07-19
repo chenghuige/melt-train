@@ -8,7 +8,7 @@ RELATIVE_PATH='../'
 
 USE_GPROF=0 #是否增加-pg选项 gprof使用 
 print 'USE_GPROF: %d'%USE_GPROF
-LEVEL=3
+LEVEL=0
 print 'LEVEL: %d'%(LEVEL)
 GCC_LOCAL=0
 print 'GCC_LOCAL: %d'%GCC_LOCAL 
