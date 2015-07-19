@@ -21,10 +21,10 @@
 using namespace std;
 using namespace gezi;
 DEFINE_int32(vl, 0, "vlog level");
-DEFINE_string(in, "./data/feature.txt", "input");
-//DEFINE_string(o, "", "output");
 DEFINE_string(type, "simple", "");
+DEFINE_int32(col, 183, "");
 
+DECLARE_string(i);
 #include "Trainers/FastRank/TreeLearner.h"
 //struct TreeLearner2 : public TreeLearner
 //{
@@ -42,16 +42,25 @@ DEFINE_string(type, "simple", "");
 TEST(fastrank_instances2dataset, func)
 {
 	Noticer nt("instances2dataset");
-	auto instances = create_instances(FLAGS_in);
+	auto instances = create_instances(FLAGS_i);
 	instances.PrintSummary();
 	auto dataSet = InstancesToDataset::Convert(instances);
-	Pvec(dataSet.Features[154].BinMedians);
-	Pvec(dataSet.Features[154].BinUpperBounds);
+	Pvec(dataSet.Features[FLAGS_col].BinMedians);
+	Pvec(dataSet.Features[FLAGS_col].BinUpperBounds);
 	Pval(dataSet.NumDocs);
 	//TreeLearnerPtr learner = make_shared<TreeLearner2>(dataSet, 20);
 	//TreeLearner2 learner(dataSet, 20);
-
-
+	{
+		dvec vec;
+		for (size_t i = 0; i < instances.size(); i++)
+		{
+			vec.push_back(instances(i, 183));
+		}
+		Fvec upperBounds, medians;
+		find_bins(vec, 255, upperBounds, medians);
+		Pvec(medians);
+		Pvec(upperBounds);
+	}
 }
 
 int main(int argc, char *argv[])

@@ -1,11 +1,11 @@
 /** 
  *  ==============================================================================
  * 
- *          \file   test_train.cc
+ *          \file   test_linearsvm_train.cc
  *
  *        \author   chenghuige   
  *
- *          \date   2014-11-09 15:07:25.516188
+ *          \date   2015-05-27 13:34:06.906090
  *  
  *  \Description:
  *
@@ -23,24 +23,18 @@
 using namespace std;
 using namespace gezi;
 DEFINE_int32(vl, 0, "vlog level");
-DEFINE_string(in, "./data/feature.normed.libsvm", "input file");
-DECLARE_string(cl);
-DECLARE_bool(calibrate);
-DECLARE_bool(norm);
-DECLARE_bool(se);
-DECLARE_double(efrac);
-DECLARE_double(efreq);
+
+DECLARE_string(i);
 DECLARE_string(valid);
 DECLARE_string(evaluator);
 
-TEST(train, func)
+
+TEST(linearsvm_train, func)
 {
-	FLAGS_norm = false;
-	FLAGS_calibrate = false;
-	auto trainer = TrainerFactory::CreateTrainer(FLAGS_cl);
+	auto trainer = TrainerFactory::CreateTrainer("linearsvm");
 	CHECK_NE((trainer == nullptr), true);
-	auto instances = create_instances(FLAGS_in);
-	AutoTimer timer("Train");
+	auto instances = create_instances(FLAGS_i);
+
 	if (FLAGS_valid.empty())
 	{
 		trainer->Train(instances);
@@ -49,7 +43,7 @@ TEST(train, func)
 	{
 		dynamic_pointer_cast<ValidatingTrainer>(trainer)->Train(instances,
 			vector < Instances > {create_instances(FLAGS_valid)},
-			EvaluatorUtils::CreateEvaluators(FLAGS_evaluator), FLAGS_se, FLAGS_efreq);
+			EvaluatorUtils::CreateEvaluators(FLAGS_evaluator));
 	}
 }
 
