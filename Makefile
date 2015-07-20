@@ -46,6 +46,10 @@ DEP_INCPATH=-I../../../../../app/search/sep/anti-spam/gezi \
   -I../../../../../app/search/sep/anti-spam/gezi/include \
   -I../../../../../app/search/sep/anti-spam/gezi/output \
   -I../../../../../app/search/sep/anti-spam/gezi/output/include \
+  -I../../../../../app/search/sep/anti-spam/gezi/third/rabit \
+  -I../../../../../app/search/sep/anti-spam/gezi/third/rabit/include \
+  -I../../../../../app/search/sep/anti-spam/gezi/third/rabit/output \
+  -I../../../../../app/search/sep/anti-spam/gezi/third/rabit/output/include \
   -I../../../../../app/search/sep/anti-spam/melt \
   -I../../../../../app/search/sep/anti-spam/melt/include \
   -I../../../../../app/search/sep/anti-spam/melt/output \
@@ -86,10 +90,6 @@ DEP_INCPATH=-I../../../../../app/search/sep/anti-spam/gezi \
   -I../../../../../lib2-64/wordseg/include \
   -I../../../../../lib2-64/wordseg/output \
   -I../../../../../lib2-64/wordseg/output/include \
-  -I../../../../../other/rabit \
-  -I../../../../../other/rabit/include \
-  -I../../../../../other/rabit/output \
-  -I../../../../../other/rabit/output/include \
   -I../../../../../public/comlog-plugin \
   -I../../../../../public/comlog-plugin/include \
   -I../../../../../public/comlog-plugin/output \
@@ -161,7 +161,7 @@ CCP_FLAGS=
 
 
 #COMAKE UUID
-COMAKE_MD5=8790b81c2d1487d670f237ca116a0f55  COMAKE
+COMAKE_MD5=41b7eb0e99d3afadea183105939988f4  COMAKE
 
 
 .PHONY:all

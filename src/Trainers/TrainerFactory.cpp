@@ -3,10 +3,12 @@
 #include "Trainers/SVM/LinearSVM.h"
 #include "Trainers/Gbdt/BinaryClassificationGbdt.h"
 #include "Trainers/RandomTrainer.h"
+#ifdef MELT_USE_THIRD_PARTY
 #include "Trainers/VWTrainer.h"
 #include "Trainers/SofiaTrainer.h"
 #include "Trainers/LibLinearTrainer.h"
 #include "Trainers/LibSVMTrainer.h"
+#endif // MELT_USE_THIRD_PARTY
 #include "Trainers/EnsembleTrainer.h"
 #include "Trainers/Gbdt/RegressionGbdt.h"
 namespace gezi {
@@ -116,6 +118,7 @@ namespace gezi {
 		case  TrainerType::BinaryNeuralNetwork:
 			VLOG(0) << "Creating BinaryNeuralNetwork trainer";
 			break;
+#ifdef MELT_USE_THIRD_PARTY
 		case  TrainerType::VW:
 			VLOG(0) << "Creating VW trainer";
 			return make_shared<VWTrainer>();
@@ -132,6 +135,7 @@ namespace gezi {
 			VLOG(0) << "Creating LibSVM trainer";
 			return make_shared<LibSVMTrainer>();
 			break;
+#endif // MELT_USE_THIRD_PARTY 
 		case TrainerType::Ensemble:
 			VLOG(0) << "Creating ensemble trainer";
 			return make_shared<EnsembleTrainer>();
@@ -145,8 +149,8 @@ namespace gezi {
 			break;
 		}
 
-		LOG(WARNING) << name << " is not supported now, return nullptr";
-		return nullptr;
+		LOG(FATAL) << name << " is not supported now";
+		return nullptr; //will not come to here
 	}
 
 }  //----end of namespace gezi
