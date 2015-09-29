@@ -8,10 +8,11 @@
 *          \date   2014-04-06 21:41:18.444778
 *
 *  \Description:
-SVM (Pegasos-Linear)	/cl:LinearSVM	Fast primal-space stochastic gradient descent solver (with an optional projection step).
+SVM (Pegasos-Linear)	-cl LinearSVM	Fast primal-space stochastic gradient descent solver (with an optional projection step).
 S. Shalev-Shwartz, Y. Singer, and N. Srebro.  Pegasos:
-Primal Estimated sub-GrAdient SOlver for SVM. ICML-2007.	Projection step is off by default (resulting in a 1.5-2x speedup).
-It is advisable to pre-normalize or turn off normalization for sparse data. (or pre-normalize via /c CreateInstances if normalization does help)
+Primal Estimated sub-GrAdient SOlver for SVM. ICML-2007.	
+默认关闭projection(result in 1.5-2x speedup).
+借鉴sofia-ml使用WeightVector替代Vector提升效率
 *  ==============================================================================
 */
 

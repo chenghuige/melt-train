@@ -127,7 +127,7 @@ namespace gezi {
 			VLOG(0) << i++ << " FEATURE_STATUS, //打印特征的均值方差信息　mean var";
 			VLOG(0) << i++ << " SHOW_FEATURES, //打印特征名";
 			VLOG(0) << i++ << " SHOW_INFOS, //展示输入数据的基本信息  特征数目，样本数目，正例比例";
-			VLOG(0) << i++ << " CONVERT, //对输入样本文件载入然后输出要求的格式 比如 dense -> sparse";
+			VLOG(0) << i++ << " CONVERT, //对输入样本文件载入然后输出要求的格式 比如 dense -> sparse or to libsvm, libsvm2(label as 0 not -1), arff,vw format";
 			VLOG(0) << i++ << " SPLIT_DATA, //对输入样本进行切分  比如 1:1 1:3:2 同时保持每份中正反例比例维持和原始数据一致";
 			VLOG(0) << i++ << " GEN_CROSS_DATA, //输出交叉验证的文本数据文件 方便对比其它机器学习工具的实验效果";
 			VLOG(0) << i++ << " CHANGE_RAIO //对输入样本进行正反例比例调整 比如 原始 1:30 调整为 1:1";
@@ -524,7 +524,8 @@ namespace gezi {
 			(*predictor).SetSaveNormalizerText(_cmd.saveNormalizerText)
 				.SetSaveCalibratorText(_cmd.saveCalibratorText);
 
-			predictor->Save(_cmd.modelFolder);
+			predictor->SetPath(_cmd.modelFolder);
+		
 			if (_cmd.modelfileXml)
 			{
 				predictor->SaveXml();
@@ -549,6 +550,8 @@ namespace gezi {
 			{
 				predictor->SaveFeaturesGain(_cmd.num);
 			}
+
+			predictor->Save(_cmd.modelFolder);
 		}
 
 		PredictorPtr RunTrain(Instances& instances)
@@ -650,8 +653,11 @@ namespace gezi {
 		void RunTrainTest()
 		{
 			Noticer nt("TrainTest!");
-			Instances instances;
-			PredictorPtr predictor = RunTrain(instances);
+			PredictorPtr predictor;
+			{
+				Instances instances;
+				predictor = RunTrain(instances);
+			}
 			if (_cmd.modelfile)
 			{ //训练+测试模式 默认是不save模型的 需要自己打开
 				SavePredictor(predictor);

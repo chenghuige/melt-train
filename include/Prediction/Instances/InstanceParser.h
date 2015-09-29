@@ -32,6 +32,8 @@
 
 #include "rabit_util.h"
 
+#include "serialize_util.h"
+
 namespace gezi {
 
 	//@TODO 修改名字或者增加namespace 易冲突
@@ -43,7 +45,6 @@ namespace gezi {
 		{ "sparse2", FileFormat::SparseNoLength },
 		{ "text", FileFormat::Text },
 		{ "libsvm", FileFormat::LibSVM },
-		{ "libsvm2", FileFormat::LibSVM2 },
 		{ "arff", FileFormat::Arff },
 		{ "vw", FileFormat::VW },
 	};
@@ -56,7 +57,6 @@ namespace gezi {
 		{ FileFormat::SparseNoLength, "sparse" },
 		{ FileFormat::Text, "txt" },
 		{ FileFormat::LibSVM, "libsvm" },
-		{ FileFormat::LibSVM2, "libsvm" },
 		{ FileFormat::Arff, "arff" },
 		{ FileFormat::VW, "vw" },
 	};
@@ -69,7 +69,6 @@ namespace gezi {
 		{ FileFormat::SparseNoLength, "sparse" },
 		{ FileFormat::Text, "txt" },
 		{ FileFormat::LibSVM, "libsvm" },
-		{ FileFormat::LibSVM2, "libsvm" },
 		{ FileFormat::Arff, "arff" },
 		{ FileFormat::VW, "vw" },
 	};
@@ -101,6 +100,7 @@ namespace gezi {
 			int libsvmStartIndex = 1;
 			double sparsifyThre = 0.5;
 			string resultDir = "";//rd|
+			bool cacheInstance = false;//|if cacheInsantce will seralize instance as binary
 		};
 
 		InstanceParser()
@@ -923,6 +923,10 @@ namespace gezi {
 			Float positiveRatio = positiveCount / (double)_instances.Count();
 			Pval(positiveRatio);
 
+			uint64 denseCount = _instances.DenseCount();
+			Float denseRatio = denseCount / (double)_instances.Count();
+			Pval2(denseCount, denseRatio);
+
 			PVEC(_instances.schema.tagNames);
 			PVEC(_instances.schema.attributeNames);
 			PVAL(IsDense());
@@ -1006,6 +1010,7 @@ namespace gezi {
 		}
 
 		//@TODO 还可以优化的是首先处理 不带有:的属性 然后集中处理带有的
+		//@FIXM 目前只有label数据的 也就是空向量的会core
 		void CreateInstancesFromLibSVMFormat(svec& lines, uint64 start)
 		{
 			VLOG(0) << "CreateInstancesFromLibSVMFormat";
@@ -1019,7 +1024,7 @@ namespace gezi {
 				string line = boost::trim_right_copy(lines[i]);
 				_instances[i - start] = make_shared<Instance>(_featureNum);
 				Instance& instance = *_instances[i - start];
-				Vector& features = instance.features;;
+				Vector& features = instance.features;
 				if (_groupsIdx.empty())
 				{
 					splits_int_double(line, sep, ':', [&, this](int index, Float value) {
@@ -1330,6 +1335,20 @@ namespace gezi {
 		Instances&& Parse_(string dataFile, bool printInfo = false)
 		{
 			Timer timer;
+			string cacheFile = GetOutputFileName(dataFile, "cache", true);
+			if (bfs::exists(cacheFile))
+			{
+				if (bfs::last_write_time(cacheFile) > bfs::last_write_time(dataFile))
+				{
+					VLOG(0) << "Cache file exist, reading directly from " << cacheFile << " instead reading from " << dataFile;
+					serialize_util::load(_instances, cacheFile);
+					if (printInfo)
+					{
+						PrintInfo();
+					}
+					return move(_instances);
+				}
+			}
 			vector<string> lines = read_lines_fast(dataFile, "//");
 			if (lines.empty())
 			{
@@ -1403,9 +1422,25 @@ namespace gezi {
 			{
 				PrintInfo();
 			}
+			if (_args.cacheInstance)
+			{
+				serialize_util::save(_instances, cacheFile);
+			}
+			else
+			{
+				if (bfs::exists(cacheFile))
+				{
+					bfs::remove(cacheFile);
+				}
+				if (timer.elapsed() > 60)
+				{
+					VLOG(0) << "Loading big data file slow, you may try to use --cacheInst=1 to generate cache file so next time loading will be faster";
+				}
+			}
 			return move(_instances);
 		}
 
+		//如果是libsvm格式 但是稠密格式数据 可能会占用较多内存 最后才会做Densify
 		void Finallize()
 		{
 #pragma omp parallel for 

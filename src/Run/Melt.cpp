@@ -39,7 +39,7 @@ DEFINE_int32(stopRounds, 10, "earlyStopRounds| will stop after no performance ga
 DEFINE_bool(useBestStage, false, "If setting useBestStage will return to best stage state for model");
 
 DEFINE_string(m, "model", "modelFolder");
-DEFINE_bool(mf, true, " modelfile: Gen model file? (for TrainTest)");
+DEFINE_bool(mf, false, " modelfile: Gen model file? (for TrainTest)");
 DEFINE_bool(mc, false, " modelfileCode: Gen model file to save in C++ code £¿ (for Train or TrainTest)");
 DEFINE_string(codeType, "cpp", "Which language for modelfileCode ? default is cpp->model.cpp, or c->model.c or py for python -> model.py, php -> mode.php");
 DEFINE_bool(mt, false, "modelfileText:  Gen model file to save in text format ? (for Train or TrainTest");

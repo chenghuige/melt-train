@@ -214,7 +214,7 @@ namespace gezi {
 			{
 				int idx = indexVec[i];
 				ss << setiosflags(ios::left) << setfill(' ') << setw(60)
-					<< STR(i) + STR(":") + featureList[idx].Name
+					<< STR(i) + ":" + featureList[idx].Name
 					<< gains[idx] << endl;
 			}
 			return ss.str();

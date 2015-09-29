@@ -46,6 +46,10 @@ DEP_INCPATH=-I../../../../../app/search/sep/anti-spam/gezi \
   -I../../../../../app/search/sep/anti-spam/gezi/include \
   -I../../../../../app/search/sep/anti-spam/gezi/output \
   -I../../../../../app/search/sep/anti-spam/gezi/output/include \
+  -I../../../../../app/search/sep/anti-spam/gezi/third \
+  -I../../../../../app/search/sep/anti-spam/gezi/third/include \
+  -I../../../../../app/search/sep/anti-spam/gezi/third/output \
+  -I../../../../../app/search/sep/anti-spam/gezi/third/output/include \
   -I../../../../../app/search/sep/anti-spam/gezi/third/rabit \
   -I../../../../../app/search/sep/anti-spam/gezi/third/rabit/include \
   -I../../../../../app/search/sep/anti-spam/gezi/third/rabit/output \
@@ -161,7 +165,7 @@ CCP_FLAGS=
 
 
 #COMAKE UUID
-COMAKE_MD5=41b7eb0e99d3afadea183105939988f4  COMAKE
+COMAKE_MD5=01ba070b27323319589c4b392a35c9ad  COMAKE
 
 
 .PHONY:all

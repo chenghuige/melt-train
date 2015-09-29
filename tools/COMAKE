@@ -89,11 +89,10 @@ INCPATHS('./ ./include ./utils'.replace('./', RELATIVE_PATH))
 
 #ÒÀÀµÄ£¿é
 ImportConfigsFrom('../')
-CONFIGS('app/search/sep/anti-spam/gezi/third/folly')
 
 srcs=''
 srcs=GLOB('./src/*.cpp ./src/Trainers/*.cpp ./src/Run/*.cpp ./src/Prediction/Instances/*.cpp'.replace('./',RELATIVE_PATH))
 
 #CppFlags = ENV.CppFlags() + CppFlags('-DFOLLY_NO_CONFIG -DFOLLY_HAVE_CLOCK_GETTIME -DFOLLY_VERSION=\\\"1\\\" -DUSE_FOLLY_VECTOR')
-CppFlags = ENV.CppFlags() + CppFlags('-DMELT_USE_THIRD_PARTY')
-Application('melt',Sources('melt.cc',srcs, CppFlags))
+CPP_FLAGS = ENV.CppFlags() + CppFlags('-DMELT_USE_THIRD_PARTY')
+Application('melt',Sources('melt.cc',srcs, CPP_FLAGS))

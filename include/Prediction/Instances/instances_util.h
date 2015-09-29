@@ -16,6 +16,9 @@
 
 #include "InstanceParser.h"
 #include "random_util.h"
+
+DECLARE_int32(libsvmNL);
+DECLARE_int32(libsvmSI);
 namespace gezi {
 
 	//@TODO 需要增加的 boot strap方式得到一个新的Insatnces, Shrink的方式得到一个新的
@@ -261,7 +264,7 @@ namespace gezi {
 	}
 
 	//暂时不考虑有未标注label的情况 未标注设置为-1 normal 样本
-	inline void write_libsvm(Instance& instance, HeaderSchema& schema, ofstream& ofs, bool noNegLabel = false, bool isVW = false)
+	inline void write_libsvm(Instance& instance, HeaderSchema& schema, ofstream& ofs, bool noNegLabel = false, int startIndex = 1, bool isVW = false)
 	{
 		if (schema.numClasses == 2)
 		{ //为了sofia方便 将0转为-1 这样libsvm sofia都可以直接处理这种格式
@@ -299,9 +302,9 @@ namespace gezi {
 			ofs << " |n";
 		}
 
-		instance.features.ForEachNonZero([&ofs](int index, Float value)
+		instance.features.ForEachNonZero([&](int index, Float value)
 		{
-			ofs << " " << index + 1 << ":" << value;
+			ofs << " " << index + startIndex << ":" << value;
 		});
 
 		if (instance.features.NumNonZeros() == 0)
@@ -311,12 +314,12 @@ namespace gezi {
 		ofs << endl;
 	}
 
-	inline void write_libsvm(Instances& instances, string outfile, bool noNegLabel = false)
+	inline void write_libsvm(Instances& instances, string outfile, bool noNegLabel = false, int startIndex = 1)
 	{
 		ofstream ofs(outfile);
 		for (InstancePtr instance : instances)
 		{
-			write_libsvm(*instance, instances.schema, ofs, noNegLabel);
+			write_libsvm(*instance, instances.schema, ofs, noNegLabel, startIndex);
 		}
 	}
 
@@ -378,10 +381,7 @@ namespace gezi {
 		case FileFormat::Text:
 			break;
 		case  FileFormat::LibSVM:
-			write_libsvm(instances, outfile);
-			break;
-		case  FileFormat::LibSVM2:
-			write_libsvm(instances, outfile, true);
+			write_libsvm(instances, outfile, FLAGS_libsvmNL == 0, FLAGS_libsvmSI);
 			break;
 		case FileFormat::Arff:
 			write_arff(instances, outfile);
