@@ -75,6 +75,8 @@ DEFINE_string(off, "unknown", "ouput_file_format: if unknow using it's input for
 
 DEFINE_bool(fast, false, "fast mode, will try fastest training, like calibrate = false");
 
+DEFINE_double(posThre, 0.5, "for binary classification > thre means judge it as positive otherwise judge it as negative");
+
 namespace gezi {
 	void Melt::ParseArguments()
 	{

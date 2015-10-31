@@ -262,16 +262,24 @@ namespace gezi {
 				else
 				{
 					filterArray.resize(_featureNum, false);
+					
+					if (incls.size() > 100)
+					{
+						VLOG(0) << "Total incls features is " << incls.size() << " only print top 100";
+					}
+					else
+					{
+						VLOG(0) << "Total incls features is " << incls.size();
+					}
+
 					int count = 0;
 					for (int idx : incls)
 					{
 						count++;
-						if (count > 100)
+						if (count <= 100)
 						{
-							VLOG(0) << "Total incls features is " << incls.size() << " only print top 100";
-							break;
+							VLOG(0) << "Including feature: " << _instances.schema.featureNames[idx];
 						}
-						VLOG(0) << "Including feature: " << _instances.schema.featureNames[idx];
 						filterArray[idx] = true;
 					}
 				}
@@ -291,16 +299,25 @@ namespace gezi {
 					{
 						filterArray.resize(_featureNum, true);
 					}
+
+					if (excls.size() > 100)
+					{
+						VLOG(0) << "Total excls features is " << excls.size() << " only print top 100";
+					}
+					else
+					{
+						VLOG(0) << "Total excls features is " << excls.size();
+					}
+
 					int count = 0;
 					for (int idx : excls)
 					{
 						count++;
-						if (count > 100)
+						if (count <= 100)
 						{
-							VLOG(0) << "Total excls features is " << excls.size() << " only print top 100";
-							break;
+							VLOG(0) << "Excluding feature: " << _instances.schema.featureNames[idx];
 						}
-						VLOG(0) << "Excluding feature: " << _instances.schema.featureNames[idx];
+						
 						filterArray[idx] = false;
 					}
 				}

@@ -42,6 +42,7 @@ import numpy
 import numpy as np 
 
 import theano
+theano.config.openmp = True
 import theano.tensor as T
 
 from sklearn.metrics import roc_auc_score

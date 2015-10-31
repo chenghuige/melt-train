@@ -47,6 +47,8 @@
 #include "Testers/testers.h"
 #include "Utils/PredictorUtils.h"
 
+DECLARE_int32(nt);
+
 namespace gezi {
 	class Melt
 	{
@@ -1213,6 +1215,7 @@ namespace gezi {
 			{ //@TODO openmp设置线程数目很微妙。。 如果有其它程序在跑12核 设置12 很慢 11，13 等都比12快很多。。
 				int numProcs = omp_get_num_procs();
 				numProcs = std::max(1, numProcs - 2);
+				FLAGS_nt = numProcs;
 				omp_set_num_threads(numProcs);
 			}
 			Pval(get_num_threads());

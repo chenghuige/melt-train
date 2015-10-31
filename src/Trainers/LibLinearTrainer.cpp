@@ -20,17 +20,24 @@
 #define Malloc(type,n) (type *)malloc((n)*sizeof(type))
 #define INF HUGE_VAL
 
+#include "common_util.h"
+DECLARE_int32(nt);
+
 namespace gezi {
 
 	namespace
 	{
-		struct feature_node thread_local *x_space;
-		struct parameter thread_local param;
-		struct problem thread_local prob;
-		struct model thread_local *model_;
-		int thread_local flag_cross_validation;
-		int thread_local nr_fold;
-		double thread_local bias;
+		struct feature_node *x_space;
+		struct parameter param;
+		struct problem prob;
+		struct model* model_;
+		int flag_cross_validation;
+		int flag_find_C;
+		int flag_omp;
+		int flag_C_specified;
+		int flag_solver_specified;
+		int nr_fold;
+		double bias;
 
 		void print_null(const char *s) {}
 
@@ -73,11 +80,14 @@ namespace gezi {
 				"-B bias : if bias >= 0, instance x becomes [x; bias]; if < 0, no bias term added (default -1)\n"
 				"-wi weight: weights adjust the parameter C of different classes (see README for details)\n"
 				"-v n: n-fold cross validation mode\n"
+				"-C : find parameter C (only for -s 0 and 2)\n"
+				"-n nr_thread : parallel version with [nr_thread] threads (default 1; only for -s 0, 2, 11)\n"
 				"-q : quiet mode (no outputs)\n"
 				);
 			exit(1);
 		}
 
+		//void parse_command_line(int argc, char **argv, char *input_file_name, char *model_file_name)
 		void parse_command_line(int argc, char **argv)
 		{
 			int i;
@@ -88,10 +98,16 @@ namespace gezi {
 			param.C = 1;
 			param.eps = INF; // see setting below
 			param.p = 0.1;
+			param.nr_thread = FLAGS_nt;
 			param.nr_weight = 0;
 			param.weight_label = NULL;
 			param.weight = NULL;
+			param.init_sol = NULL;
 			flag_cross_validation = 0;
+			flag_C_specified = 0;
+			flag_solver_specified = 0;
+			flag_find_C = 0;
+			flag_omp = (FLAGS_nt > 1);
 			bias = -1;
 
 			// parse options
@@ -104,10 +120,12 @@ namespace gezi {
 				{
 				case 's':
 					param.solver_type = atoi(argv[i]);
+					flag_solver_specified = 1;
 					break;
 
 				case 'c':
 					param.C = atof(argv[i]);
+					flag_C_specified = 1;
 					break;
 
 				case 'p':
@@ -120,6 +138,11 @@ namespace gezi {
 
 				case 'B':
 					bias = atof(argv[i]);
+					break;
+
+				case 'n':
+					flag_omp = 1;
+					param.nr_thread = atoi(argv[i]);
 					break;
 
 				case 'w':
@@ -145,6 +168,11 @@ namespace gezi {
 					i--;
 					break;
 
+				case 'C':
+					flag_find_C = 1;
+					i--;
+					break;
+
 				default:
 					fprintf(stderr, "unknown option: -%c\n", argv[i - 1][1]);
 					exit_with_help();
@@ -154,7 +182,6 @@ namespace gezi {
 
 			set_print_string_function(print_func);
 
-			//chg removed can be used withou file input
 			//// determine filenames
 			//if (i >= argc)
 			//	exit_with_help();
@@ -172,6 +199,56 @@ namespace gezi {
 			//		++p;
 			//	sprintf(model_file_name, "%s.model", p);
 			//}
+
+
+			// default solver for parameter selection is L2R_L2LOSS_SVC
+			if (flag_find_C)
+			{
+				if (!flag_cross_validation)
+					nr_fold = 5;
+				if (!flag_solver_specified)
+				{
+					fprintf(stderr, "Solver not specified. Using -s 2\n");
+					param.solver_type = L2R_L2LOSS_SVC;
+				}
+				else if (param.solver_type != L2R_LR && param.solver_type != L2R_L2LOSS_SVC)
+				{
+					fprintf(stderr, "Warm-start parameter search only available for -s 0 and -s 2\n");
+					exit_with_help();
+				}
+			}
+
+			//default solver for parallel execution is L2R_L2LOSS_SVC
+			if (flag_omp)
+			{
+				if (!flag_solver_specified)
+				{
+					fprintf(stderr, "Solver not specified. Using -s 2\n");
+					param.solver_type = L2R_L2LOSS_SVC;
+				}
+				else if (param.solver_type != L2R_LR && param.solver_type != L2R_L2LOSS_SVC && param.solver_type != L2R_L2LOSS_SVR)
+				{
+					fprintf(stderr, "Parallel LIBLINEAR is only available for -s 0, 2, 11 now\n");
+					exit_with_help();
+				}
+#ifdef CV_OMP
+				omp_set_nested(1);
+				omp_set_num_threads(nr_fold);
+				if (nr_fold*param.nr_thread > omp_get_max_threads())
+					fprintf(stderr, "The number of threads exceeds maxminum limit\n");
+				else
+					printf("Total threads used: %d\n", nr_fold*param.nr_thread);
+#else
+				printf("Total threads used: %d\n", param.nr_thread);
+#endif
+			}
+#ifdef CV_OMP
+			else
+			{
+				omp_set_num_threads(nr_fold);
+				printf("Total threads used: %d\n", nr_fold);
+			}
+#endif
 
 			if (param.eps == INF)
 			{
