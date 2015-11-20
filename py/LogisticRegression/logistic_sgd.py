@@ -242,9 +242,9 @@ def load_data(dataset):
     '''
     cache_file = ''
     if dataset.endswith('.txt'):
-        cache_file = dataset.replace('.txt', '.pkl')
+        cache_file = dataset.replace('.txt', '.pkl2')
     else:
-        cache_file = dataset + '.pkl'
+        cache_file = dataset + '.pkl2'
 
     print '... loading data:',dataset
     dataset_x = []
