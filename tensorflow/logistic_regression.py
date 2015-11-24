@@ -14,21 +14,31 @@ import melt_dataset
 import sys
 from sklearn.metrics import roc_auc_score
 
+#./logistic_regression.py corpus/feature.normed.rand.12000.0_2.txt corpus/feature.normed.rand.12000.1_2.txt
+#notice if setting batch_size too big here 500 will result in learning turn output nan if using learning_rate 0.01,
+#to solve this large batch size need low learning rate 0.001 will be ok
+
+flags = tf.app.flags
+FLAGS = flags.FLAGS
+flags.DEFINE_float('learning_rate', 0.001, 'Initial learning rate.')
+flags.DEFINE_integer('num_epochs', 120, 'Number of epochs to run trainer.')
+flags.DEFINE_integer('batch_size', 500, 'Batch size. Must divide evenly into the dataset sizes.')
+flags.DEFINE_string('train', './corpus/feature.normed.rand.12000.0_2.txt', 'train file')
+flags.DEFINE_string('test', './corpus/feature.normed.rand.12000.1_2.txt', 'test file')
+
 def init_weights(shape):
-    return tf.Variable(tf.random_normal(shape, stddev=0.01))
+	return tf.Variable(tf.random_normal(shape, stddev=0.01))
 
 def model(X, w):
-    return 1.0/(1.0 + tf.exp(-(tf.matmul(X, w))))
+		return tf.matmul(X,w)
 
-#./logistic_regression.py corpus/feature.normed.rand.12000.0_2.txt corpus/feature.normed.rand.12000.1_2.txt
-#notice if setting batch_size too big here 500 will result in learning turn output nan...  why? @TODO
-batch_size = 100
-learning_rate = 0.01
-num_iters = 100
 
-argv = sys.argv 
-trainset = argv[1]
-testset = argv[2]
+trainset = FLAGS.train
+testset = FLAGS.test
+
+learning_rate = FLAGS.learning_rate 
+num_epochs = FLAGS.num_epochs 
+batch_size = FLAGS.batch_size 
 
 trX, trY = melt_dataset.load_dense_data(trainset)
 print "finish loading train set ",trainset
@@ -39,7 +49,7 @@ num_features = trX[0].shape[0]
 print 'num_features: ',num_features 
 print 'trainSet size: ', len(trX)
 print 'testSet size: ', len(teX)
-print 'batch_size:', batch_size, ' learning_rate:', learning_rate, ' num_iters:', num_iters
+print 'batch_size:', batch_size, ' learning_rate:', learning_rate, ' num_epochs:', num_epochs
 
 X = tf.placeholder("float", [None, num_features]) # create symbolic variables
 Y = tf.placeholder("float", [None, 1])
@@ -48,19 +58,19 @@ w = init_weights([num_features, 1]) # like in linear regression, we need a share
 
 py_x = model(X, w)
 
-cost = -tf.reduce_sum(Y*tf.log(py_x) + (1 - Y) * tf.log(1 - py_x))
+cost = tf.reduce_sum(tf.nn.sigmoid_cross_entropy_with_logits(py_x, Y))
 train_op = tf.train.GradientDescentOptimizer(learning_rate).minimize(cost) # construct optimizer
 
-predict_op = py_x
+predict_op = tf.nn.sigmoid(py_x)
 
 sess = tf.Session()
 init = tf.initialize_all_variables()
 sess.run(init)
 
-for i in range(num_iters):
-    predicts, cost_ = sess.run([predict_op, cost], feed_dict={X: teX, Y: teY})
-    print i, 'auc:', roc_auc_score(teY, predicts), 'cost:', cost_
-    for start, end in zip(range(0, len(trX), batch_size), range(batch_size, len(trX), batch_size)):
+for i in range(num_epochs):
+	predicts, cost_ = sess.run([predict_op, cost], feed_dict={X: teX, Y: teY})
+	print i, 'auc:', roc_auc_score(teY, predicts), 'cost:', cost_
+	for start, end in zip(range(0, len(trX), batch_size), range(batch_size, len(trX), batch_size)):
 			sess.run(train_op, feed_dict={X: trX[start:end], Y: trY[start:end]})
 
 predicts, cost_ = sess.run([predict_op, cost], feed_dict={X: teX, Y: teY})
