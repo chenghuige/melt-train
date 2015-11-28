@@ -48,7 +48,7 @@ num_features = trX[0].shape[0]
 print 'num_features: ',num_features 
 print 'trainSet size: ', len(trX)
 print 'testSet size: ', len(teX)
-print 'batch_size:', batch_size, ' learning_rate:', learning_rate, ' num_epochs:', num_epochs
+print 'batch_size:', batch_size, ' learning_rate:', learning_rate, ' num_iters:', num_iters
 
 X = tf.placeholder("float", [None, num_features]) # create symbolic variables
 Y = tf.placeholder("float", [None, 1])
@@ -66,7 +66,7 @@ sess = tf.Session()
 init = tf.initialize_all_variables()
 sess.run(init)
 
-for i in range(num_epochs):
+for i in range(num_iters):
 	predicts, cost_ = sess.run([predict_op, cost], feed_dict={X: teX, Y: teY})
 	print i, 'auc:', roc_auc_score(teY, predicts), 'cost:', cost_
 	for start, end in zip(range(0, len(trX), batch_size), range(batch_size, len(trX), batch_size)):
