@@ -85,7 +85,7 @@ algo = gen_algo(method)
 py_x = algo.run(trainer)
 Y = trainer.Y
 
-cost = tf.reduce_sum(tf.nn.sigmoid_cross_entropy_with_logits(py_x, Y))
+cost = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(py_x, Y))
 train_op = tf.train.GradientDescentOptimizer(learning_rate).minimize(cost) # construct optimizer
 predict_op = tf.nn.sigmoid(py_x)
 
