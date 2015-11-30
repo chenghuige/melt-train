@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 #coding=gbk
 # ==============================================================================
-#          \file   logistic_regression.py
+#          \file   binary_classification.py
 #        \author   chenghuige  
-#          \date   2015-11-19 16:06:52.693026
+#          \date   2015-11-30 16:06:52.693026
 #   \Description  
 # ==============================================================================
 
@@ -15,18 +15,17 @@ from sklearn.metrics import roc_auc_score
 
 import melt
 
-#./logistic_regression.py corpus/feature.normed.rand.12000.0_2.txt corpus/feature.normed.rand.12000.1_2.txt
-#notice if setting batch_size too big here 500 will result in learning turn output nan if using learning_rate 0.01,
-#to solve this large batch size need low learning rate 0.001 will be ok
-
 flags = tf.app.flags
 FLAGS = flags.FLAGS
+
 flags.DEFINE_float('learning_rate', 0.001, 'Initial learning rate.')
 flags.DEFINE_integer('num_epochs', 120, 'Number of epochs to run trainer.')
 flags.DEFINE_integer('batch_size', 500, 'Batch size. Must divide evenly into the dataset sizes.')
 flags.DEFINE_string('train', './corpus/feature.normed.rand.12000.0_2.txt', 'train file')
 flags.DEFINE_string('test', './corpus/feature.normed.rand.12000.1_2.txt', 'test file')
-
+flags.DEFINE_string('method', 'logistic', 'currently support logistic/mlp')
+#----for mlp
+flags.DEFINE_integer('hidden_size', 20, 'Hidden unit size')
 
 trainset_file = FLAGS.train
 testset_file = FLAGS.test
@@ -34,6 +33,8 @@ testset_file = FLAGS.test
 learning_rate = FLAGS.learning_rate 
 num_epochs = FLAGS.num_epochs 
 batch_size = FLAGS.batch_size 
+
+method = FLAGS.method
 
 trainset = melt.load_dataset(trainset_file)
 print "finish loading train set ",trainset_file
@@ -50,13 +51,41 @@ print 'batch_size:', batch_size, ' learning_rate:', learning_rate, ' num_epochs:
 
 trainer = melt.gen_binary_classification_trainer(trainset)
 
-#---------------- logistic regression
-def model(X, w):
+class LogisticRegresssion:
+	def model(self, X, w):
 		return melt.matmul(X,w)
-w = melt.init_weights([num_features, 1]) 
-py_x = model(trainer.X, w)
+	
+	def run(self, trainer):
+		w = melt.init_weights([trainer.num_features, 1]) 
+		py_x = self.model(trainer.X, w)
+		return py_x
 
-cost = tf.reduce_sum(tf.nn.sigmoid_cross_entropy_with_logits(py_x, trainer.Y))
+class Mlp:
+	def model(self, X, w_h, w_o):
+		h = tf.nn.sigmoid(melt.matmul(X, w_h)) # this is a basic mlp, think 2 stacked logistic regressions
+		return tf.matmul(h, w_o) # note that we dont take the softmax at the end because our cost fn does that for us
+	
+	def run(self, trainer):
+		w_h = melt.init_weights([trainer.num_features, FLAGS.hidden_size]) # create symbolic variables
+		w_o = melt.init_weights([FLAGS.hidden_size, 1])
+
+		py_x = self.model(trainer.X, w_h, w_o)
+		return py_x	
+
+def gen_algo(method):
+	if method == 'logistic':
+		return LogisticRegresssion()
+	elif method == 'mlp':
+		return Mlp()
+	else:
+		print method, ' is not supported right now'
+		exit(-1)
+
+algo = gen_algo(method)
+py_x = algo.run(trainer)
+Y = trainer.Y
+
+cost = tf.reduce_sum(tf.nn.sigmoid_cross_entropy_with_logits(py_x, Y))
 train_op = tf.train.GradientDescentOptimizer(learning_rate).minimize(cost) # construct optimizer
 predict_op = tf.nn.sigmoid(py_x)
 

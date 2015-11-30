@@ -59,6 +59,7 @@ class SparseFeatures(object):
 		batch.sp_weights_val = self.sp_weights_val[start_: end_]
 		row_idx = 0
 		max_len = 0
+		#@TODO better way to construct sp_indices for each mini batch ?
 		for i in xrange(start + 1, end + 1):
 			len_ = self.start_indices[i] - self.start_indices[i - 1]
 			if len_ > max_len:
@@ -167,7 +168,7 @@ def load_dataset(dataset, has_header=False):
 	else:
 		return load_sparse_dataset(lines)
 
-#-----------------------------------------melt hack for tensorflow
+#-----------------------------------------melt for tensorflow
 import tensorflow as tf
 
 def init_weights(shape):
@@ -185,10 +186,8 @@ class BinaryClassificationTrainer(object):
 		self.features = dataset.features
 		self.num_features = dataset.num_features
 
-		self.X = tf.placeholder("float", [None, self.num_features]) # create symbolic variables
+		self.X = tf.placeholder("float", [None, self.num_features]) 
 		self.Y = tf.placeholder("float", [None, 1])
-		self.w = init_weights([self.num_features, 1]) # like in linear regression, we need a shared variable weight matrix for
-										   # logistic regression
 
 	def gen_feed_dict(self, trX, trY):
 		return {self.X: trX, self.Y: trY}
@@ -207,20 +206,9 @@ class SparseBinaryClassificationTrainer(object):
 		self.sp_weights = tf.SparseTensor(self.sp_indices, self.sp_weights_val, self.sp_shape)
 
 		self.X = (self.sp_ids, self.sp_weights)
-
 		self.Y = tf.placeholder("float", [None, 1])
-		self.w = init_weights([self.num_features, 1]) # like in linear regression, we need a shared variable weight matrix for
-										   # logistic regressio
 
 	def gen_feed_dict(self, trX, trY):
-		#assert(trX.sp_indices != None)
-		#assert(trX.sp_shape != None)
-		#assert(trX.sp_ids_val != None)
-		#assert(trX.sp_weights_val != None)
-		#print trX.sp_indices
-		#print trX.sp_shape, ' ', len(trX.sp_indices), ' ', len(trX.sp_ids_val), ' ', len(trX.sp_weights_val) , ' ', len(trY)
-		#print trX.sp_ids_val
-		#print trX.sp_weights_val
 		return {self.Y: trY, self.sp_indices: trX.sp_indices, self.sp_shape: trX.sp_shape,  self.sp_ids_val: trX.sp_ids_val, self.sp_weights_val: trX.sp_weights_val}
 
 
