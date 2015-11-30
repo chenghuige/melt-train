@@ -7,12 +7,13 @@
 #   \Description  
 # ==============================================================================
 
+import sys
 
 import tensorflow as tf
 import numpy as np
-import melt_dataset
-import sys
 from sklearn.metrics import roc_auc_score
+
+import melt
 
 #./logistic_regression.py corpus/feature.normed.rand.12000.0_2.txt corpus/feature.normed.rand.12000.1_2.txt
 #notice if setting batch_size too big here 500 will result in learning turn output nan if using learning_rate 0.01,
@@ -26,39 +27,41 @@ flags.DEFINE_integer('batch_size', 500, 'Batch size. Must divide evenly into the
 flags.DEFINE_string('train', './corpus/feature.normed.rand.12000.0_2.txt', 'train file')
 flags.DEFINE_string('test', './corpus/feature.normed.rand.12000.1_2.txt', 'test file')
 
-def init_weights(shape):
-	return tf.Variable(tf.random_normal(shape, stddev=0.01))
+#def init_weights(shape):
+#	return tf.Variable(tf.random_normal(shape, stddev=0.01))
 
 def model(X, w):
-		return tf.matmul(X,w)
+		return melt.matmul(X,w)
 
-
-trainset = FLAGS.train
-testset = FLAGS.test
+trainset_file = FLAGS.train
+testset_file = FLAGS.test
 
 learning_rate = FLAGS.learning_rate 
 num_epochs = FLAGS.num_epochs 
 batch_size = FLAGS.batch_size 
 
-trX, trY = melt_dataset.load_dense_data(trainset)
-print "finish loading train set ",trainset
-teX, teY = melt_dataset.load_dense_data(testset)
-print "finish loading test set ", testset
+trainset = melt.load_dataset(trainset_file)
+print "finish loading train set ",trainset_file
+testset = melt.load_dataset(testset_file)
+print "finish loading test set ", testset_file
 
-num_features = trX[0].shape[0]
-print 'num_features: ',num_features 
-print 'trainSet size: ', len(trX)
-print 'testSet size: ', len(teX)
+assert(trainset.num_features == testset.num_features)
+num_features = trainset.num_features
+print 'num_features: ', num_features
+print 'trainSet size: ', trainset.num_instances()
+print 'testSet size: ', testset.num_instances()
 print 'batch_size:', batch_size, ' learning_rate:', learning_rate, ' num_epochs:', num_epochs
 
-X = tf.placeholder("float", [None, num_features]) # create symbolic variables
-Y = tf.placeholder("float", [None, 1])
+#X = tf.placeholder("float", [None, num_features]) # create symbolic variables
+#Y = tf.placeholder("float", [None, 1])
 
-w = init_weights([num_features, 1]) # like in linear regression, we need a shared variable weight matrix for logistic regression
+#w = init_weights([num_features, 1]) # like in linear regression, we need a shared variable weight matrix for logistic regression
 
-py_x = model(X, w)
+trainer = melt.gen_binary_classification_trainer(trainset)
 
-cost = tf.reduce_sum(tf.nn.sigmoid_cross_entropy_with_logits(py_x, Y))
+py_x = model(trainer.X, trainer.w)
+
+cost = tf.reduce_sum(tf.nn.sigmoid_cross_entropy_with_logits(py_x, trainer.Y))
 train_op = tf.train.GradientDescentOptimizer(learning_rate).minimize(cost) # construct optimizer
 
 predict_op = tf.nn.sigmoid(py_x)
@@ -67,11 +70,17 @@ sess = tf.Session()
 init = tf.initialize_all_variables()
 sess.run(init)
 
+teX, teY = testset.full_batch()
+num_train_instances = trainset.num_instances()
 for i in range(num_epochs):
-	predicts, cost_ = sess.run([predict_op, cost], feed_dict={X: teX, Y: teY})
+	predicts, cost_ = sess.run([predict_op, cost], feed_dict = trainer.gen_feed_dict(teX, teY))
 	print i, 'auc:', roc_auc_score(teY, predicts), 'cost:', cost_
-	for start, end in zip(range(0, len(trX), batch_size), range(batch_size, len(trX), batch_size)):
-			sess.run(train_op, feed_dict={X: trX[start:end], Y: trY[start:end]})
+	#print i
+	for start, end in zip(range(0, num_train_instances, batch_size), range(batch_size, num_train_instances, batch_size)):
+			trX, trY = trainset.mini_batch(start, end)
+			#r = sess.run(py_x, feed_dict = trainer.gen_feed_dict(trX, trY))
+			#print r.shape
+			sess.run(train_op, feed_dict = trainer.gen_feed_dict(trX, trY))
 
-predicts, cost_ = sess.run([predict_op, cost], feed_dict={X: teX, Y: teY})
+predicts, cost_ = sess.run([predict_op, cost], feed_dict = trainer.gen_feed_dict(teX, teY))
 print 'final ', 'auc:', roc_auc_score(teY, predicts),'cost:', cost_
