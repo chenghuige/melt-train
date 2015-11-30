@@ -85,7 +85,7 @@ algo = gen_algo(method)
 py_x = algo.run(trainer)
 Y = trainer.Y
 
-cost = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(py_x, Y))
+cost = tf.reduce_sum(tf.nn.sigmoid_cross_entropy_with_logits(py_x, Y))
 train_op = tf.train.GradientDescentOptimizer(learning_rate).minimize(cost) # construct optimizer
 predict_op = tf.nn.sigmoid(py_x)
 
@@ -97,10 +97,10 @@ teX, teY = testset.full_batch()
 num_train_instances = trainset.num_instances()
 for i in range(num_epochs):
 	predicts, cost_ = sess.run([predict_op, cost], feed_dict = trainer.gen_feed_dict(teX, teY))
-	print i, 'auc:', roc_auc_score(teY, predicts), 'cost:', cost_
+	print i, 'auc:', roc_auc_score(teY, predicts), 'cost:', cost_ / len(teY)
 	for start, end in zip(range(0, num_train_instances, batch_size), range(batch_size, num_train_instances, batch_size)):
 			trX, trY = trainset.mini_batch(start, end)
 			sess.run(train_op, feed_dict = trainer.gen_feed_dict(trX, trY))
 
 predicts, cost_ = sess.run([predict_op, cost], feed_dict = trainer.gen_feed_dict(teX, teY))
-print 'final ', 'auc:', roc_auc_score(teY, predicts),'cost:', cost_
+print 'final ', 'auc:', roc_auc_score(teY, predicts),'cost:', cost_ / len(teY)
