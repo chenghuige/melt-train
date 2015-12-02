@@ -1139,14 +1139,21 @@ namespace gezi {
 			}
 			else
 			{
-				try
-				{
-					double ratio = DOUBLE(_cmd.commandInput);
-					instances.ShrinkData(ratio, rng);
-				}
-				catch (...)
+				if (_cmd.commandInput.empty())
 				{
 					instances.Randomize(rng);
+				}
+				else
+				{
+					try
+					{
+						double ratio = DOUBLE(_cmd.commandInput);
+						instances.ShrinkData(ratio, rng);
+					}
+					catch (...)
+					{
+						instances.Randomize(rng);
+					}
 				}
 				write(instances, outfile, fileFormat);
 			}

@@ -171,8 +171,12 @@ def load_dataset(dataset, has_header=False):
 #-----------------------------------------melt for tensorflow
 import tensorflow as tf
 
-def init_weights(shape):
-	return tf.Variable(tf.random_normal(shape, stddev = 0.01))
+def init_weights(shape, stddev = 0.01):
+	return tf.Variable(tf.random_normal(shape, stddev = stddev))
+
+def init_bias(shape, val = 0.1):
+  initial = tf.constant(val, shape=shape)
+  return tf.Variable(initial)
 
 def matmul(X, w):
 	if type(X) == tf.Tensor:
