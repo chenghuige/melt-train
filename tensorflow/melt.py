@@ -8,7 +8,6 @@
 # ==============================================================================
 
 import numpy as np
-import os 
 
 #---------------------------melt load data
 #Now support melt dense and sparse input file format, for sparse input no
@@ -128,7 +127,6 @@ def load_dense_dataset(lines):
 	return dataset
 
 def load_sparse_dataset(lines):
-	dataset_x = []
 	dataset_y = []
 
 	label_idx = guess_label_index(lines[0])
@@ -171,12 +169,12 @@ def load_dataset(dataset, has_header=False):
 #-----------------------------------------melt for tensorflow
 import tensorflow as tf
 
-def init_weights(shape, stddev = 0.01):
-	return tf.Variable(tf.random_normal(shape, stddev = stddev))
+def init_weights(shape, stddev = 0.01, name = None):
+	return tf.Variable(tf.random_normal(shape, stddev = stddev), name = name)
 
-def init_bias(shape, val = 0.1):
+def init_bias(shape, val = 0.1, name = None):
   initial = tf.constant(val, shape=shape)
-  return tf.Variable(initial)
+  return tf.Variable(initial, name = name)
 
 def matmul(X, w):
 	if type(X) == tf.Tensor:
@@ -190,8 +188,8 @@ class BinaryClassificationTrainer(object):
 		self.features = dataset.features
 		self.num_features = dataset.num_features
 
-		self.X = tf.placeholder("float", [None, self.num_features]) 
-		self.Y = tf.placeholder("float", [None, 1])
+		self.X = tf.placeholder("float", [None, self.num_features], name = 'X') 
+		self.Y = tf.placeholder("float", [None, 1], name = 'Y') 
 
 	def gen_feed_dict(self, trX, trY):
 		return {self.X: trX, self.Y: trY}
@@ -202,10 +200,10 @@ class SparseBinaryClassificationTrainer(object):
 		self.features = dataset.features
 		self.num_features = dataset.num_features
 
-		self.sp_indices = tf.placeholder(tf.int64)
-		self.sp_shape = tf.placeholder(tf.int64)
-		self.sp_ids_val = tf.placeholder(tf.int64)
-		self.sp_weights_val = tf.placeholder(tf.float32)
+		self.sp_indices = tf.placeholder(tf.int64, name = 'sp_indices')
+		self.sp_shape = tf.placeholder(tf.int64, name = 'sp_shape')
+		self.sp_ids_val = tf.placeholder(tf.int64, name = 'sp_ids_val')
+		self.sp_weights_val = tf.placeholder(tf.float32, name = 'sp_weights_val')
 		self.sp_ids = tf.SparseTensor(self.sp_indices, self.sp_ids_val, self.sp_shape)
 		self.sp_weights = tf.SparseTensor(self.sp_indices, self.sp_weights_val, self.sp_shape)
 

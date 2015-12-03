@@ -11,7 +11,7 @@ import tensorflow as tf
 import numpy as np
 
 def model(X, w):
-    return tf.mul(X, w) # notice we use the same model as linear regression, this is because there is a baked in cost function which performs softmax and cross entropy
+    return tf.matmul(X, tf.transpose(w)) # notice we use the same model as linear regression, this is because there is a baked in cost function which performs softmax and cross entropy
 
 X = tf.placeholder("float", [2, 3]) # create symbolic variables
 W = tf.placeholder("float", [2, 3])
@@ -23,8 +23,6 @@ w = np.array([[1,4,5], [3, 2, 1]], dtype=np.float32)
 print w
 py_x = model(X, W)
 
-true_logits = tf.reduce_sum(py_x, 1)
 sess = tf.Session()
 print sess.run(py_x, feed_dict={X: x, W: w})
-print sess.run(true_logits, feed_dict={X: x, W: w})
 

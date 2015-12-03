@@ -52,36 +52,36 @@ print 'batch_size:', batch_size, ' learning_rate:', learning_rate, ' num_epochs:
 trainer = melt.gen_binary_classification_trainer(trainset)
 
 class LogisticRegresssion:
-	def model(self, X, w, b):
-		return melt.matmul(X,w) + b
-	
-	def forward(self, trainer):
-		self.w = melt.init_weights([trainer.num_features, 1]) 
-		self.b = melt.init_bias([1])
-		py_x = self.model(trainer.X, self.w, self.b)
-		return py_x
+    def model(self, X, w, b):
+        return melt.matmul(X,w) + b
+    
+    def forward(self, trainer):
+        self.w = melt.init_weights([trainer.num_features, 1], name = 'w') 
+        self.b = melt.init_bias([1], name = 'b')
+        py_x = self.model(trainer.X, self.w, self.b)
+        return py_x
 
 class Mlp:
-	def model(self, X, w_h, w_o, b):
-		h = tf.nn.sigmoid(melt.matmul(X, w_h) + b) # this is a basic mlp, think 2 stacked logistic regressions
-		return tf.matmul(h, w_o) # note that we dont take the softmax at the end because our cost fn does that for us
-	
-	def forward(self, trainer):
-		self.w_h = melt.init_weights([trainer.num_features, FLAGS.hidden_size]) # create symbolic variables
-		self.w_o = melt.init_weights([FLAGS.hidden_size, 1])
-		self.b = melt.init_bias([1])
-
-		py_x = self.model(trainer.X, self.w_h, self.w_o, self.b)
-		return py_x	
+    def model(self, X, w_h, b_h, w_o, b_o):
+        h = tf.nn.sigmoid(melt.matmul(X, w_h) + b_h) # this is a basic mlp, think 2 stacked logistic regressions
+        return tf.matmul(h, w_o) + b_o # note that we dont take the softmax at the end because our cost fn does that for us
+    
+    def forward(self, trainer):
+        self.w_h = melt.init_weights([trainer.num_features, FLAGS.hidden_size], name = 'w_h') # create symbolic variables
+        self.b_h = melt.init_bias([1], name = 'b_h')        
+        self.w_o = melt.init_weights([FLAGS.hidden_size, 1], name = 'w_o')
+        self.b_o = melt.init_bias([1], name = 'b_o')
+        py_x = self.model(trainer.X, self.w_h, self.b_h, self.w_o, self.b_o)
+        return py_x    
 
 def gen_algo(method):
-	if method == 'logistic':
-		return LogisticRegresssion()
-	elif method == 'mlp':
-		return Mlp()
-	else:
-		print method, ' is not supported right now'
-		exit(-1)
+    if method == 'logistic':
+        return LogisticRegresssion()
+    elif method == 'mlp':
+        return Mlp()
+    else:
+        print method, ' is not supported right now'
+        exit(-1)
 
 algo = gen_algo(method)
 py_x = algo.forward(trainer)
@@ -91,25 +91,25 @@ cost = tf.reduce_sum(tf.nn.sigmoid_cross_entropy_with_logits(py_x, Y))
 train_op = tf.train.GradientDescentOptimizer(learning_rate).minimize(cost) # construct optimizer
 predict_op = tf.nn.sigmoid(py_x)
 
-a = tf.constant(5, name='alpha')
+a = tf.constant(5, name='alpha') 
 
 sess = tf.Session() 
 init = tf.initialize_all_variables()
 sess.run(init)
 
-summary_writer = tf.train.SummaryWriter('./summary', graph_def=sess.graph_def)
+
+tf.scalar_summary("cross_entropy", cost)
+merged_summary_op = tf.merge_all_summaries()
+
+summary_writer = tf.train.SummaryWriter('/home/users/chenghuige/tmp/tensorflow_logs', sess.graph_def)
 
 teX, teY = testset.full_batch()
 num_train_instances = trainset.num_instances()
-for i in range(num_epochs):
-	predicts, cost_ = sess.run([predict_op, cost], feed_dict = trainer.gen_feed_dict(teX, teY))
-	print i, 'auc:', roc_auc_score(teY, predicts), 'cost:', cost_ / len(teY)
-	for start, end in zip(range(0, num_train_instances, batch_size), range(batch_size, num_train_instances, batch_size)):
-		trX, trY = trainset.mini_batch(start, end)
-		sess.run(train_op, feed_dict = trainer.gen_feed_dict(trX, trY))
-
-predicts, cost_ = sess.run([predict_op, cost], feed_dict = trainer.gen_feed_dict(teX, teY))
-print 'final ', 'auc:', roc_auc_score(teY, predicts),'cost:', cost_ / len(teY)
-
-#tf.train.write_graph(sess.graph_def, 'models/', 'train.pb', as_text=True)
-#print algo.w.eval(sess)
+for epoch in range(num_epochs):
+    for start, end in zip(range(0, num_train_instances, batch_size), range(batch_size, num_train_instances, batch_size)):
+        trX, trY = trainset.mini_batch(start, end)
+        sess.run(train_op, feed_dict = trainer.gen_feed_dict(trX, trY))
+    predicts, cost_ = sess.run([predict_op, cost], feed_dict = trainer.gen_feed_dict(teX, teY))
+    print epoch, ' auc:', roc_auc_score(teY, predicts),'cost:', cost_ / len(teY)
+    summary_str = sess.run(merged_summary_op, feed_dict = trainer.gen_feed_dict(teX, teY))
+    summary_writer.add_summary(summary_str, epoch)
