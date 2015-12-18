@@ -38,6 +38,7 @@ namespace gezi {
 		string validationDatafile = "";
 		string modelFolder = "model"; //m|
 		bool modelfile = false; //mf|
+		bool useCustomModel = false; //mcustom|
 		bool modelfileCode = false; //mc|
 		string codeType = "c"; //
 		bool modelfileText = false; //mt|

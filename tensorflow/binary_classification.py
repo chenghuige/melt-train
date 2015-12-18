@@ -24,6 +24,7 @@ flags.DEFINE_integer('batch_size', 500, 'Batch size. Must divide evenly into the
 flags.DEFINE_string('train', './corpus/feature.normed.rand.12000.0_2.txt', 'train file')
 flags.DEFINE_string('test', './corpus/feature.normed.rand.12000.1_2.txt', 'test file')
 flags.DEFINE_string('method', 'logistic', 'currently support logistic/mlp')
+flags.DEFINE_string('activation', 'sigmoid', 'you may try tanh or other activate function')
 #----for mlp
 flags.DEFINE_integer('hidden_size', 20, 'Hidden unit size')
 
@@ -62,8 +63,12 @@ class LogisticRegresssion:
         return py_x
 
 class Mlp:
+    def __init__(self, activation = 'sigmoid'):
+        self.activation = tf.nn.sigmoid
+        if activation == 'tanh':
+            self.activation = tf.nn.tanh
     def model(self, X, w_h, b_h, w_o, b_o):
-        h = tf.nn.sigmoid(melt.matmul(X, w_h) + b_h) # this is a basic mlp, think 2 stacked logistic regressions
+        h = self.activation(melt.matmul(X, w_h) + b_h) # this is a basic mlp, think 2 stacked logistic regressions
         return tf.matmul(h, w_o) + b_o # note that we dont take the softmax at the end because our cost fn does that for us
     
     def forward(self, trainer):
@@ -78,7 +83,7 @@ def gen_algo(method):
     if method == 'logistic':
         return LogisticRegresssion()
     elif method == 'mlp':
-        return Mlp()
+        return Mlp(FLAGS.activation)
     else:
         print method, ' is not supported right now'
         exit(-1)
@@ -89,9 +94,12 @@ Y = trainer.Y
 
 cost = tf.reduce_sum(tf.nn.sigmoid_cross_entropy_with_logits(py_x, Y))
 train_op = tf.train.GradientDescentOptimizer(learning_rate).minimize(cost) # construct optimizer
-predict_op = tf.nn.sigmoid(py_x)
+predict_op = tf.nn.sigmoid(py_x) 
 
-a = tf.constant(5, name='alpha') 
+#one question is will cost and predict_op will run twice...?
+evaluate_op = tf.user_ops.auc(py_x, Y)
+
+#auc = tf.user_ops.auc(py_x, 
 
 sess = tf.Session() 
 init = tf.initialize_all_variables()
@@ -99,6 +107,7 @@ sess.run(init)
 
 
 tf.scalar_summary("cross_entropy", cost)
+tf.scalar_summary("auc", evaluate_op)
 merged_summary_op = tf.merge_all_summaries()
 
 summary_writer = tf.train.SummaryWriter('/home/users/chenghuige/tmp/tensorflow_logs', sess.graph_def)
@@ -109,7 +118,9 @@ for epoch in range(num_epochs):
     for start, end in zip(range(0, num_train_instances, batch_size), range(batch_size, num_train_instances, batch_size)):
         trX, trY = trainset.mini_batch(start, end)
         sess.run(train_op, feed_dict = trainer.gen_feed_dict(trX, trY))
-    predicts, cost_ = sess.run([predict_op, cost], feed_dict = trainer.gen_feed_dict(teX, teY))
-    print epoch, ' auc:', roc_auc_score(teY, predicts),'cost:', cost_ / len(teY)
+    #predicts, cost_ = sess.run([predict_op, cost], feed_dict = trainer.gen_feed_dict(teX, teY))
+    #print epoch, ' auc:', roc_auc_score(teY, predicts),'cost:', cost_ / len(teY)
+    predicts, auc_, cost_ = sess.run([predict_op, evaluate_op, cost], feed_dict = trainer.gen_feed_dict(teX, teY))
+    print epoch, ' auc:', auc_,'cost:', cost_ / len(teY)
     summary_str = sess.run(merged_summary_op, feed_dict = trainer.gen_feed_dict(teX, teY))
     summary_writer.add_summary(summary_str, epoch)

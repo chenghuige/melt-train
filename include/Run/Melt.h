@@ -524,10 +524,12 @@ namespace gezi {
 			Noticer nt("Save predictor");
 
 			(*predictor).SetSaveNormalizerText(_cmd.saveNormalizerText)
-				.SetSaveCalibratorText(_cmd.saveCalibratorText);
+				.SetSaveCalibratorText(_cmd.saveCalibratorText)
+				.SetUseCustomModel(_cmd.useCustomModel);
 
 			predictor->SetPath(_cmd.modelFolder);
-		
+			try_create_dir(_cmd.modelFolder);
+
 			if (_cmd.modelfileXml)
 			{
 				predictor->SaveXml();
@@ -646,7 +648,7 @@ namespace gezi {
 			PredictorPtr predictor;
 			{
 				Noticer nt("Loading predictor");
-				predictor = PredictorFactory::LoadPredictor(_cmd.modelFolder);
+				predictor = PredictorFactory::LoadPredictor(_cmd.modelFolder, _cmd.useCustomModel);
 				CHECK(predictor != nullptr);
 			}
 			RunTest(predictor);

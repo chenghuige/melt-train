@@ -39,6 +39,7 @@ DEFINE_int32(stopRounds, 10, "earlyStopRounds| will stop after no performance ga
 DEFINE_bool(useBestStage, false, "If setting useBestStage will return to best stage state for model");
 
 DEFINE_string(m, "model", "modelFolder");
+DEFINE_bool(mcustom, false, "model using custom/handwrite save and load now only gbdt support");
 DEFINE_bool(mf, false, " modelfile: Gen model file? (for TrainTest)");
 DEFINE_bool(mc, false, " modelfileCode: Gen model file to save in C++ code £¿ (for Train or TrainTest)");
 DEFINE_string(codeType, "cpp", "Which language for modelfileCode ? default is cpp->model.cpp, or c->model.c or py for python -> model.py, php -> mode.php");
@@ -91,6 +92,7 @@ namespace gezi {
 		_cmd.testDatafile = FLAGS_test;
 		_cmd.validationDatafile = FLAGS_valid;
 		_cmd.modelFolder = FLAGS_m;
+		_cmd.useCustomModel = FLAGS_mcustom;
 		_cmd.modelfile = FLAGS_mf;
 		_cmd.modelfileCode = FLAGS_mc;
 		_cmd.codeType = FLAGS_codeType;
