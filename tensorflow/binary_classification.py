@@ -7,10 +7,8 @@
 #   \Description  
 # ==============================================================================
 
-import sys, os
-
+import os
 import tensorflow as tf
-import numpy as np
 #from sklearn.metrics import roc_auc_score
 import cPickle
 
@@ -45,46 +43,30 @@ method = FLAGS.method
 
 print 'batch_size:', batch_size, ' learning_rate:', learning_rate, ' num_epochs:', num_epochs
 
+from algos import Mlp, MlpOptions, LogisticRegression, LogisticRegressionOptions
 
-class LogisticRegresssion(object):
-    def model(self, X, w, b):
-        return melt.matmul(X,w) + b
-    
-    def forward(self, trainer):
-        w = melt.init_weights([trainer.num_features, 1], name = 'w') 
-        b = melt.init_bias([1], name = 'b')
-        py_x = self.model(trainer.X, w, b)
-        return py_x
-
-class Mlp(object):
-    def __init__(self, activation = 'sigmoid', hidden_size = 10):
-        self.activation = tf.nn.sigmoid
-        self.hidden_size = hidden_size
-        if activation == 'tanh':
-            self.activation = tf.nn.tanh
-    def model(self, X, w_h, b_h, w_o, b_o):
-        h = self.activation(melt.matmul(X, w_h) + b_h) # this is a basic mlp, think 2 stacked logistic regressions
-        return tf.matmul(h, w_o) + b_o # note that we dont take the softmax at the end because our cost fn does that for us
-    
-    def forward(self, trainer):
-        w_h = melt.init_weights([trainer.num_features, self.hidden_size], name = 'w_h') # create symbolic variables
-        b_h = melt.init_bias([1], name = 'b_h')        
-        w_o = melt.init_weights([FLAGS.hidden_size, 1], name = 'w_o')
-        b_o = melt.init_bias([1], name = 'b_o')
-        py_x = self.model(trainer.X, w_h, b_h, w_o, b_o)
-        return py_x    
-
-
-class BinaryClassification(object):
+class BinaryClassifier(object):
     def gen_algo(self, method):
         self.method = method
         if method == 'logistic':
-            return LogisticRegresssion()
+            option = LogisticRegressionOptions()
+            return LogisticRegression(option)
         elif method == 'mlp':
-            return Mlp(activation=FLAGS.activation, hidden_size=FLAGS.hidden_size)
+            option = MlpOptions()
+            option.activation = FLAGS.activation
+            option.hidden_size = FLAGS.hidden_size
+            return Mlp(option)
         else:
             print method, ' is not supported right now'
             method = 'mlp'
+    
+    def gen_algo_from_option(self, option):
+        if option.type == 'logistic':
+            return LogisticRegression(option) 
+        elif option.type == 'mlp':
+            return Mlp(option) 
+        else:
+            return None
 
     def build_graph(self, algo, trainer):
         py_x = algo.forward(trainer)
@@ -133,6 +115,7 @@ class BinaryClassification(object):
         
         teX, teY = testset.full_batch()
         
+        os.system('rm -rf ' + FLAGS.model)
         os.system('mkdir -p ' + FLAGS.model)
         num_train_instances = trainset.num_instances()
         for epoch in range(num_epochs):
@@ -154,23 +137,22 @@ class BinaryClassification(object):
         tf.train.Saver().save(self.session, model_path + '/model.ckpt', global_step = epoch)
     
     def save_others(self, model_path):
-        file_ = open(model_path + '/algo.ckpt', 'w')
-        cPickle.dump(self.algo, file_)
-        
         file_ = open(model_path + '/trainer.ckpt', 'w')
 
         #@FIXME can't pickle module objects error
         #cPickle.dump(self.trainer, file_)
         
         file_.write('%s\t%d'%(self.trainer.type, self.trainer.num_features))
+        
+        file_ = open(model_path + '/algo.ckpt', 'w')
+        cPickle.dump(self.algo, file_)
+        #cPickle.dump(self.algo.options, file_)
+        #file_.write('%s'%self.algo.type)
 
     #since trainer and not dump by cPickle, another way is to load trainset again, but load
     #only one line data, so the save/load will use almost same code as train for reload
     #though a bit more redundant work for reconsructing the graph
     def load(self, model_path):  
-        algo_file = open(model_path + '/algo.ckpt')
-        self.algo = cPickle.load(algo_file)   
-        
         trainer_file = open(model_path + '/trainer.ckpt')
         type_, self.num_features = trainer_file.read().strip().split('\t')
         self.num_features = int(self.num_features)
@@ -178,12 +160,32 @@ class BinaryClassification(object):
             self.trainer = melt.BinaryClassificationTrainer(num_features=self.num_features)
         else:
             self.trainer = melt.SparseBinaryClassificationTrainer(num_features=self.num_features) 
+
+        #self.trainer = cPickle.load(trainer_file)
+        
+        print 'trainer finish loading'        
+        
+        algo_file = open(model_path + '/algo.ckpt')
+        self.algo = cPickle.load(algo_file)  
+        print type(self.algo.options)
+        #options = cPickle.load(algo_file)
+        #self.algo = self.gen_algo_from_option(options)
+        #method = algo_file.read().strip()
+        #self.algo = self.gen_algo(method)
+        
+        print 'algo finish loading ', type(self.algo)
         
         self.build_graph(self.algo, self.trainer)
         
+        print 'finish building graph'
+        
         self.session = tf.Session() 
+        
+        print 'new session'
 
         tf.train.Saver().restore(self.session, model_path + "/model.ckpt")
+        
+        print 'dnn predictor finish loading'
         
     def test(self, testset_file):
         testset = melt.load_dataset(testset_file)
@@ -191,15 +193,52 @@ class BinaryClassification(object):
         assert(testset.num_features == self.num_features)   
         teX, teY = testset.full_batch()
         predicts, auc_, cost_ = self.session.run([self.predict_op, self.evaluate_op, self.cost], feed_dict = self.trainer.gen_feed_dict(teX, teY))
+        #for i in xrange(len(predicts)):
+        #    print teY[i][0], ' ', predicts[i][0]
         print ' auc:', auc_,'cost:', cost_ / len(teY)
         
+    def predict(self, feature_vecs):
+        if type(feature_vecs) != list:
+            feature_vecs = [feature_vecs]
+        spf = melt.sparse_vectors2sparse_features(feature_vecs)
+        predicts = self.session.run([self.predict_op], feed_dict=self.trainer.gen_feed_dict(spf))
+        return predicts
+        
+    def predict_one(self, feature):
+        feature_vecs = [feature]
+        return (self.predict(feature_vecs))[0][0][0]
+    
+    def Predict(self, feature):
+        return self.predict_one(feature)
+    
+    def Load(self, model_path):
+        return self.load(model_path)
+    
+import nowarning
+import libtrate
+
+def predict(classifer, file):
+    for line in open(file):
+        l = line.strip().split()
+        label = l[1]
+        feature_str = '\t'.join(l[3:])
+        #print label, ' # ' , feature_str
+        fe = libtrate.Vector(feature_str)
+        #print fe.indices.size()
+        score = classifer.Predict(fe)
+        print label,' ', score
+
 def main():
-    bc = BinaryClassification()
+    classifer = BinaryClassifier()
     if FLAGS.command == 'train':    
-        bc.train(trainset_file, testset_file, method, num_epochs, learning_rate, FLAGS.model)
+        classifer.train(trainset_file, testset_file, method, num_epochs, learning_rate, FLAGS.model)
     elif FLAGS.command == 'test':
-        bc.load(FLAGS.model)
-        bc.test(testset_file)
+        classifer.load(FLAGS.model)
+        classifer.test(testset_file)
+    elif FLAGS.command == 'predict':
+        classifer.load(FLAGS.model)
+        predict(classifer, testset_file)
+        
 
 if __name__ == "__main__":
     main()

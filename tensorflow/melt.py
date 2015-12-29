@@ -83,6 +83,24 @@ class SparseFeatures(object):
         self.sp_shape = [len(self.start_indices) - 1, max_len]
         return self
 
+#import libtrate
+def sparse_vectors2sparse_features(feature_vecs):
+    spf = SparseFeatures()
+    num_features = 0
+    max_len = 0
+    for feature in feature_vecs:
+        len_ = feature.indices.size()
+        if len_ > max_len:
+            max_len = len_
+        for i in xrange(len_):
+            spf.sp_indices.append([num_features, i])
+            spf.sp_ids_val.append(int(feature.indices[i]))
+            spf.sp_weights_val.append(float(feature.values[i]))
+        num_features += 1
+    spf.sp_shape = [num_features, max_len]
+    print 'spf.sp_shape:', spf.sp_shape
+    return spf
+
 class DataSet(object):
     def __init__(self):
         self.labels = []
@@ -205,7 +223,7 @@ class BinaryClassificationTrainer(object):
         
         self.type = 'dense'
 
-    def gen_feed_dict(self, trX, trY):
+    def gen_feed_dict(self, trX, trY = np.array([[0.0]])):
         return {self.X: trX, self.Y: trY}
 
 class SparseBinaryClassificationTrainer(object):
@@ -230,7 +248,7 @@ class SparseBinaryClassificationTrainer(object):
         
         self.type = 'sparse'
 
-    def gen_feed_dict(self, trX, trY):
+    def gen_feed_dict(self, trX, trY = np.array([[0.0]])):
         return {self.Y: trY, self.sp_indices: trX.sp_indices, self.sp_shape: trX.sp_shape,  self.sp_ids_val: trX.sp_ids_val, self.sp_weights_val: trX.sp_weights_val}
 
 
