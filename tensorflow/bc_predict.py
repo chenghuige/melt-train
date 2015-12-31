@@ -11,26 +11,34 @@
 
 from binary_classification import BinaryClassifier
 
+import nowarning
+import libtieba, libnormalizer, libcalibrator
+
 bc = BinaryClassifier()
 
 bc.load('./model')
-
-import nowarning
-import libtieba
  
 pid = 81431360452
 pid = 81431361392
+pid = 81412038123
+
 info = libtieba.get_post_info(pid)
 
 print info.title, ' ', info.content 
  
 import libtrate
+
+
 identifer = libtrate.DoubleIdentifer()
 identifer.Load('./data/ltrate.thread.model/identifer.bin')
 print identifer.size()
 
-normalizer = libtrate.NormalizerFactory.CreateNormalizer('minmax', './data/ltrate.thread.model/normalizer.bin')
+#normalizer = libtrate.NormalizerFactory.CreateNormalizer('minmax', './data/ltrate.thread.model/normalizer.bin')
+normalizer = libnormalizer.NormalizerFactory.Load('./data/ltrate.thread.model/normalizer.bin')
 lpredictor = libtrate.PredictorFactory.LoadPredictor('./data/ltrate.thread.model/')
+
+from libcalibrator import CalibratorFactory
+calibrator = CalibratorFactory.Load('./model/calibrator.bin')
 
 print type(normalizer)
 
@@ -52,6 +60,10 @@ content = deal_content(info.content)
 print content
 
 from libsegment import *
+from libsegment import LogHelper
+
+LogHelper.set_level(4)
+
 Segmentor.Init()
 title_words = Segmentor.Segment(title, SEG_BASIC)
 content_words = Segmentor.Segment(content, SEG_BASIC)
@@ -64,8 +76,10 @@ fe = libtrate.Vector(id_val_map)
 print fe.indices.size() 
 print fe.str()
 #@FIXME why wrong core.....??
-#fe = normalizer.NormalizeCopy(fe)
-fe = lpredictor.GetNormalizer().NormalizeCopy(fe)
+fe = normalizer.NormalizeCopy(fe)
+#fe = lpredictor.GetNormalizer().NormalizeCopy(fe)
 print fe.str() 
 
-print 'score:', bc.Predict(fe)
+score = float(bc.Predict(fe))
+print 'score:{}, adjusted_score:{}'.format(score, calibrator.PredictProbability(score))
+print 'score2:', libtrate.TextPredictor.Predict(title_words, content_words, identifer, lpredictor)

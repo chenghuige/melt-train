@@ -12,6 +12,7 @@ import tensorflow as tf
 #from sklearn.metrics import roc_auc_score
 import cPickle
 
+import nowarning
 import melt
 
 flags = tf.app.flags
@@ -44,8 +45,11 @@ method = FLAGS.method
 print 'batch_size:', batch_size, ' learning_rate:', learning_rate, ' num_epochs:', num_epochs
 
 from algos import Mlp, MlpOptions, LogisticRegression, LogisticRegressionOptions
+from libcalibrator import CalibratorFactory
 
 class BinaryClassifier(object):
+    def __init__(self):
+        self.calibrator = CalibratorFactory.CreateCalibrator('sigmoid')
     def gen_algo(self, method):
         self.method = method
         if method == 'logistic':
@@ -85,6 +89,10 @@ class BinaryClassifier(object):
         train_op = tf.train.GradientDescentOptimizer(learning_rate).minimize(cost)   
         
         return cost, train_op, predict_op, evaluate_op
+        
+    def calibrate(self, trY, train_predicts):
+        for i in xrange(len(train_predicts)):
+            self.calibrator.ProcessTrainingExample(float(train_predicts[i][0]), bool(trY[i][0] > 0), 1.0)
 
     def train(self, trainset_file, testset_file, method, num_epochs, learning_rate, model_path):
         trainset = melt.load_dataset(trainset_file)
@@ -118,25 +126,35 @@ class BinaryClassifier(object):
         os.system('rm -rf ' + FLAGS.model)
         os.system('mkdir -p ' + FLAGS.model)
         num_train_instances = trainset.num_instances()
+        self.save_info(model_path)
         for epoch in range(num_epochs):
             for start, end in zip(range(0, num_train_instances, batch_size), range(batch_size, num_train_instances, batch_size)):
                 trX, trY = trainset.mini_batch(start, end)
-                self.session.run(train_op, feed_dict = trainer.gen_feed_dict(trX, trY))
+                self.session.run(train_op, feed_dict = trainer.gen_feed_dict(trX, trY))                 
                 #predicts, cost_ = sess.run([predict_op, cost], feed_dict = trainer.gen_feed_dict(teX, teY))
             #print epoch, ' auc:', roc_auc_score(teY, predicts),'cost:', cost_ / len(teY)
             predicts, auc_, cost_ = self.session.run([predict_op, evaluate_op, cost], feed_dict = trainer.gen_feed_dict(teX, teY))
             print epoch, ' auc:', auc_,'cost:', cost_ / len(teY)
-            self.save_model(model_path, epoch)
+            #self.save_model(model_path, epoch)
         
+        for start, end in zip(range(0, num_train_instances, batch_size), range(batch_size, num_train_instances, batch_size)):
+            trX, trY = trainset.mini_batch(start, end)
+            train_predicts = self.session.run(predict_op, feed_dict = trainer.gen_feed_dict(trX, trY))  
+            self.calibrate(trY, train_predicts)    
+        self.calibrator.FinishTraining()
+            
+        self.save_model(model_path)
+        CalibratorFactory.Save(self.calibrator, model_path + '/calibrator.bin')
         summary_str = self.session.run(merged_summary_op, feed_dict = trainer.gen_feed_dict(teX, teY))
         summary_writer.add_summary(summary_str, epoch)
         
-        self.save_others(model_path)
+        
+        #os.system('cp ./{0}/model.ckpt-{1} ./{0}/model.ckpt'.format(FLAGS.model, num_epochs - 1))
     
-    def save_model(self, model_path, epoch):
+    def save_model(self, model_path, epoch = None):
         tf.train.Saver().save(self.session, model_path + '/model.ckpt', global_step = epoch)
     
-    def save_others(self, model_path):
+    def save_info(self, model_path):
         file_ = open(model_path + '/trainer.ckpt', 'w')
 
         #@FIXME can't pickle module objects error
@@ -153,6 +171,7 @@ class BinaryClassifier(object):
     #only one line data, so the save/load will use almost same code as train for reload
     #though a bit more redundant work for reconsructing the graph
     def load(self, model_path):  
+        self.calibrator = CalibratorFactory.Load(model_path + '/calibrator.bin')
         trainer_file = open(model_path + '/trainer.ckpt')
         type_, self.num_features = trainer_file.read().strip().split('\t')
         self.num_features = int(self.num_features)
@@ -193,8 +212,8 @@ class BinaryClassifier(object):
         assert(testset.num_features == self.num_features)   
         teX, teY = testset.full_batch()
         predicts, auc_, cost_ = self.session.run([self.predict_op, self.evaluate_op, self.cost], feed_dict = self.trainer.gen_feed_dict(teX, teY))
-        #for i in xrange(len(predicts)):
-        #    print teY[i][0], ' ', predicts[i][0]
+        for i in xrange(len(predicts)):
+            print teY[i][0], ' ', predicts[i][0], ' ', self.calibrator.PredictProbability(float(predicts[i][0]))
         print ' auc:', auc_,'cost:', cost_ / len(teY)
         
     def predict(self, feature_vecs):

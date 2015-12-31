@@ -98,7 +98,7 @@ def sparse_vectors2sparse_features(feature_vecs):
             spf.sp_weights_val.append(float(feature.values[i]))
         num_features += 1
     spf.sp_shape = [num_features, max_len]
-    print 'spf.sp_shape:', spf.sp_shape
+    #print 'spf.sp_shape:', spf.sp_shape
     return spf
 
 class DataSet(object):
