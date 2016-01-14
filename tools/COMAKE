@@ -2,7 +2,7 @@
 #coding:gbk
 
 #工作路径. 如果高版本gcc 需要修改两个路径 设置好TOOLCHAIN_ROOT
-WORKROOT('../../../../../../')
+WORKROOT('../../../../../')
 TOOLCHAIN_ROOT='../../../../../../ps/se/toolchain'
 RELATIVE_PATH='../'
 
@@ -89,6 +89,8 @@ INCPATHS('./ ./include ./utils'.replace('./', RELATIVE_PATH))
 
 #依赖模块
 ImportConfigsFrom('../')
+CONFIGS('baidu/nlp-dnn/liblego')
+CONFIGS('third-64/protobuf@protobuf_2-4-1-1100_PD_BL')
 
 srcs=''
 srcs=GLOB('./src/*.cpp ./src/Trainers/*.cpp ./src/Run/*.cpp ./src/Prediction/Instances/*.cpp'.replace('./',RELATIVE_PATH))

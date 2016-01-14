@@ -92,10 +92,15 @@ def sparse_vectors2sparse_features(feature_vecs):
         len_ = feature.indices.size()
         if len_ > max_len:
             max_len = len_
-        for i in xrange(len_):
-            spf.sp_indices.append([num_features, i])
-            spf.sp_ids_val.append(int(feature.indices[i]))
-            spf.sp_weights_val.append(float(feature.values[i]))
+        if len_ == 0:
+            spf.sp_indices.append([num_features, 0])
+            spf.sp_ids_val.append(0)
+            spf.sp_weights_val.append(0.0)
+        else:
+            for i in xrange(len_):
+                spf.sp_indices.append([num_features, i])
+                spf.sp_ids_val.append(int(feature.indices[i]))
+                spf.sp_weights_val.append(float(feature.values[i]))
         num_features += 1
     spf.sp_shape = [num_features, max_len]
     #print 'spf.sp_shape:', spf.sp_shape
@@ -118,7 +123,10 @@ class DataSet(object):
             end = self.num_instances() + end 
         return self.features.mini_batch(start, end), self.labels[start: end]
 
+import random
 def load_dense_dataset(lines):
+    random.shuffle(lines)
+
     dataset_x = []
     dataset_y = []
 
@@ -145,6 +153,9 @@ def load_dense_dataset(lines):
     return dataset
 
 def load_sparse_dataset(lines):
+    random.shuffle(lines)
+    #print lines[0]
+
     dataset_y = []
 
     label_idx = guess_label_index(lines[0])
@@ -173,9 +184,15 @@ def load_sparse_dataset(lines):
     dataset.features = features
     return dataset
 
+_datasetCache = {}
 def load_dataset(dataset, has_header=False, max_lines = 0):
     print '... loading dataset:',dataset
-    lines = open(dataset).readlines()
+    global _lines
+    if dataset not in _datasetCache:
+        lines = open(dataset).readlines()
+        _datasetCache[dataset] = lines  
+    else:
+        lines = _datasetCache[dataset]
     if has_header:
      if max_lines <= 0:
          return load_dense_dataset(lines[1:])
@@ -257,3 +274,6 @@ def gen_binary_classification_trainer(dataset):
         return BinaryClassificationTrainer(dataset)
     else:
         return SparseBinaryClassificationTrainer(dataset)
+
+
+activation_map = {'sigmoid' :  tf.nn.sigmoid, 'tanh' : tf.nn.tanh}

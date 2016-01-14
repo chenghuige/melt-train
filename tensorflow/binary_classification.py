@@ -18,15 +18,25 @@ import melt
 flags = tf.app.flags
 FLAGS = flags.FLAGS
 
-flags.DEFINE_float('learning_rate', 0.001, 'Initial learning rate.')
+#flags.DEFINE_float('learning_rate', 0.001, 'Initial learning rate.')
+flags.DEFINE_float('learning_rate', 0.1, 'Initial learning rate.')
 flags.DEFINE_integer('num_epochs', 120, 'Number of epochs to run trainer.')
+flags.DEFINE_integer('save_epochs', 50, 'save epochs every save_epochs round')
 flags.DEFINE_integer('batch_size', 500, 'Batch size. Must divide evenly into the dataset sizes.')
 flags.DEFINE_string('train', './corpus/feature.normed.rand.12000.0_2.txt', 'train file')
 flags.DEFINE_string('test', './corpus/feature.normed.rand.12000.1_2.txt', 'test file')
-flags.DEFINE_string('method', 'mlp', 'currently support logistic/mlp')
-flags.DEFINE_string('activation', 'sigmoid', 'you may try tanh or other activate function')
+flags.DEFINE_string('method', 'mlp', 'currently support logistic/mlp/mlp2')
+
+flags.DEFINE_boolean('shuffle', False, 'shuffle dataset each epoch')
 #----for mlp
 flags.DEFINE_integer('hidden_size', 20, 'Hidden unit size')
+flags.DEFINE_integer('hidden2_size', 5, 'Hidden unit size of second hidden layer')
+
+flags.DEFINE_string('activation', 'sigmoid', 'you may try tanh or other activate function')
+flags.DEFINE_string('activation2', 'sigmoid', 'you may try tanh or other activate function')
+
+#----for cbow
+flags.DEFINE_integer('emb_dim', 128, 'embedding dimension')
 
 #first train then test
 flags.DEFINE_string('model', './model', 'model path')
@@ -44,14 +54,12 @@ method = FLAGS.method
 
 print 'batch_size:', batch_size, ' learning_rate:', learning_rate, ' num_epochs:', num_epochs
 
-from algos import Mlp, MlpOptions, LogisticRegression, LogisticRegressionOptions
+#from algos import Mlp, MlpOptions, LogisticRegression, LogisticRegressionOptions
+from algos import *
 from libcalibrator import CalibratorFactory
 
-class BinaryClassifier(object):
-    def __init__(self):
-        self.calibrator = CalibratorFactory.CreateCalibrator('sigmoid')
+class AlgosFactory(object):
     def gen_algo(self, method):
-        self.method = method
         if method == 'logistic':
             option = LogisticRegressionOptions()
             return LogisticRegression(option)
@@ -60,9 +68,28 @@ class BinaryClassifier(object):
             option.activation = FLAGS.activation
             option.hidden_size = FLAGS.hidden_size
             return Mlp(option)
+        elif method == 'mlp2':
+            option = Mlp2Options()
+            option.activation = FLAGS.activation
+            option.activation2 = FLAGS.activation2
+            option.hidden_size = FLAGS.hidden_size
+            option.hidden_size2 = FLAGS.hidden2_size
+            return Mlp2(option)
+        elif method == 'cbow':
+            option = CBOWOptions()
+            option.emb_dim = FLAGS.emb_dim
+            return CBOW(option)
         else:
-            print method, ' is not supported right now'
+            print method, ' is not supported right now, will use default method mlp'
             method = 'mlp'
+            return self.gen_algo(method)
+
+class BinaryClassifier(object):
+    def __init__(self):
+        self.calibrator = CalibratorFactory.CreateCalibrator('sigmoid')
+    def gen_algo(self, method):
+        self.method = method
+        return AlgosFactory().gen_algo(method)
     
     def gen_algo_from_option(self, option):
         if option.type == 'logistic':
@@ -73,6 +100,7 @@ class BinaryClassifier(object):
             return None
 
     def build_graph(self, algo, trainer):
+        #py_x, self.weight = algo.forward(trainer)
         py_x = algo.forward(trainer)
         Y = trainer.Y
         cost = tf.reduce_sum(tf.nn.sigmoid_cross_entropy_with_logits(py_x, Y))
@@ -82,11 +110,13 @@ class BinaryClassifier(object):
         self.cost = cost
         self.predict_op = predict_op
         self.evaluate_op = evaluate_op  
+        #self.weight = algo.weight
         return cost, predict_op, evaluate_op
         
     def foward(self, algo, trainer, learning_rate):
         cost, predict_op, evaluate_op = self.build_graph(algo, trainer)
-        train_op = tf.train.GradientDescentOptimizer(learning_rate).minimize(cost)   
+        #train_op = tf.train.GradientDescentOptimizer(learning_rate).minimize(cost)   
+        train_op = tf.train.AdagradOptimizer(learning_rate).minimize(cost)   
         
         return cost, train_op, predict_op, evaluate_op
         
@@ -128,14 +158,19 @@ class BinaryClassifier(object):
         num_train_instances = trainset.num_instances()
         self.save_info(model_path)
         for epoch in range(num_epochs):
+            if epoch > 0 and FLAGS.shuffle:
+                 trainset = melt.load_dataset(trainset_file)
             for start, end in zip(range(0, num_train_instances, batch_size), range(batch_size, num_train_instances, batch_size)):
                 trX, trY = trainset.mini_batch(start, end)
                 self.session.run(train_op, feed_dict = trainer.gen_feed_dict(trX, trY))                 
                 #predicts, cost_ = sess.run([predict_op, cost], feed_dict = trainer.gen_feed_dict(teX, teY))
             #print epoch, ' auc:', roc_auc_score(teY, predicts),'cost:', cost_ / len(teY)
             predicts, auc_, cost_ = self.session.run([predict_op, evaluate_op, cost], feed_dict = trainer.gen_feed_dict(teX, teY))
+            #predicts, auc_, cost_, weight = self.session.run([predict_op, evaluate_op, cost, self.weight], feed_dict = trainer.gen_feed_dict(teX, teY))
             print epoch, ' auc:', auc_,'cost:', cost_ / len(teY)
-            #self.save_model(model_path, epoch)
+            #print weight
+            if epoch % FLAGS.save_epochs == 0:
+                self.save_model(model_path, epoch)
         
         for start, end in zip(range(0, num_train_instances, batch_size), range(batch_size, num_train_instances, batch_size)):
             trX, trY = trainset.mini_batch(start, end)
@@ -186,7 +221,7 @@ class BinaryClassifier(object):
         
         algo_file = open(model_path + '/algo.ckpt')
         self.algo = cPickle.load(algo_file)  
-        print type(self.algo.options)
+        #print type(self.algo.options)
         #options = cPickle.load(algo_file)
         #self.algo = self.gen_algo_from_option(options)
         #method = algo_file.read().strip()

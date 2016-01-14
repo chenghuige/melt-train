@@ -2,7 +2,7 @@
 #coding:gbk
 
 #工作路径. 如果高版本gcc 需要修改两个路径 设置好TOOLCHAIN_ROOT
-WORKROOT('../../../../../')
+WORKROOT('../../../../')
 TOOLCHAIN_ROOT='../../../../../ps/se/toolchain'
 RELATIVE_PATH='./'
 
