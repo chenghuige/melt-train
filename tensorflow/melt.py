@@ -17,12 +17,16 @@ import numpy as np
 def guess_file_format(line):
     is_dense = True 
     has_header = False
+    index_only = False
     if line.startswith('#'):
         has_header = True
-        return  is_dense, has_header
+        return  is_dense, has_header, index_only
     elif line.find(':') > 0:
         is_dense = False 
-    return is_dense, has_header
+    #no header and dense
+    if line.find('.') == -1:
+        index_only = True
+    return is_dense, has_header, index_only
 
 def guess_label_index(line):
     label_idx = 0
@@ -111,6 +115,7 @@ class DataSet(object):
         self.labels = []
         self.features = None
         self.num_features = 0
+        self.index_only = False
 
     def num_instances(self):
         return len(self.labels)
@@ -124,7 +129,11 @@ class DataSet(object):
         return self.features.mini_batch(start, end), self.labels[start: end]
 
 import random
-def load_dense_dataset(lines):
+#dense format the same as melt input inf index_only == False
+#also support index only format, may be of differnt length each feature, will be <label, num_features, index0, index1 ...>
+#num_features here the same as vocabulary size
+#may also be sparse format as <label, num_features, 3:0, 5:0, 3:0, ...>, but here mostly for embedding look up so deal as dense input is fine
+def load_dense_dataset(lines, index_only = False):
     random.shuffle(lines)
 
     dataset_x = []
@@ -132,6 +141,7 @@ def load_dense_dataset(lines):
 
     nrows = 0
     label_idx = guess_label_index(lines[0])
+    num_features = None
     for i in xrange(len(lines)):
         if nrows % 10000 == 0:
             print nrows
@@ -139,14 +149,21 @@ def load_dense_dataset(lines):
         line = lines[i]
         l = line.rstrip().split()
         dataset_y.append([float(l[label_idx])])
-        dataset_x.append([float(x) for x in l[label_idx + 1:]])
+        if not index_only:
+            dataset_x.append([float(x) for x in l[label_idx + 1:]])
+        else:
+            dataset_x.append([int(x) for x in l[label_idx + 2:]])
+            num_features = int(l[label_idx + 1])
     
     dataset_x = np.array(dataset_x)
     dataset_y = np.array(dataset_y) 
 
     dataset = DataSet()
     dataset.labels = dataset_y
-    dataset.num_features = dataset_x.shape[1]
+    if not index_only:
+        dataset.num_features = dataset_x.shape[1] 
+    else:
+        dataset.num_features = num_features
     features = Features()
     features.data = dataset_x
     dataset.features = features
@@ -198,12 +215,12 @@ def load_dataset(dataset, has_header=False, max_lines = 0):
          return load_dense_dataset(lines[1:])
      else:
          return load_dense_dataset(lines[1: 1 + max_lines])
-    is_dense, has_header = guess_file_format(lines[0])
+    is_dense, has_header, index_only = guess_file_format(lines[0])
     if is_dense:
         if max_lines <= 0:
-            return load_dense_dataset(lines[has_header:])
+            return load_dense_dataset(lines[has_header:], index_only)
         else:
-            return load_dense_dataset(lines[has_header: has_header + max_lines])
+            return load_dense_dataset(lines[has_header: has_header + max_lines], index_only)
     else:
         if max_lines <= 0:
             return load_sparse_dataset(lines)
@@ -227,16 +244,21 @@ def matmul(X, w):
         return tf.nn.embedding_lookup_sparse(w, X[0], X[1], combiner = "sum")
 
 class BinaryClassificationTrainer(object):
-    def __init__(self, dataset = None, num_features = 0):
+    def __init__(self, dataset = None, num_features = 0, index_only = False):
         if dataset != None:
             self.labels = dataset.labels
             self.features = dataset.features
             self.num_features = dataset.num_features
+            self.index_only = dataset.index_only
         else:
             self.num_features = num_features
             self.features = Features()
-        self.X = tf.placeholder("float", [None, self.num_features], name = 'X') 
-        self.Y = tf.placeholder("float", [None, 1], name = 'Y') 
+            self.index_only = index_only
+        if not self.index_only:
+            self.X = tf.placeholder(tf.float32, [None, self.num_features], name = 'X') 
+        else:
+             self.X = tf.placeholder(tf.int32, [None, self.num_features], name = 'X') 
+        self.Y = tf.placeholder(tf.float32, [None, 1], name = 'Y') 
         
         self.type = 'dense'
 

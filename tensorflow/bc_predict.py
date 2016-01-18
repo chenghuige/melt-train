@@ -43,6 +43,8 @@ pid = 82069968445
 
 pid = 82073369485
 
+pid = 82154598133
+
 info = libtieba.get_post_info(pid)
 
 print info.title, ' ', info.content 
@@ -91,7 +93,7 @@ def deal_title(title):
 #info.title = '央视'
 #info.title = '张斌。'
 #info.title = '央视张斌。'
-info.title = '斌。'
+#info.title = '斌。'
 #info.title = '。'
 title = deal_title(info.title)
 print title

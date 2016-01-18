@@ -115,6 +115,7 @@ class CBOW(object):
         opts = self.options
         init_width = 0.5 / opts.emb_dim
         vocab_size = trainer.num_features
+
         emb = tf.Variable(
             tf.random_uniform(
                 [vocab_size, opts.emb_dim], -init_width, init_width),
@@ -128,3 +129,13 @@ class CBOW(object):
         #return tf.matmul(self.activation(text_emb), w_o) + b_o
         return tf.matmul(text_emb, w_o) + b_o
 
+
+
+#--------------------------------------------- simple cnn model, now the most simple one, padding to make each post with the same length
+class CnnOptions(object):
+    def __init__(self):
+        pass
+
+class Cnn(object):
+    def __init__(self, options = CnnOptions()):
+        pass

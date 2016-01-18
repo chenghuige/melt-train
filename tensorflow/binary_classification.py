@@ -195,7 +195,7 @@ class BinaryClassifier(object):
         #@FIXME can't pickle module objects error
         #cPickle.dump(self.trainer, file_)
         
-        file_.write('%s\t%d'%(self.trainer.type, self.trainer.num_features))
+        file_.write('%s\t%d\t%d'%(self.trainer.type, self.trainer.num_features, self.trainer.index_only))
         
         file_ = open(model_path + '/algo.ckpt', 'w')
         cPickle.dump(self.algo, file_)
@@ -208,10 +208,11 @@ class BinaryClassifier(object):
     def load(self, model_path):  
         self.calibrator = CalibratorFactory.Load(model_path + '/calibrator.bin')
         trainer_file = open(model_path + '/trainer.ckpt')
-        type_, self.num_features = trainer_file.read().strip().split('\t')
+        type_, self.num_features, self.index_only = trainer_file.read().strip().split('\t')
         self.num_features = int(self.num_features)
+        self.index_only = int(self.index_only)
         if type_ == 'dense':
-            self.trainer = melt.BinaryClassificationTrainer(num_features=self.num_features)
+            self.trainer = melt.BinaryClassificationTrainer(num_features=self.num_features, index_only = self.index_only)
         else:
             self.trainer = melt.SparseBinaryClassificationTrainer(num_features=self.num_features) 
 
