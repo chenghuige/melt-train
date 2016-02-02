@@ -52,6 +52,8 @@ batch_size = FLAGS.batch_size
 method = FLAGS.method
 
 
+cout = open('cout.txt', 'w')
+
 print 'batch_size:', batch_size, ' learning_rate:', learning_rate, ' num_epochs:', num_epochs
 
 #from algos import Mlp, MlpOptions, LogisticRegression, LogisticRegressionOptions
@@ -79,6 +81,9 @@ class AlgosFactory(object):
             option = CBOWOptions()
             option.emb_dim = FLAGS.emb_dim
             return CBOW(option)
+        elif method == 'cnn':
+            option = CnnOptions()
+            return Cnn(option)
         else:
             print method, ' is not supported right now, will use default method mlp'
             method = 'mlp'
@@ -115,13 +120,22 @@ class BinaryClassifier(object):
         
     def foward(self, algo, trainer, learning_rate):
         cost, predict_op, evaluate_op = self.build_graph(algo, trainer)
-        #train_op = tf.train.GradientDescentOptimizer(learning_rate).minimize(cost)   
-        train_op = tf.train.AdagradOptimizer(learning_rate).minimize(cost)   
+
+        if not trainer.index_only:
+            #train_op = tf.train.GradientDescentOptimizer(learning_rate).minimize(cost)   
+            train_op = tf.train.AdagradOptimizer(learning_rate).minimize(cost)   
+        else:
+            ##@TODO WHY  train_op = tf.train.AdagradOptimizer(learning_rate).minimize(cost) will fail...
+            #global_step = tf.Variable(0, name="global_step", trainable=False)
+            optimizer = tf.train.AdamOptimizer(learning_rate)
+            grads_and_vars = optimizer.compute_gradients(cost)
+            train_op = optimizer.apply_gradients(grads_and_vars)
         
         return cost, train_op, predict_op, evaluate_op
         
     def calibrate(self, trY, train_predicts):
         for i in xrange(len(train_predicts)):
+            cout.write('{}\t{}\n'.format(int(trY[i][0] > 0), float(train_predicts[i][0])))
             self.calibrator.ProcessTrainingExample(float(train_predicts[i][0]), bool(trY[i][0] > 0), 1.0)
 
     def train(self, trainset_file, testset_file, method, num_epochs, learning_rate, model_path):
@@ -139,6 +153,8 @@ class BinaryClassifier(object):
         trainer = melt.gen_binary_classification_trainer(trainset)
         self.algo = algo
         self.trainer = trainer
+        print 'trainer_type:', trainer.type
+        print 'trainer_index_only:', trainer.index_only
         
         cost, train_op, predict_op, evaluate_op = self.foward(algo, trainer, learning_rate)
         
@@ -162,25 +178,29 @@ class BinaryClassifier(object):
                  trainset = melt.load_dataset(trainset_file)
             for start, end in zip(range(0, num_train_instances, batch_size), range(batch_size, num_train_instances, batch_size)):
                 trX, trY = trainset.mini_batch(start, end)
-                self.session.run(train_op, feed_dict = trainer.gen_feed_dict(trX, trY))                 
+                self.session.run(train_op, feed_dict = melt.gen_feed_dict(self.trainer, self.algo, trX, trY))                 
                 #predicts, cost_ = sess.run([predict_op, cost], feed_dict = trainer.gen_feed_dict(teX, teY))
             #print epoch, ' auc:', roc_auc_score(teY, predicts),'cost:', cost_ / len(teY)
-            predicts, auc_, cost_ = self.session.run([predict_op, evaluate_op, cost], feed_dict = trainer.gen_feed_dict(teX, teY))
+            predicts, auc_, cost_ = self.session.run([predict_op, evaluate_op, cost], feed_dict = melt.gen_feed_dict(self.trainer, self.algo, teX, teY, test_mode = True))
             #predicts, auc_, cost_, weight = self.session.run([predict_op, evaluate_op, cost, self.weight], feed_dict = trainer.gen_feed_dict(teX, teY))
             print epoch, ' auc:', auc_,'cost:', cost_ / len(teY)
             #print weight
-            if epoch % FLAGS.save_epochs == 0:
+            #@FIXME 
+            if epoch % FLAGS.save_epochs == 0 and not trainer.index_only:
                 self.save_model(model_path, epoch)
         
         for start, end in zip(range(0, num_train_instances, batch_size), range(batch_size, num_train_instances, batch_size)):
             trX, trY = trainset.mini_batch(start, end)
-            train_predicts = self.session.run(predict_op, feed_dict = trainer.gen_feed_dict(trX, trY))  
+            train_predicts = self.session.run(predict_op, feed_dict = melt.gen_feed_dict(self.trainer, self.algo, trX, trY))  
             self.calibrate(trY, train_predicts)    
         self.calibrator.FinishTraining()
             
         self.save_model(model_path)
         CalibratorFactory.Save(self.calibrator, model_path + '/calibrator.bin')
-        summary_str = self.session.run(merged_summary_op, feed_dict = trainer.gen_feed_dict(teX, teY))
+        #self.calibrator.Save(model_path + '/calibrator.bin')
+        self.calibrator.SaveText(model_path + '/calibrator.txt')
+
+        summary_str = self.session.run(merged_summary_op, feed_dict = melt.gen_feed_dict(self.trainer, self.algo, teX, teY, test_mode = True))
         summary_writer.add_summary(summary_str, epoch)
         
         
@@ -195,7 +215,7 @@ class BinaryClassifier(object):
         #@FIXME can't pickle module objects error
         #cPickle.dump(self.trainer, file_)
         
-        file_.write('%s\t%d\t%d'%(self.trainer.type, self.trainer.num_features, self.trainer.index_only))
+        file_.write('%s\t%d\t%d\t%d'%(self.trainer.type, self.trainer.num_features, self.trainer.total_features, self.trainer.index_only))
         
         file_ = open(model_path + '/algo.ckpt', 'w')
         cPickle.dump(self.algo, file_)
@@ -208,11 +228,12 @@ class BinaryClassifier(object):
     def load(self, model_path):  
         self.calibrator = CalibratorFactory.Load(model_path + '/calibrator.bin')
         trainer_file = open(model_path + '/trainer.ckpt')
-        type_, self.num_features, self.index_only = trainer_file.read().strip().split('\t')
+        type_, self.num_features, self.total_features, self.index_only = trainer_file.read().strip().split('\t')
         self.num_features = int(self.num_features)
+        self.total_features = int(self.total_features)
         self.index_only = int(self.index_only)
         if type_ == 'dense':
-            self.trainer = melt.BinaryClassificationTrainer(num_features=self.num_features, index_only = self.index_only)
+            self.trainer = melt.BinaryClassificationTrainer(num_features=self.num_features, total_features = self.total_features, index_only = self.index_only)
         else:
             self.trainer = melt.SparseBinaryClassificationTrainer(num_features=self.num_features) 
 
@@ -247,7 +268,7 @@ class BinaryClassifier(object):
         print "finish loading test set ", testset_file
         assert(testset.num_features == self.num_features)   
         teX, teY = testset.full_batch()
-        predicts, auc_, cost_ = self.session.run([self.predict_op, self.evaluate_op, self.cost], feed_dict = self.trainer.gen_feed_dict(teX, teY))
+        predicts, auc_, cost_ = self.session.run([self.predict_op, self.evaluate_op, self.cost], feed_dict = melt.gen_feed_dict(self.trainer, self.algo, teX, teY, test_mode = True))
         for i in xrange(len(predicts)):
             print teY[i][0], ' ', predicts[i][0], ' ', self.calibrator.PredictProbability(float(predicts[i][0]))
         print ' auc:', auc_,'cost:', cost_ / len(teY)
@@ -256,7 +277,7 @@ class BinaryClassifier(object):
         if type(feature_vecs) != list:
             feature_vecs = [feature_vecs]
         spf = melt.sparse_vectors2sparse_features(feature_vecs)
-        predicts = self.session.run([self.predict_op], feed_dict=self.trainer.gen_feed_dict(spf))
+        predicts = self.session.run([self.predict_op], feed_dict=melt.gen_feed_dict(self.trainer, self.algo, spf, test_mode = True))
         return predicts
         
     def predict_one(self, feature):

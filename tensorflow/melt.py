@@ -115,6 +115,7 @@ class DataSet(object):
         self.labels = []
         self.features = None
         self.num_features = 0
+        self.total_features = 0
         self.index_only = False
 
     def num_instances(self):
@@ -141,7 +142,7 @@ def load_dense_dataset(lines, index_only = False):
 
     nrows = 0
     label_idx = guess_label_index(lines[0])
-    num_features = None
+    total_features = None
     for i in xrange(len(lines)):
         if nrows % 10000 == 0:
             print nrows
@@ -153,20 +154,26 @@ def load_dense_dataset(lines, index_only = False):
             dataset_x.append([float(x) for x in l[label_idx + 1:]])
         else:
             dataset_x.append([int(x) for x in l[label_idx + 2:]])
-            num_features = int(l[label_idx + 1])
+            total_features = int(l[label_idx + 1])
     
     dataset_x = np.array(dataset_x)
     dataset_y = np.array(dataset_y) 
 
     dataset = DataSet()
     dataset.labels = dataset_y
-    if not index_only:
-        dataset.num_features = dataset_x.shape[1] 
-    else:
-        dataset.num_features = num_features
+    #if not index_only:
+    #    dataset.num_features = dataset_x.shape[1] 
+    #else:
+    #    dataset.num_features = num_features
+    #    dataset.length = dataset_x.shape[1] 
+    dataset.num_features = dataset_x.shape[1]
+    if total_features == None:
+        total_features = dataset.num_features
+    dataset.total_features = total_features
     features = Features()
     features.data = dataset_x
     dataset.features = features
+    dataset.index_only = index_only
     return dataset
 
 def load_sparse_dataset(lines):
@@ -244,20 +251,25 @@ def matmul(X, w):
         return tf.nn.embedding_lookup_sparse(w, X[0], X[1], combiner = "sum")
 
 class BinaryClassificationTrainer(object):
-    def __init__(self, dataset = None, num_features = 0, index_only = False):
+    def __init__(self, dataset = None, num_features = 0, total_features = 0, index_only = False):
         if dataset != None:
             self.labels = dataset.labels
             self.features = dataset.features
             self.num_features = dataset.num_features
+            self.total_features = dataset.total_features
+            #print 'length:', self.length
             self.index_only = dataset.index_only
+            #print 'index_only:', self.index_only
         else:
             self.num_features = num_features
+            self.total_features = total_features
             self.features = Features()
             self.index_only = index_only
         if not self.index_only:
             self.X = tf.placeholder(tf.float32, [None, self.num_features], name = 'X') 
         else:
-             self.X = tf.placeholder(tf.int32, [None, self.num_features], name = 'X') 
+            self.X = tf.placeholder(tf.int32, [None, self.num_features], name = 'X') 
+        #self.X = tf.placeholder(tf.float32, [None, self.num_features], name = 'X') 
         self.Y = tf.placeholder(tf.float32, [None, 1], name = 'Y') 
         
         self.type = 'dense'
@@ -275,6 +287,9 @@ class SparseBinaryClassificationTrainer(object):
             self.features = SparseFeatures() 
             self.num_features = num_features
 
+        self.index_only = False
+        self.total_features = self.num_features
+
         self.sp_indices = tf.placeholder(tf.int64, name = 'sp_indices')
         self.sp_shape = tf.placeholder(tf.int64, name = 'sp_shape')
         self.sp_ids_val = tf.placeholder(tf.int64, name = 'sp_ids_val')
@@ -283,7 +298,7 @@ class SparseBinaryClassificationTrainer(object):
         self.sp_weights = tf.SparseTensor(self.sp_indices, self.sp_weights_val, self.sp_shape)
 
         self.X = (self.sp_ids, self.sp_weights)
-        self.Y = tf.placeholder("float", [None, 1])
+        self.Y = tf.placeholder(tf.float32, [None, 1])
         
         self.type = 'sparse'
 
@@ -298,4 +313,11 @@ def gen_binary_classification_trainer(dataset):
         return SparseBinaryClassificationTrainer(dataset)
 
 
-activation_map = {'sigmoid' :  tf.nn.sigmoid, 'tanh' : tf.nn.tanh}
+activation_map = {'sigmoid' :  tf.nn.sigmoid, 'tanh' : tf.nn.tanh, 'relu' : tf.nn.relu}
+
+
+def gen_feed_dict(trainer, algo, trX, trY = np.array([[0.0]]), test_mode = False):
+    if hasattr(algo, 'gen_feed_dict'):
+        return algo.gen_feed_dict(trainer, trX, trY, test_mode)
+    else:
+        return trainer.gen_feed_dict(trX, trY)
