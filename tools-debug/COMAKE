@@ -2,8 +2,8 @@
 #coding:gbk
 
 #工作路径. 如果高版本gcc 需要修改两个路径 设置好TOOLCHAIN_ROOT
-WORKROOT('../../../../../../')
-TOOLCHAIN_ROOT='../../../../../../ps/se/toolchain'
+WORKROOT('../../../../../')
+TOOLCHAIN_ROOT='../../../../../ps/se/toolchain'
 RELATIVE_PATH='../'
 
 USE_GPROF=0 #是否增加-pg选项 gprof使用 
