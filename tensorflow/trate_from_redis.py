@@ -1,0 +1,1 @@
+../../gezi/tools/tieba/trate/trate_from_redis.py

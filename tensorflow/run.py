@@ -1,0 +1,1 @@
+../../gezi/tools/tieba/trate/run.py

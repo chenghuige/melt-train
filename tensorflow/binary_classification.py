@@ -7,12 +7,32 @@
 #   \Description  
 # ==============================================================================
 
+
+
 import os
-import tensorflow as tf
+
+if os.path.abspath('.').startswith('/home/gezi'):
+    import nowarning
+    from libcalibrator import CalibratorFactory 
+    import libtrate
+    import tensorflow as tf 
+else:
+    import tensorflow as tf 
+    import nowarning
+    from libcalibrator import CalibratorFactory 
+    import libtrate
+
+auc_module = tf.load_op_library('auc.so')
+#auc = tf.user_ops.auc
+auc = auc_module.auc
+
+try:
+    print 'tf.verion:', tf.__version__
+except Exception:
+    print 'tf version unknown, might be an old verion'
 #from sklearn.metrics import roc_auc_score
 import cPickle
 
-import nowarning
 import melt
 
 flags = tf.app.flags
@@ -26,8 +46,10 @@ flags.DEFINE_integer('batch_size', 500, 'Batch size. Must divide evenly into the
 flags.DEFINE_string('train', './corpus/feature.normed.rand.12000.0_2.txt', 'train file')
 flags.DEFINE_string('test', './corpus/feature.normed.rand.12000.1_2.txt', 'test file')
 flags.DEFINE_string('method', 'mlp', 'currently support logistic/mlp/mlp2')
+flags.DEFINE_string('summary_path', '/home/gezi/tmp/tensorflow_logs', 'currently support logistic/mlp/mlp2')
 
 flags.DEFINE_boolean('shuffle', False, 'shuffle dataset each epoch')
+flags.DEFINE_boolean('show_device', False, 'show device info or not')
 #----for mlp
 flags.DEFINE_integer('hidden_size', 20, 'Hidden unit size')
 flags.DEFINE_integer('hidden2_size', 5, 'Hidden unit size of second hidden layer')
@@ -58,7 +80,6 @@ print 'batch_size:', batch_size, ' learning_rate:', learning_rate, ' num_epochs:
 
 #from algos import Mlp, MlpOptions, LogisticRegression, LogisticRegressionOptions
 from algos import *
-from libcalibrator import CalibratorFactory
 
 class AlgosFactory(object):
     def gen_algo(self, method):
@@ -105,12 +126,13 @@ class BinaryClassifier(object):
             return None
 
     def build_graph(self, algo, trainer):
+        #with tf.device('/cpu:0'):
         #py_x, self.weight = algo.forward(trainer)
         py_x = algo.forward(trainer)
         Y = trainer.Y
         cost = tf.reduce_sum(tf.nn.sigmoid_cross_entropy_with_logits(py_x, Y))
         predict_op = tf.nn.sigmoid(py_x) 
-        evaluate_op = tf.user_ops.auc(py_x, Y)
+        evaluate_op = auc(py_x, Y)
 
         self.cost = cost
         self.predict_op = predict_op
@@ -119,14 +141,16 @@ class BinaryClassifier(object):
         return cost, predict_op, evaluate_op
         
     def foward(self, algo, trainer, learning_rate):
+        #with tf.device('/cpu:0'):
         cost, predict_op, evaluate_op = self.build_graph(algo, trainer)
 
         if not trainer.index_only:
-            #train_op = tf.train.GradientDescentOptimizer(learning_rate).minimize(cost)   
-            train_op = tf.train.AdagradOptimizer(learning_rate).minimize(cost)   
+            train_op = tf.train.GradientDescentOptimizer(learning_rate).minimize(cost)   
+            #train_op = tf.train.AdagradOptimizer(learning_rate).minimize(cost)    #gpu will fail...
         else:
             ##@TODO WHY  train_op = tf.train.AdagradOptimizer(learning_rate).minimize(cost) will fail...
             #global_step = tf.Variable(0, name="global_step", trainable=False)
+            #optimizer = tf.train.GradientDescentOptimizer(learning_rate)
             optimizer = tf.train.AdamOptimizer(learning_rate)
             grads_and_vars = optimizer.compute_gradients(cost)
             train_op = optimizer.apply_gradients(grads_and_vars)
@@ -158,14 +182,17 @@ class BinaryClassifier(object):
         
         cost, train_op, predict_op, evaluate_op = self.foward(algo, trainer, learning_rate)
         
-        self.session = tf.Session() 
+        if not FLAGS.show_device:
+            self.session = tf.Session() 
+        else:
+            self.session = tf.Session(config=tf.ConfigProto(log_device_placement=True)) 
         init = tf.initialize_all_variables()
         self.session.run(init)
         
         tf.scalar_summary("cross_entropy", cost)
         tf.scalar_summary("auc", evaluate_op)
         merged_summary_op = tf.merge_all_summaries()
-        summary_writer = tf.train.SummaryWriter('/home/users/chenghuige/tmp/tensorflow_logs', self.session.graph_def)
+        summary_writer = tf.train.SummaryWriter(FLAGS.summary_path, self.session.graph_def)
         
         teX, teY = testset.full_batch()
         
@@ -181,6 +208,7 @@ class BinaryClassifier(object):
                 self.session.run(train_op, feed_dict = melt.gen_feed_dict(self.trainer, self.algo, trX, trY))                 
                 #predicts, cost_ = sess.run([predict_op, cost], feed_dict = trainer.gen_feed_dict(teX, teY))
             #print epoch, ' auc:', roc_auc_score(teY, predicts),'cost:', cost_ / len(teY)
+    
             predicts, auc_, cost_ = self.session.run([predict_op, evaluate_op, cost], feed_dict = melt.gen_feed_dict(self.trainer, self.algo, teX, teY, test_mode = True))
             #predicts, auc_, cost_, weight = self.session.run([predict_op, evaluate_op, cost, self.weight], feed_dict = trainer.gen_feed_dict(teX, teY))
             print epoch, ' auc:', auc_,'cost:', cost_ / len(teY)
@@ -251,6 +279,7 @@ class BinaryClassifier(object):
         
         print 'algo finish loading ', type(self.algo)
         
+        #with tf.device('/cpu:0'):
         self.build_graph(self.algo, self.trainer)
         
         print 'finish building graph'
@@ -290,8 +319,6 @@ class BinaryClassifier(object):
     def Load(self, model_path):
         return self.load(model_path)
     
-import nowarning
-import libtrate
 
 def predict(classifer, file):
     for line in open(file):
