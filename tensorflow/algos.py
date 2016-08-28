@@ -142,8 +142,8 @@ class CnnOptions(object):
 
         #self.emb_dim = 256
 
-        self.filter_sizes = [3, 4, 5]
-        #self.filter_sizes = [5, 6, 7]
+        #self.filter_sizes = [3, 4, 5]
+        self.filter_sizes = [5, 6, 7]
         #self.filter_sizes = [6, 7, 8]
         #self.filter_sizes = [10, 11, 12]
         #self.filter_sizes = [3, 5, 9]
@@ -151,12 +151,13 @@ class CnnOptions(object):
         #self.filter_sizes = [3, 7, 15]
         #self.filter_sizes = [3, 7, 5, 11, 15]
         #self.filter_sizes = [11, 15, 17]
-        self.num_filters = 128
+        #self.num_filters = 128
+        self.num_filters = 194
         #self.num_filters = 256
         #self.num_filters = 32
         
-        self.dropout_keep_prob = 0.5
-        #self.dropout_keep_prob = 0.8
+        #self.dropout_keep_prob = 0.5
+        self.dropout_keep_prob = 0.8
 
         #self.dropout_keep_prob = 1.0
 

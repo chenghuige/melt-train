@@ -332,6 +332,15 @@
     <ClInclude Include="include\Trainers\Gbdt\TrivialGradientWrapper.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\Trainers\Gbdt\LambdaRankObjectiveFunction.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Trainers\Gbdt\RankingGbdt.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Trainers\Gbdt\RankingObjectiveFunction.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="test\data\test.20140115-0304\feature\feature.def">

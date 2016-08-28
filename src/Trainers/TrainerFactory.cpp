@@ -11,6 +11,7 @@
 #endif // MELT_USE_THIRD_PARTY
 #include "Trainers/EnsembleTrainer.h"
 #include "Trainers/Gbdt/RegressionGbdt.h"
+#include "Trainers/Gbdt/RankingGbdt.h"
 namespace gezi {
 	namespace {
 		enum class TrainerType
@@ -33,6 +34,8 @@ namespace gezi {
 			Ensemble,
 			//----------------------Regression
 			GbdtRegression,
+			//----------------------Ranking
+			GbdtRank,  //@TODO provid LambdaRank?
 		};
 		//TrainerFactory的另外一种设计方式是每个Trainer自己处理 而不是统一放到这个cpp, 这样这里不需要应用这么多.h 利用类似REGISTER(NAME,TYPE)的方式,
 		//存储到map<string,TrainerPtr>中  map是个好东西
@@ -45,22 +48,35 @@ namespace gezi {
 		{
 			//----------------------Binary Classification
 			{ "random", TrainerType::Random },
+
 			{ "baselinelinearsvm", TrainerType::BaseLineLinearSVM },
 			{ "baselinesvm", TrainerType::BaseLineLinearSVM },
+
 			{ "linearsvm", TrainerType::LinearSVM },
 			{ "svm", TrainerType::LinearSVM },
+
 			{ "gbdt", TrainerType::GbdtBinaryClassification },
 			{ "gb", TrainerType::GbdtBinaryClassification },
 			{ "fr", TrainerType::GbdtBinaryClassification },
+
 			{ "vw", TrainerType::VW },
+
 			{ "sofia", TrainerType::Sofia },
+
 			{ "liblinear", TrainerType::LibLinear },
+
 			{ "libsvm", TrainerType::LibSVM },
+
 			{ "ensemble", TrainerType::Ensemble },
 			//----------------------Regression
 			{ "gbdtregression", TrainerType::GbdtRegression },
 			{ "gbregression", TrainerType::GbdtRegression },
 			{ "gbrt", TrainerType::GbdtRegression },
+
+			//-----------------------Rank
+			{ "lambdamart", TrainerType::GbdtRank },
+			{ "gbdtrank", TrainerType::GbdtRank },
+			{ "gbrank", TrainerType::GbdtRank }, //注意当前只实现lambdaMart,gbrank代表gbdtrank也指向lambdaMart
 		};
 	} //------------- anoymous namespace
 	void TrainerFactory::PrintTrainersInfo()
@@ -74,6 +90,8 @@ namespace gezi {
 		VLOG(0) << "The default trainer is LinearSVM, if use other trainers use -cl, eg. <./melt feature.txt -c train -cl gbdt> will train feature.txt using gbdt trainer";
 		VLOG(0) << "---Regression Trainers";
 		VLOG(0) << "[Gbdt] -cl gbdtRegression or fastrankRegression or frr or gbrt| ./melt -helpmatch Gbdt.cpp";
+		VLOG(0) << "---Ranking Trainers";
+		VLOG(0) << "[GBDT/lambdaMart] -cl gbrank or gbdtrank or lambdamart| ./melt -helpmatch Gbdt.cpp";
 		print_enum_map(_trainerTypes);
 	}
 
@@ -144,6 +162,10 @@ namespace gezi {
 		case  TrainerType::GbdtRegression:
 			VLOG(0) << "Creating Gbdt trainer for regression";
 			return make_shared<RegressionGbdt>();
+			break;
+		case TrainerType::GbdtRank:
+			VLOG(0) << "Creating Gbdt(lambdaMart) trainer for rank";
+			return make_shared<RankingGbdt>();
 			break;
 		default:
 			break;

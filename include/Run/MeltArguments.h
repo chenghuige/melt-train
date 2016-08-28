@@ -48,12 +48,14 @@ namespace gezi {
 		bool saveNormalizerText = false; //snt|
 		bool saveCalibratorText = false; //sct|
 		string featureName = ""; //fn|
-		bool stratify = false;
+		//bool stratify = false;
 		bool foldsSequential = false;
 		double trainProportion = 1.0;
 		bool bootStrap = false;
 
 		bool selfTest = false; //st| when -c train will test the train data its self after training
+		bool rankTest = false; //if instances is ranking instances and rankTest is ture, then will use RankTester even if not ranking learner like gbdt classification
+		bool binaryClassificationTest = false; //if set true, will force to use binary classification tester
 
 		bool selfEvaluate = false; //se|when trainer is validatingTrainer, will self evaluate during training
 		bool selfEvaluate2 = false;

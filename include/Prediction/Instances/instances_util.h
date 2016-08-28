@@ -19,6 +19,7 @@
 
 DECLARE_int32(libsvmNL);
 DECLARE_int32(libsvmSI);
+DECLARE_bool(mallocDense);
 namespace gezi {
 
 	//@TODO 需要增加的 boot strap方式得到一个新的Insatnces, Shrink的方式得到一个新的
@@ -107,11 +108,11 @@ namespace gezi {
 	}
 
 	//注意修改了intance 特别是最后clear了 sparse 转dense 暂未验证
-	inline void write_dense(Instance& instance, HeaderSchema& schema, ofstream& ofs)
+	inline void write_dense(Instance& instance, const HeaderSchema& schema, ofstream& ofs)
 	{
 		instance.features.MakeDense(); //修改了 输入instance 如果不转换 []访问慢，这里也不便用ForEachAll
 		size_t featureIdx = 0, nameIdx = 0, attributeIdx = 0;
-		switch (schema.cloumnTypes[0])
+		switch (schema.columnTypes[0])
 		{
 		case ColumnType::Feature:
 			ofs << instance.features[featureIdx++];
@@ -131,9 +132,9 @@ namespace gezi {
 		default:
 			break;
 		}
-		for (size_t i = 1; i < schema.cloumnTypes.size(); i++)
+		for (size_t i = 1; i < schema.columnTypes.size(); i++)
 		{
-			switch (schema.cloumnTypes[i])
+			switch (schema.columnTypes[i])
 			{
 			case ColumnType::Feature:
 				ofs << "\t" << instance.features[featureIdx++];
@@ -162,14 +163,68 @@ namespace gezi {
 		ofs << endl;
 		instance.features.Clear(); //避免都转dense带来内存问题
 	}
-
+	inline void add_fake_heaer(const HeaderSchema& schema, ofstream& ofs)
+	{
+		size_t featureIdx = 0, nameIdx = 0, attributeIdx = 0;
+		ofs << "#";
+		switch (schema.columnTypes[0])
+		{
+		case ColumnType::Feature:
+			ofs << format("f{}", featureIdx++);
+			break;
+		case ColumnType::Name:
+			ofs << format("name{}", nameIdx++);
+			break;
+		case ColumnType::Label:
+			ofs << "label";
+			break;
+		case ColumnType::Weight:
+			ofs << "weight";
+			break;
+		case ColumnType::Attribute:
+			ofs << format("attr{}", attributeIdx++);
+			break;
+		default:
+			break;
+		}
+		for (size_t i = 1; i < schema.columnTypes.size(); i++)
+		{
+			switch (schema.columnTypes[i])
+			{
+			case ColumnType::Feature:
+				ofs << "\t" << format("f{}", featureIdx++);;
+				break;
+			case ColumnType::Name:
+				ofs << "\t" << format("name{}", nameIdx++);
+				break;
+			case ColumnType::Label:
+				ofs << "\t" << "label";
+				break;
+			case ColumnType::Weight:
+				ofs << "\t" << "weight";
+				break;
+			case ColumnType::Attribute:
+				ofs << "\t" << format("attr{}", attributeIdx++);
+				break;
+			default:
+				break;
+			}
+		}
+		ofs << endl;
+	}
 	//有heder dense 已经验证ok
-	inline void write_dense(Instances& instances, string outfile)
+	inline void write_dense(Instances& instances, string outfile, bool addHeader = false)
 	{
 		ofstream ofs(outfile);
+		//ofs.flags(std::ios::scientific);
+		ofs.precision(std::numeric_limits<double>::digits10 + 1);
 		if (instances.HasHeader())
 		{
 			ofs << instances.HeaderStr() << endl;
+		}
+		else if (addHeader)
+		{
+			add_fake_heaer(instances.schema, ofs);
 		}
 		for (InstancePtr instance : instances)
 		{
@@ -178,10 +233,10 @@ namespace gezi {
 	}
 
 	//sparse 自己转换ok  但是要注意 如果是dense 转sparse 要确保 desne的feature 都是在其他属性后面的
-	inline void write_sparse(Instance& instance, HeaderSchema& schema, ofstream& ofs)
+	inline void write_sparse(Instance& instance, const HeaderSchema& schema, ofstream& ofs)
 	{
 		size_t featureIdx = 0, nameIdx = 0, attributeIdx = 0;
-		switch (schema.cloumnTypes[0])
+		switch (schema.columnTypes[0])
 		{
 		case ColumnType::Feature:
 			ofs << instance.features.indices[featureIdx++] << ":" << instance.features.values[featureIdx++];
@@ -202,13 +257,13 @@ namespace gezi {
 			break;
 		}
 
-		for (size_t i = 1; i < schema.cloumnTypes.size(); i++)
+		for (size_t i = 1; i < schema.columnTypes.size(); i++)
 		{
-			if (schema.cloumnTypes[i] == ColumnType::Feature)
+			if (schema.columnTypes[i] == ColumnType::Feature)
 			{
 				break;
 			}
-			switch (schema.cloumnTypes[i])
+			switch (schema.columnTypes[i])
 			{
 			case ColumnType::Name:
 				ofs << "\t" << instance.names[nameIdx++];
@@ -245,16 +300,95 @@ namespace gezi {
 		ofs << endl;
 	}
 
+	inline void write_sparse_from_malloc_rank(Instance& instance, const HeaderSchema& schema, ofstream& ofs)
+	{
+		size_t featureIdx = 0, nameIdx = 0, attributeIdx = 0;
+		switch (schema.columnTypes[0])
+		{
+		case ColumnType::Feature:
+			ofs << instance.features.indices[featureIdx++] << ":" << instance.features.values[featureIdx++];
+			break;
+		case ColumnType::Name:
+			ofs << gezi::replace(instance.names[nameIdx++], ':', '_');
+			break;
+		case ColumnType::Label:
+			ofs << instance.label;
+			break;
+		case ColumnType::Weight:
+			ofs << instance.weight;
+			break;
+		case ColumnType::Attribute:
+			ofs << instance.attributes[attributeIdx++];
+			break;
+		default:
+			break;
+		}
+
+		for (size_t i = 1; i < schema.columnTypes.size(); i++)
+		{
+			if (schema.columnTypes[i] == ColumnType::Feature)
+			{
+				break;
+			}
+			switch (schema.columnTypes[i])
+			{
+			case ColumnType::Name:
+				ofs << "\t" << gezi::replace(instance.names[nameIdx++], ':', '_');
+				break;
+			case ColumnType::Label:
+				ofs << "\t" << instance.label;
+				break;
+			case ColumnType::Weight:
+				ofs << "\t" << instance.weight;
+				break;
+			case ColumnType::Attribute:
+				ofs << "\t" << instance.attributes[attributeIdx++];
+				break;
+			default:
+				break;
+			}
+		}
+
+		if (schema.fileFormat != FileFormat::Sparse)
+		{//Sparse格式的话 已经有了Attribute记录了特征数目, 当然一般不需要sparse->sparse除了debug
+			ofs << "\t" << instance.NumFeatures();
+		}
+
+		instance.features.ForEachNonZero([&ofs](int index, Float value)
+		{
+			ofs << "\t" << index << ":" << value;
+		});
+
+		if (instance.features.NumNonZeros() == 0)
+		{
+			ofs << "\t0:0.0";
+		}
+
+		ofs << endl;
+	}
+
+
 	inline void write_sparse(Instances& instances, string outfile)
 	{
 		ofstream ofs(outfile);
+		ofs.precision(std::numeric_limits<double>::digits10 + 1);
 		if (instances.HasHeader())
 		{
 			ofs << instances.HeaderStr() << endl;
 		}
-		for (InstancePtr instance : instances)
+		if (instances.schema.fileFormat != FileFormat::MallocRank)
 		{
-			write_sparse(*instance, instances.schema, ofs);
+			for (InstancePtr instance : instances)
+			{
+				write_sparse(*instance, instances.schema, ofs);
+			}
+		}
+		else
+		{
+			for (InstancePtr instance : instances)
+			{ //避免再输出name qid:1 解析sparse 会有问题，改为输出 qid_1
+				write_sparse_from_malloc_rank(*instance, instances.schema, ofs);
+			}
 		}
 	}
 
@@ -314,9 +448,160 @@ namespace gezi {
 		ofs << endl;
 	}
 
+	inline void write_malloc_rank(Instance& instance, const HeaderSchema& schema, ofstream& ofs)
+	{
+		size_t featureIdx = 0, nameIdx = 0, attributeIdx = 0;
+		switch (schema.columnTypes[0])
+		{
+		case ColumnType::Feature:
+			ofs << instance.features.indices[featureIdx++] << ":" << instance.features.values[featureIdx++];
+			break;
+		case ColumnType::Name:
+			ofs << instance.names[nameIdx++];
+			break;
+		case ColumnType::Label:
+			ofs << instance.label;
+			break;
+		case ColumnType::Weight:
+			ofs << instance.weight;
+			break;
+		case ColumnType::Attribute:
+			ofs << instance.attributes[attributeIdx++];
+			break;
+		default:
+			break;
+		}
+
+		for (size_t i = 1; i < schema.columnTypes.size(); i++)
+		{
+			if (schema.columnTypes[i] == ColumnType::Feature)
+			{
+				break;
+			}
+			switch (schema.columnTypes[i])
+			{
+			case ColumnType::Name:
+				ofs << "\t" << instance.names[nameIdx++];
+				break;
+			case ColumnType::Label:
+				ofs << "\t" << instance.label;
+				break;
+			case ColumnType::Weight:
+				ofs << "\t" << instance.weight;
+				break;
+			case ColumnType::Attribute:
+				ofs << "\t" << instance.attributes[attributeIdx++];
+				break;
+			default:
+				break;
+			}
+		}
+
+		if (!FLAGS_mallocDense)
+		{
+			instance.features.ForEachNonZero([&ofs](int index, Float value)
+			{ //malloc 1 index start
+				ofs << "\t" << index + 1 << ":" << value;
+			});
+
+			if (instance.features.NumNonZeros() == 0)
+			{
+				ofs << "\t1:0.0";
+			}
+		}
+		else
+		{
+			instance.features.ForEachAll([&ofs](int index, Float value)
+			{ //malloc 1 index start
+				ofs << "\t" << index + 1 << ":" << value;
+			});
+		}
+
+		ofs << endl;
+	}
+
+	//至少确保feature在name,attr后面
+	inline void write_to_malloc_rank(Instance& instance, const HeaderSchema& schema, ofstream& ofs, unordered_map<string, int>& nameIdMap, int& maxGroupIndex)
+	{
+		for (size_t i = 0; i < schema.columnTypes.size(); i++)
+		{
+			if (schema.columnTypes[i] == ColumnType::Label)
+			{
+				ofs << instance.label;
+				string group = instance.groupKey;
+				auto result = nameIdMap.insert(make_pair(group, maxGroupIndex));
+				if (result.second)
+				{//new group key/query
+					maxGroupIndex++;
+				}
+				int groupIndex = result.first->second;
+				ofs << "\tqid:" << groupIndex;
+			}
+			else if (schema.columnTypes[i] == ColumnType::Feature)
+			{
+				break;
+			}
+		}
+
+		if (!FLAGS_mallocDense)
+		{
+			instance.features.ForEachNonZero([&ofs](int index, Float value)
+			{ //malloc 1 index start
+				ofs << "\t" << index + 1 << ":" << value;
+			});
+
+			if (instance.features.NumNonZeros() == 0)
+			{
+				ofs << "\t1:0.0";
+			}
+		}
+		else
+		{
+			instance.features.ForEachAll([&ofs](int index, Float value)
+			{ //malloc 1 index start
+				ofs << "\t" << index + 1 << ":" << value;
+			});
+		}
+
+		ofs << endl;
+	}
+
+	inline void write_malloc_rank(Instances& instances, string outfile)
+	{
+		ofstream ofs(outfile);
+		ofs.precision(std::numeric_limits<double>::digits10 + 1);
+		if (!instances.IsRankingInstances())
+		{
+			LOG(WARNING) << "Not ranking instances can not write to malloc rank format, do nothing! Forget to specify groupkey using -group ? may be also need -name";
+			return;
+		}
+		if (instances.empty())
+		{
+			LOG(WARNING) << "Can not write empty instances to malloc rank format, do nothing!";
+			return;
+		}
+		if (gezi::startswith(instances[0]->groupKey, "qid:"))
+		{//本身就是malloc格式的输入 再输出
+			for (InstancePtr instance : instances)
+			{
+				write_malloc_rank(*instance, instances.schema, ofs);
+			}
+		}
+		else
+		{//非malloc格式输入 输出成malloc
+			unordered_map<string, int> nameIdMap;
+			int maxGroupIndex = 1;
+			for (InstancePtr instance : instances)
+			{
+				write_to_malloc_rank(*instance, instances.schema, ofs, nameIdMap, maxGroupIndex);
+			}
+		}
+	}
+
 	inline void write_libsvm(Instances& instances, string outfile, bool noNegLabel = false, int startIndex = 1)
 	{
 		ofstream ofs(outfile);
+		ofs.precision(std::numeric_limits<double>::digits10 + 1);
 		for (InstancePtr instance : instances)
 		{
 			write_libsvm(*instance, instances.schema, ofs, noNegLabel, startIndex);
@@ -326,6 +611,7 @@ namespace gezi {
 	inline void write_vw(Instances& instances, string outfile)
 	{
 		ofstream ofs(outfile);
+		ofs.precision(std::numeric_limits<double>::digits10 + 1);
 		for (InstancePtr instance : instances)
 		{
 			write_libsvm(*instance, instances.schema, ofs, false, true);
@@ -335,6 +621,7 @@ namespace gezi {
 	inline void write_arff(Instances& instances, string outfile, string relation = "table")
 	{
 		ofstream ofs(outfile);
+		ofs.precision(std::numeric_limits<double>::digits10 + 1);
 		//----------arff header
 		ofs << "@relation " << relation << "\n" << endl;
 		for (string name : instances.schema.featureNames)
@@ -361,7 +648,7 @@ namespace gezi {
 		}
 	}
 
-	inline void write(Instances& instances, string outfile, FileFormat format)
+	inline void write(Instances& instances, string outfile, FileFormat format, bool addHeader = false)
 	{
 		if (format == FileFormat::Unknown)
 		{
@@ -372,7 +659,7 @@ namespace gezi {
 		switch (format)
 		{
 		case FileFormat::Dense:
-			write_dense(instances, outfile);
+			write_dense(instances, outfile, addHeader);
 			break;
 		case  FileFormat::Sparse:
 		case FileFormat::SparseNoLength:
@@ -389,14 +676,18 @@ namespace gezi {
 		case  FileFormat::VW:
 			write_vw(instances, outfile);
 			break;
+		case FileFormat::MallocRank:
+			write_malloc_rank(instances, outfile);
+			break;
 		default:
+			LOG(WARNING) << "Not supported format for write";
 			break;
 		}
 	}
 
-	inline void write(Instances& instances, string outfile)
+	inline void write(Instances& instances, string outfile, bool addHeader = false)
 	{
-		write(instances, outfile, instances.schema.fileFormat);
+		write(instances, outfile, instances.schema.fileFormat, addHeader);
 	}
 }  //----end of namespace gezi
 

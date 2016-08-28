@@ -10,8 +10,10 @@ DEFINE_string(cls, "", "classifierSettings: Classifier settings, this is now onl
 //---------------cross validation 
 DEFINE_int32(k, 5, "numFolds: Number of folds in k-fold cross-validation");
 DEFINE_int32(nr, 1, "numRuns: numRuns: Number of runs of cross-validation");
-DEFINE_bool(strat, false, "Stratify instances during cross-validation (instances with same name up to '|' get assigned to same fold");
-DEFINE_bool(foldSeq, false, "foldSequence: instances sequentially during cross - validation");
+//all move to IntanceParser.cpp using group key
+//DEFINE_bool(strat, false, "Stratify instances during cross-validation (instances with same name up to '|' get assigned to same fold, for ranking");
+//DEFINE_string(stratKey, "n0", "stratifyKey: Names/attributes on which to stratify (e.g., n2,a1)");
+DEFINE_bool(foldSeq, false, "foldSequence: instances sequentially during cross - validation  no randomization, this option is rare");
 
 //========== MODIFYING TRAIN/TEST DATA: learning curves, stratifying, skipping certain instances
 //===============================================================================================
@@ -46,10 +48,9 @@ DEFINE_string(codeType, "cpp", "Which language for modelfileCode ? default is cp
 DEFINE_bool(mt, false, "modelfileText:  Gen model file to save in text format ? (for Train or TrainTest");
 DEFINE_bool(mxml, false, "modelfileXml:  Gen model file to save in xml format ? (for Train or TrainTest");
 DEFINE_bool(mjson, false, "modelfileJson:  Gen model file to save in json format ? (for Train or TrainTest");
-DEFINE_bool(mfeature, false, "modelFeatureInfo: Gen model featureInfo file? which usually means feature gain store in model.featureInfo");
+DEFINE_bool(mfeature, true, "modelFeatureInfo: Gen model featureInfo file? which usually means feature gain store in model.featureInfo");
 DEFINE_bool(snt, false, "saveNormalizerText: wether save normalizer as text/xml/json");
 DEFINE_bool(sct, false, "saveCalibratorText: wether save calibrator as text/xml/json");
-DEFINE_bool(st, false, "selftTest: when -c train will test the train data its self after training");
 
 DEFINE_string(rd, "./result", "resultDir: where to put the result data");
 DEFINE_string(rf, "", "resultFile: not used in cross validation which use resultDir only, can be used in test or train-test, if set FLAGS_rf than will write result to resultFile instead of to resultDir/0.inst.txt or resultDir/n.inst.txt if you set Flags_ri");
@@ -61,6 +62,12 @@ DEFINE_bool(norm, true, "Normalize features");
 DEFINE_string(normalizer, "MinMax", "Which normalizer? can also try gaussian or bin");
 
 DEFINE_string(fn, "", "featureName:");
+DEFINE_bool(st, false, "selftTest: when -c train will test the train data its self after training");
+
+DEFINE_bool(rankTest, false, "if instances is ranking instances and rankTest is ture, then will use RankTester even if not ranking learner like gbdt classification");
+DEFINE_bool(bcTest, false, "if set true, will force to use binary classification tester");
+
+
 //@FIXME
 //DEFINE_string(ev, "/home/users/chenghuige/rsc/app/search/sep/anti-spam/melt/tools3/evaluate/evaluate", "evaluate: use what to evalute the result, notice if not find this one will try to use local evaluate");
 DEFINE_string(ev, "", "evaluate: use what to evalute the result like ~/tools/evaluate.py, notice if empty not find this one will try to use internal c++ evaluate, also this used for choosing interal evaluator like auc l1 l2..");
@@ -76,7 +83,6 @@ DEFINE_string(off, "unknown", "ouput_file_format: if unknow using it's input for
 
 DEFINE_bool(fast, false, "fast mode, will try fastest training, like calibrate = false");
 
-DEFINE_double(posThre, 0.5, "for binary classification > thre means judge it as positive otherwise judge it as negative");
 
 namespace gezi {
 	void Melt::ParseArguments()
@@ -110,6 +116,9 @@ namespace gezi {
 		_cmd.numRuns = FLAGS_nr;
 
 		_cmd.selfTest = FLAGS_st;
+		_cmd.rankTest = FLAGS_rankTest;
+		_cmd.binaryClassificationTest = FLAGS_bcTest;
+		
 		_cmd.selfEvaluate = FLAGS_se;
 		_cmd.selfEvaluate2 = FLAGS_se2;
 		_cmd.evaluateFrequency = FLAGS_efreq;
@@ -127,7 +136,7 @@ namespace gezi {
 		}
 		_cmd.randSeed = FLAGS_rs;
 
-		_cmd.stratify = FLAGS_strat;
+		//_cmd.stratify = FLAGS_strat;
 		_cmd.numThreads = FLAGS_nt;
 		_cmd.foldsSequential = FLAGS_foldSeq;
 		_cmd.trainProportion = FLAGS_tp;

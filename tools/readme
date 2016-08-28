@@ -1,0 +1,13 @@
+注意当前默认使用 /opt下面的编译 
+因此 如果迁移到 其它机器 如果没有 /opt下面的gcc482会提示
+
+./melt: /opt/compiler/gcc-4.8.2/lib64/ld-linux-x86-64.so.2: bad ELF interpreter: No such file or directory 
+
+解决办法 打包需要的 ld so 
+公司elf提供了 package_lib 工具 package_lib --exec=./melt 
+但是很奇怪目前在公司706机器成功，但是本地centos不行提示copy失败,anyway 拷贝过来 生成的这个lib路径
+
+melt也放到lib路径
+cd lib 
+./ld-linux-x86-64.so.2 --library-path ./ ./melt
+

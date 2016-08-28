@@ -276,6 +276,7 @@ namespace gezi {
 		Float _gainConfidenceInSquaredStandardDeviations;
 		int _minDocsInLeaf;
 		int _numLeaves;
+		int _maxDepth;
 		Random _rand;
 		//存储每个内部节点对应每个Feature的Histogram信息,也就是整体Sum信息 这样分裂的时候可以计算优化
 		//只需要计算较少叶子的部分的Histogram然后可以由parent内部节点的Histogram信息减去这个Histogram得到较多叶子部分的Histogram
@@ -293,7 +294,7 @@ namespace gezi {
 		bool _preSplitCheck = false;
 	public:
 		LeastSquaresRegressionTreeLearner(Dataset& trainData, int numLeaves,
-			int minDocsInLeaf, Float entropyCoefficient,
+			int minDocsInLeaf, int maxDepth, Float entropyCoefficient,
 			Float featureFirstUsePenalty, Float featureReusePenalty,
 			Float softmaxTemperature, int histogramPoolSize,
 			int randomSeed, Float splitFraction, bool preSplitCheck,
@@ -303,6 +304,7 @@ namespace gezi {
 			: TreeLearner(trainData, numLeaves), _rand(randomSeed)
 		{
 			_minDocsInLeaf = minDocsInLeaf;
+			_maxDepth = maxDepth;
 			_allowDummies = allowDummies;
 			_entropyCoefficient = entropyCoefficient * 1E-06;
 			_featureFirstUsePenalty = featureFirstUsePenalty;
@@ -359,13 +361,19 @@ namespace gezi {
 			{
 				FindBestSplitOfSiblings(LTEChild, GTChild, Partitioning, targets);
 				//FindBestSplitOfSiblingsSimple(LTEChild, GTChild, Partitioning, targets);
-				int bestLeaf = GetBestSplit(_bestSplitInfoPerLeaf);
+				//int bestLeaf = GetBestSplit(_bestSplitInfoPerLeaf);
+				int bestLeaf = _maxDepth > 0 ? GetBestSplit(_bestSplitInfoPerLeaf, tree) : GetBestSplit(_bestSplitInfoPerLeaf);
+				if (_maxDepth > 0 && tree.GetDepth(bestLeaf) == _maxDepth)
+				{//不能继续分裂了 各个叶子节点再分裂都会导致树超过高度
+					break;
+				}
+
 				const SplitInfo& bestLeafSplitInfo = _bestSplitInfoPerLeaf[bestLeaf];
 				//PrintVecTopN(_bestSplitInfoPerLeaf, Gain, 10);
 				//if (bestLeafSplitInfo.Gain <= 0.0)
 				if (bestLeafSplitInfo.Gain < std::numeric_limits<Float>::epsilon()) // <= 0
 				{
-					VLOG(6) << "We cannot perform more splits with gain = " << bestLeafSplitInfo.Gain << " in split " << split;
+					VLOG(2) << "We cannot perform more splits with gain = " << bestLeafSplitInfo.Gain << " in split " << split;
 					break;
 				}
 				_featureUseCount[bestLeafSplitInfo.Feature]++;
@@ -519,6 +527,76 @@ namespace gezi {
 			else
 			{
 				return max_pos_rand(featureSplitInfo, _rand, _splitFraction, [](const SplitInfo* const l, const SplitInfo* const r) {return l->Gain < r->Gain; });
+			}
+		}
+
+		int GetBestSplit(vector<SplitInfo>& featureSplitInfo, const RegressionTree& tree)
+		{
+			vector<int> indexVec = gezi::range_vec(featureSplitInfo.size());
+			//Pvec_(GetGains(featureSplitInfo), cout, " ");
+			//Pvec_(tree.GetDepthVec(), cout, " ");
+			if (_splitFraction == 1 || _preSplitCheck) //@TODO float problem?
+			{
+				return 	*max_element(indexVec.begin(), indexVec.end(),
+					[&, this](int l, int r) {
+					if (tree.GetDepth(l) == _maxDepth && tree.GetDepth(r) < _maxDepth)
+					{
+						return true;
+					}
+					else if (tree.GetDepth(r) == _maxDepth && tree.GetDepth(l) < _maxDepth)
+					{
+						return false;
+					}
+					return featureSplitInfo[l].Gain < featureSplitInfo[r].Gain;
+				});
+			}
+			else
+			{
+				return max_pos_rand(indexVec, _rand, _splitFraction, [&, this](int l, int r) {
+					if (tree.GetDepth(l) == _maxDepth && tree.GetDepth(r) < _maxDepth)
+					{
+						return true;
+					}
+					else if (tree.GetDepth(r) == _maxDepth && tree.GetDepth(l) < _maxDepth)
+					{
+						return false;
+					}
+					return featureSplitInfo[l].Gain < featureSplitInfo[r].Gain; 
+				});
+			}
+		}
+
+		int GetBestSplit(vector<SplitInfo*>& featureSplitInfo, const RegressionTree& tree)
+		{
+			vector<int> indexVec = gezi::range_vec(featureSplitInfo.size());
+			if (_splitFraction == 1 || _preSplitCheck)
+			{
+				return 	*max_element(indexVec.begin(), indexVec.end(),
+					[&, this](int l, int r) {
+					if (tree.GetDepth(l) == _maxDepth && tree.GetDepth(r) < _maxDepth)
+					{
+						return true;
+					}
+					else if (tree.GetDepth(r) == _maxDepth && tree.GetDepth(l) < _maxDepth)
+					{
+						return false;
+					}
+					return featureSplitInfo[l]->Gain < featureSplitInfo[r]->Gain; 
+				});;
+			}
+			else
+			{
+				return max_pos_rand(indexVec, _rand, _splitFraction, [&, this](int l, int r) {
+					if (tree.GetDepth(l) == _maxDepth && tree.GetDepth(r) < _maxDepth)
+					{
+						return true;
+					}
+					else if (tree.GetDepth(r) == _maxDepth && tree.GetDepth(l) < _maxDepth)
+					{
+						return false;
+					}
+					return featureSplitInfo[l]->Gain < featureSplitInfo[r]->Gain; 
+				});
 			}
 		}
 
@@ -943,7 +1021,9 @@ namespace gezi {
 						if (_entropyCoefficient > 0.0)
 						{
 							Float entropyGain = ((totalCount * std::log((Float)totalCount)) - (LTECount * std::log((Float)LTECount))) - (GTCount * std::log((Float)GTCount));
+							//PVAL4(entropyGain, currentShiftedGain, LTECount, GTCount);
 							currentShiftedGain += _entropyCoefficient * entropyGain;
+							//PVAL(currentShiftedGain);
 						}
 						if (currentShiftedGain > bestShiftedGain)
 						{

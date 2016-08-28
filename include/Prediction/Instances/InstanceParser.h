@@ -19,6 +19,7 @@
 *   0 5 0:0.4 3:0.1
 *   1 5 1:0.3
 * 内部数据处理和TLC一致 不管输入是dense还是sparse都是判断当前0的数目 如果> 1/2 * FeatureNum 则dense否则sparse
+@TODO should be InsancesParser
 *  ==============================================================================
 */
 
@@ -47,6 +48,8 @@ namespace gezi {
 		{ "libsvm", FileFormat::LibSVM },
 		{ "arff", FileFormat::Arff },
 		{ "vw", FileFormat::VW },
+		{ "malloc", FileFormat::MallocRank },
+		{ "mallocrank", FileFormat::MallocRank },
 	};
 
 	//RunConvert 显示转换使用
@@ -59,6 +62,7 @@ namespace gezi {
 		{ FileFormat::LibSVM, "libsvm" },
 		{ FileFormat::Arff, "arff" },
 		{ FileFormat::VW, "vw" },
+		{ FileFormat::MallocRank, "malloc" },
 	};
 
 	//其它最后输出 使用
@@ -71,6 +75,7 @@ namespace gezi {
 		{ FileFormat::LibSVM, "libsvm" },
 		{ FileFormat::Arff, "arff" },
 		{ FileFormat::VW, "vw" },
+		{ FileFormat::MallocRank, "malloc" },
 	};
 
 
@@ -109,6 +114,92 @@ namespace gezi {
 			InitParam();
 		}
 
+	public:
+		Instances&& Parse(string dataFile, bool printInfo = false)
+		{
+			Noticer timer("ParseInputDataFile", 0);
+			_instances.name = dataFile;
+			Parse_(dataFile);
+			Finallize();
+			
+			if (printInfo)
+			{
+				PrintInfo();
+			}
+			return move(_instances);
+		}
+
+		//默认输入是dense数据，并且没有header,解析后 添加fake header 到outFile
+		void AddFakeHeader(string dataFile, string outFile)
+		{
+			//@TODO streaming ?
+			vector<string> lines = read_lines_fast(dataFile, "//");
+			if (lines.empty())
+			{
+				LOG(FATAL) << "Fail to load data file! " << dataFile << " is empty!";
+			}
+
+			//判断schema信息
+			ParseFirstLine(lines);
+
+
+			ofstream ofs(outFile);
+
+			//-----------------写fake header
+			size_t featureIdx = 0, nameIdx = 0, attributeIdx = 0;
+			ofs << "#";
+			switch (_columnTypes[0])
+			{
+			case ColumnType::Feature:
+				ofs << format("f{}", featureIdx++);
+				break;
+			case ColumnType::Name:
+				ofs << format("name{}", nameIdx++);
+				break;
+			case ColumnType::Label:
+				ofs << "label";
+				break;
+			case ColumnType::Weight:
+				ofs << "weight";
+				break;
+			case ColumnType::Attribute:
+				ofs << format("attr{}", attributeIdx++);
+				break;
+			default:
+				break;
+			}
+			for (size_t i = 1; i < _columnTypes.size(); i++)
+			{
+				switch (_columnTypes[i])
+				{
+				case ColumnType::Feature:
+					ofs << "\t" << format("f{}", featureIdx++);;
+					break;
+				case ColumnType::Name:
+					ofs << "\t" << format("name{}", nameIdx++);
+					break;
+				case ColumnType::Label:
+					ofs << "\t" << "label";
+					break;
+				case ColumnType::Weight:
+					ofs << "\t" << "weight";
+					break;
+				case ColumnType::Attribute:
+					ofs << "\t" << format("attr{}", attributeIdx++);
+					break;
+				default:
+					break;
+				}
+			}
+			ofs << endl;
+
+			for (string line : lines)
+			{
+				ofs << line << endl;
+			}
+		}
+
+	public:
 		void ParseArguments();
 
 		Arguments& Args()
@@ -262,7 +353,7 @@ namespace gezi {
 				else
 				{
 					filterArray.resize(_featureNum, false);
-					
+
 					if (incls.size() > 100)
 					{
 						VLOG(0) << "Total incls features is " << incls.size() << " only print top 100";
@@ -317,7 +408,7 @@ namespace gezi {
 						{
 							VLOG(0) << "Excluding feature: " << _instances.schema.featureNames[idx];
 						}
-						
+
 						filterArray[idx] = false;
 					}
 				}
@@ -341,15 +432,25 @@ namespace gezi {
 			return _fileFormat == FileFormat::Dense;
 		}
 
-		void InitColumnTypes(svec& lines)
+		void InitColumnTypes(const svec& lines)
 		{
+			int maxNameAtrrIdx = -1;
 			for (int idx : _attributesIdx)
 			{
+				if (idx > maxNameAtrrIdx)
+				{
+					maxNameAtrrIdx = idx;
+				}
 				_columnTypes[idx] = ColumnType::Attribute;
 			}
 
+
 			for (int idx : _namesIdx)
 			{
+				if (idx > maxNameAtrrIdx)
+				{
+					maxNameAtrrIdx = idx;
+				}
 				_columnTypes[idx] = ColumnType::Name;
 			}
 
@@ -364,9 +465,9 @@ namespace gezi {
 				_hasWeight = true;
 			}
 
+			//--------------set label
 			if (_args.labelIdx >= 0)
 			{
-				_columnTypes[_args.labelIdx] = ColumnType::Label;
 				_labelIdx = _args.labelIdx;
 			}
 
@@ -402,18 +503,25 @@ namespace gezi {
 					_columnTypes[0] = ColumnType::Name;
 					if (_labelIdx < 0)
 					{
-						_labelIdx = 1;
-						_columnTypes[1] = ColumnType::Label;
+						if (maxNameAtrrIdx >= 0)
+						{
+							_labelIdx = maxNameAtrrIdx + 1;
+						}
+						else
+						{
+							_labelIdx = 1;
+						}
 					}
 				}
 			}
 
-			//默认如果没有Name 第一个是Label
+			//默认如果没有制定labelIdx 第一个是Label, 如果有name,attr的制定 那么name,attr后面的第一列是Label
 			if (_labelIdx < 0)
-			{
-				_labelIdx = 0;
-				_columnTypes[0] = ColumnType::Label;
+			{//如果 maxNameAtrrIdx == -1 , then 0
+				_labelIdx = maxNameAtrrIdx + 1;
 			}
+
+			_columnTypes[_labelIdx] = ColumnType::Label;
 		}
 
 		//实际上Dense,Sparse格式 在这里完成了设置, SparseNoLength, Text将会在create instances中设置
@@ -460,16 +568,30 @@ namespace gezi {
 					}
 					_featureNum = numFeatures;
 				}
-				else if (_fileFormat == FileFormat::Sparse)
-				{ //注意已经解析首个数据行 获取到 特征数目了(_featureNum) 但是注意 SparseNoLength, Text获取不到
+				//else if (_fileFormat == FileFormat::Sparse)
+				//{ //注意已经解析首个数据行 获取到 特征数目了(_featureNum) 但是注意 SparseNoLength, Text获取不到
 					//_instances.schema.featureNames.reserve(_featureNum);
 					//for (int i = 0; i < _featureNum; i++) //@TODO may exceed int capacity
 					//{
 					//	string name = format("f{}", i);
 					//	_instances.schema.featureNames.push_back(name);
 					//}
-				}
+				//}
 				_instances.schema.featureNames.SetNumFeatures(_featureNum); //@NOTICE
+				{
+					for (auto index : _namesIdx)
+					{
+						_instances.schema.tagNames.push_back(STR(index));
+					}
+					for (auto index : _attributesIdx)
+					{
+						_instances.schema.attributeNames.push_back(STR(index));
+					}
+					for (auto index : _groupsIdx)
+					{
+						_instances.schema.groupKeys.push_back(STR(index));
+					}
+				}
 			}
 			PVEC(_instances.schema.tagNames);
 			PVEC(_instances.schema.groupKeys);
@@ -483,9 +605,9 @@ namespace gezi {
 			}
 		}
 
-		void CreateInstancesFromDenseFormat(svec& lines, uint64 start)
+		void CreateInstancesFromDenseFormat(const svec& lines, uint64 start)
 		{
-			VLOG(1) << "CreateInstancesFromDenseFormat";
+			VLOG(0) << "CreateInstancesFromDenseFormat";
 			uint64 end = start + _instanceNum;
 #pragma omp parallel for 
 			for (uint64 i = start; i < end; i++)
@@ -638,9 +760,9 @@ namespace gezi {
 		//@TODO tlc貌似快很多thread.feature.txt 9w instance 
 		//1000ms 这里需要2000ms是因为split c#的速度更快？ 另外注意能char split find不要用string
 		//不过使用omp并行后 200ms就搞定
-		void CreateInstancesFromSparseFormat(svec& lines, uint64 start)
+		void CreateInstancesFromSparseFormat(const svec& lines, uint64 start)
 		{
-			VLOG(1) << " CreateInstancesFromSparseFormat";
+			VLOG(0) << " CreateInstancesFromSparseFormat";
 			uint64 end = start + _instanceNum;
 #pragma omp parallel for 
 			for (uint64 i = start; i < end; i++)
@@ -730,9 +852,9 @@ namespace gezi {
 		}
 
 		//如果没有提前声明向量最大长度SparseNoLength 那么不支持特征选择,否则影响解析速度 可以先转换为正常的sparse格式
-		void CreateInstancesFromSparseNoLengthFormat(svec& lines, uint64 start)
+		void CreateInstancesFromSparseNoLengthFormat(const svec& lines, uint64 start)
 		{
-			VLOG(1) << "CreateInstancesFromSparseNoLengthFormat";
+			VLOG(0) << "CreateInstancesFromSparseNoLengthFormat";
 			uint64 end = start + _instanceNum;
 			int maxIndex = 0;
 			//#pragma omp parallel for 
@@ -831,6 +953,11 @@ namespace gezi {
 
 		FileFormat GetFileFormat(string line)
 		{
+			if (_fileFormat != FileFormat::Unknown)
+			{
+				return _fileFormat;
+			}
+
 			for (int i = 0; i < _columnNum; i++)
 			{
 				if (_columnTypes[i] == ColumnType::Feature)
@@ -879,11 +1006,11 @@ namespace gezi {
 			_instances.SetHeader(line, _hasHeader);
 			_instances.schema.fileFormat = _fileFormat;
 			_instances.schema.hasWeights = _hasWeight;
-			_instances.schema.cloumnTypes = _columnTypes;
+			_instances.schema.columnTypes = _columnTypes;
 		}
 
 		//获取列信息，名字，是dense还是sparse表示
-		void ParseFirstLine(svec lines)
+		void ParseFirstLine(const svec& lines)
 		{
 			//Timer timer;
 			string line = lines[0];
@@ -913,10 +1040,14 @@ namespace gezi {
 			//VLOG(2) << format("InitColumnTypes time: {}", timer.elapsed_ms());
 			//timer.restart();
 
-			_fileFormat = kFormats[_format];
+			
 			if (_fileFormat == FileFormat::Unknown)
 			{
-				_fileFormat = GetFileFormat(lines[_hasHeader]);
+				_fileFormat = kFormats[_format];
+				if (_fileFormat == FileFormat::Unknown)
+				{
+					_fileFormat = GetFileFormat(lines[_hasHeader]);
+				}
 			}
 
 			InitNames();
@@ -939,6 +1070,28 @@ namespace gezi {
 			Pval(positiveCount);
 			Float positiveRatio = positiveCount / (double)_instances.Count();
 			Pval(positiveRatio);
+
+			//如果多个label打印每个label的instance数目信息
+			if (_instances.schema.numClasses > 2)
+			{
+				int numLabels = _instances.schema.numClasses;
+				Pval(numLabels);
+				map<int, size_t> countMap;
+				for (auto& instance : _instances)
+				{
+					countMap[(int)instance->label] += 1;
+				}
+				for (auto& item : countMap)
+				{
+					VLOG(0) << "Label:" << item.first << " Count:" << item.second;
+				}
+			}
+
+			//如果是Ranking打印有多少组
+			if (_instances.IsRankingInstances())
+			{
+				Pval(_instances.NumGroups());
+			}
 
 			uint64 denseCount = _instances.DenseCount();
 			Float denseRatio = denseCount / (double)_instances.Count();
@@ -971,36 +1124,6 @@ namespace gezi {
 			THROW(format("Could not gusess sep for line:[{}] seps:{}", line, seps));
 		}
 
-		//处理广义的属性数据
-		void ParseSparseAttributes(Instance& instance, int index, string item, svec& groupKeys)
-		{
-			switch (_columnTypes[index])
-			{
-			case ColumnType::Name:
-				instance.names.push_back(item);
-				break;
-			case ColumnType::Label:
-				instance.label = DOUBLE(item);
-				if (instance.label == -1)
-				{
-					instance.label = 0;
-				}
-				break;
-			case ColumnType::Weight:
-				instance.weight = DOUBLE(item);
-				break;
-			case ColumnType::Attribute:
-				instance.attributes.push_back(item);
-				break;
-			default:
-				break;
-			}
-			if (_groupKeysMark[index])
-			{
-				groupKeys.push_back(item);
-			}
-		}
-
 		void ParseSparseAttributes(Instance& instance, int index, string item)
 		{
 			switch (_columnTypes[index])
@@ -1010,10 +1133,10 @@ namespace gezi {
 				break;
 			case ColumnType::Label:
 				instance.label = DOUBLE(item);
-				if (instance.label == -1)
+				/*				if (instance.label == -1)
 				{
-					instance.label = 0;
-				}
+				instance.label = 0;
+				}*/
 				break;
 			case ColumnType::Weight:
 				instance.weight = DOUBLE(item);
@@ -1026,9 +1149,41 @@ namespace gezi {
 			}
 		}
 
+		//处理广义的属性数据
+		void ParseSparseAttributes(Instance& instance, int index, string item, svec& groupKeys)
+		{
+			//switch (_columnTypes[index])
+			//{
+			//case ColumnType::Name:
+			//	instance.names.push_back(item);
+			//	break;
+			//case ColumnType::Label:
+			//	instance.label = DOUBLE(item);
+			//	/*				if (instance.label == -1)
+			//					{
+			//					instance.label = 0;
+			//					}*/
+			//	break;
+			//case ColumnType::Weight:
+			//	instance.weight = DOUBLE(item);
+			//	break;
+			//case ColumnType::Attribute:
+			//	instance.attributes.push_back(item);
+			//	break;
+			//default:
+			//	break;
+			//}
+			ParseSparseAttributes(instance, index, item);
+			if (_groupKeysMark[index])
+			{
+				groupKeys.push_back(item);
+			}
+		}
+
+
 		//@TODO 还可以优化的是首先处理 不带有:的属性 然后集中处理带有的
 		//@FIXM 目前只有label数据的 也就是空向量的会core
-		void CreateInstancesFromLibSVMFormat(svec& lines, uint64 start)
+		void CreateInstancesFromLibSVMFormat(const svec& lines, uint64 start)
 		{
 			VLOG(0) << "CreateInstancesFromLibSVMFormat";
 			uint64 end = start + _instanceNum;
@@ -1109,7 +1264,85 @@ namespace gezi {
 			_instances.schema.featureNames.SetNumFeatures(_featureNum);
 		}
 
-		void CreateInstancesFromVWFormat(svec& lines, uint64 start)
+		//针对malloc rank格式数据的 分割解析函数
+		template<typename FindFunc, typename UnfindFunc>
+		void splits_int_double_malloc(string input, const char sep, const char inSep, FindFunc findFunc, UnfindFunc unfindFunc)
+		{
+			size_t pos = 0;
+			size_t pos2 = input.find(sep);
+			int i = 0;
+			bool isFirst = true;
+			while (pos2 != string::npos)
+			{
+				int len = pos2 - pos;
+				//why find_char so slow.... 
+				//size_t inPos = find_char(input, inSep, pos, len);
+				size_t inPos = input.find(inSep, pos);
+				//if (inPos != string::npos)
+				if (inPos < pos2) //这个查找可以优化 但是问题不大。。暂时没找到好的方法 改为find_char速度更慢很多
+				{
+					if (isFirst)
+					{
+						isFirst = false;
+						unfindFunc(i, input.substr(pos, len));
+					}
+					else
+					{
+						//findFunc(atoi(input.c_str() + pos), atof(input.c_str() + inPos + 1));
+						findFunc(fast_atou(input.c_str() + pos, input.c_str() + inPos), atof(input.c_str() + inPos + 1));
+					}
+				}
+				else
+				{
+					unfindFunc(i, input.substr(pos, len));
+				}
+				pos = pos2 + 1;
+				pos2 = input.find(sep, pos);
+				i++;
+			}
+			size_t inPos = input.find(inSep, pos);
+			findFunc(atoi(input.c_str() + pos), atof(input.c_str() + inPos + 1));
+		}
+
+		//类似libsvm 可能稠密或者稀疏 区别是 有一个 qid:0 类似的在feature前面
+		void CreateInstancesFromMallocRankFormat(const svec& lines, uint64 start)
+		{
+			VLOG(0) << "CreateInstancesFromMallocRankFormat";
+			uint64 end = start + _instanceNum;
+			int maxIndex = 1; //malloc 都是 下标1开始
+			//char sep = GuessSeparator(lines[0], "\t "); //已经在ParseFirstLine的时候确定了
+			char sep = _sep[0];
+#pragma omp parallel for reduction(max : maxIndex)
+			for (uint64 i = start; i < end; i++)
+			{
+				string line = boost::trim_right_copy(lines[i]);
+				_instances[i - start] = make_shared<Instance>(_featureNum);
+				Instance& instance = *_instances[i - start];
+				Vector& features = instance.features;
+
+				svec groupKeys;
+				splits_int_double_malloc(line, sep, ':', [&, this](int index, Float value) {
+					if (_selectedArray[index - 1])
+					{
+						features.Add(index - 1, value);
+					}
+
+					if (index > maxIndex)
+					{
+						maxIndex = index;
+					}
+				},
+					[&, this](int index, string item) {
+					ParseSparseAttributes(instance, index, item, groupKeys);
+				});
+				instance.groupKey = gezi::join(groupKeys, _args.ncsep);
+			}
+			_featureNum = maxIndex;
+			Rabit::Allreduce<op::Max>(_featureNum);
+			_instances.schema.featureNames.SetNumFeatures(_featureNum);
+		}
+
+		void CreateInstancesFromVWFormat(const svec& lines, uint64 start)
 		{
 			VLOG(0) << "CreateInstancesFromVWFormat";
 			uint64 end = start + _instanceNum;
@@ -1123,7 +1356,7 @@ namespace gezi {
 		}
 
 		//训练文本解析 暂时都是只支持单一char的分隔符 没有必要支持string分割
-		void ParseTextForTrain(svec& lines, uint64 start)
+		void ParseTextForTrain(const svec& lines, uint64 start)
 		{
 			VLOG(0) << "ParseTextForTrain";
 			uint64 end = start + _instanceNum;
@@ -1150,7 +1383,7 @@ namespace gezi {
 						[&, this](int index, string item) {
 						ParseSparseAttributes(instance, index, item);
 					});
-				} 
+				}
 				else
 				{
 					svec groupKeys;
@@ -1170,7 +1403,7 @@ namespace gezi {
 					});
 					instance.groupKey = gezi::join(groupKeys, _args.ncsep);
 				}
-			
+
 				//				svec l = split(line, _sep);
 				//
 				//				for (size_t j = 0; j < l.size(); j++)
@@ -1219,7 +1452,7 @@ namespace gezi {
 		}
 
 		//测试文本解析
-		void ParseTextForTest(svec& lines, uint64 start)
+		void ParseTextForTest(const svec& lines, uint64 start)
 		{
 			VLOG(0) << "ParseTextForTest";
 			_featureNum = GetIdentifer().size();
@@ -1252,7 +1485,7 @@ namespace gezi {
 						[&, this](int index, string item) {
 						ParseSparseAttributes(instance, index, item);
 					});
-				} 
+				}
 				else
 				{
 					svec groupKeys;
@@ -1268,7 +1501,7 @@ namespace gezi {
 					});
 					instance.groupKey = gezi::join(groupKeys, _args.ncsep);
 				}
-			
+
 				//svec l = split(line, _sep);
 				//for (size_t j = 0; j < l.size(); j++)
 				//{
@@ -1307,7 +1540,7 @@ namespace gezi {
 		}
 
 		//1 张无忌:3.5 小甜甜:2.0  暂时没有测试 不推荐使用 尽量还是外部使用Identifer 脚本处理这些
-		void CreateInstancesFromTextFormat(svec& lines, uint64 start)
+		void CreateInstancesFromTextFormat(const svec& lines, uint64 start)
 		{
 			VLOG(0) << "CreateInstancesFromTextFormat";
 			int times = TextFormatParsedTime();
@@ -1317,15 +1550,52 @@ namespace gezi {
 				ParseTextForTest(lines, start);
 		}
 
-
-		Instances&& Parse(string dataFile, bool printInfo = false)
+		//@TODO better  如果类别是 -2, -1, 2, 3 这样会有问题  默认只是  0, 1, 2, 3
+		void CheckNumLabelsAndFix()
 		{
-			Noticer timer("ParseInputDataFile", 0);
-			_instances.name = dataFile;
-			Parse_(dataFile, printInfo);
-			Finallize();
-			return move(_instances);
+			set<int> labels;
+			bool isRegression = false;
+			int maxLabel = 1;
+			for (auto& instance : _instances)
+			{
+				int label = int(instance->label);
+				if (label != instance->label)
+				{
+					isRegression = true;
+					break;
+				}
+				if (label > maxLabel)
+				{
+					maxLabel = label;
+				}
+				labels.insert(label);
+			}
+			if (isRegression)
+			{
+				_instances.schema.numClasses = -1;
+			}
+			else
+			{
+				_instances.schema.numClasses = labels.size();
+				if (maxLabel + 1 > labels.size())
+				{
+					LOG(WARNING) << "check if you have missing label data, as maxLabel is " << maxLabel << " but labels.size() is " << labels.size() << " which should be maxLabel + 1";
+					_instances.schema.numClasses = maxLabel + 1;
+				}
+				if (labels.size() == 2 && labels.count(-1))
+				{
+					for (auto& instance : _instances)
+					{
+						if (instance->label == -1)
+						{
+							instance->label = 0;
+						}
+					}
+				}
+			}
 		}
+
+
 
 		void Clear()
 		{
@@ -1348,29 +1618,44 @@ namespace gezi {
 			return time++;
 		}
 
+		//------for malloc rank data format   #    label, qid:0  libsvm-features
+		void TryAdaptForMallocRankFormat(svec& lines)
+		{ 
+			//malloc rank需要自动解析 不带任何其他输入信息
+			if (_args.namesIdx.empty() && _args.attrsIdx.empty() 
+				&& _args.labelIdx == -1 &&
+				_args.groupsIdx.empty() && gezi::contains(lines[0], "qid:"))
+			{
+				_fileFormat = FileFormat::MallocRank;
+				_namesIdx.push_back(1);
+				//_attributesIdx.push_back(1);
+				_groupsIdx.push_back(1);
+				_labelIdx = 0;
+			}
+		}
 	protected:
-		Instances&& Parse_(string dataFile, bool printInfo = false)
+		Instances&& Parse_(string dataFile)
 		{
 			Timer timer;
-			string cacheFile = GetOutputFileName(dataFile, "cache", true);
+			//如果有cache数据 直接从cache数据load
+			string cacheFile = GetOutputFileNameWithSuffix(dataFile, "cache", true);
 			if (bfs::exists(cacheFile))
 			{
 				if (bfs::last_write_time(cacheFile) > bfs::last_write_time(dataFile))
 				{
 					VLOG(0) << "Cache file exist, reading directly from " << cacheFile << " instead reading from " << dataFile;
 					serialize_util::load(_instances, cacheFile);
-					if (printInfo)
-					{
-						PrintInfo();
-					}
 					return move(_instances);
 				}
 			}
 			vector<string> lines = read_lines_fast(dataFile, "//");
+			TryAdaptForMallocRankFormat(lines); //malloc格式数据的补丁
+
 			if (lines.empty())
 			{
 				LOG(FATAL) << "Fail to load data file! " << dataFile << " is empty!";
 			}
+
 			_instanceNum = lines.size();
 
 			if (_args.hasHeader)
@@ -1428,6 +1713,9 @@ namespace gezi {
 			case FileFormat::Text:
 				CreateInstancesFromTextFormat(lines, _hasHeader);
 				break;
+			case  FileFormat::MallocRank:
+				CreateInstancesFromMallocRankFormat(lines, _hasHeader);
+				break;
 			default:
 				LOG(WARNING) << "well not supported file format ?";
 				break;
@@ -1435,10 +1723,6 @@ namespace gezi {
 
 			PVAL_(timer.elapsed_ms(), "CreateInstances");
 
-			if (printInfo)
-			{
-				PrintInfo();
-			}
 			if (_args.cacheInstance)
 			{
 				serialize_util::save(_instances, cacheFile);
@@ -1454,15 +1738,18 @@ namespace gezi {
 					VLOG(0) << "Loading big data file slow, you may try to use --cacheInst=1 to generate cache file so next time loading will be faster";
 				}
 			}
+
 			return move(_instances);
 		}
 
 		//如果是libsvm格式 但是稠密格式数据 可能会占用较多内存 最后才会做Densify
-		void Finallize()
+		void FinallizeEachInstance()
 		{
+			VLOG(2) << "Before adjust for dense/sparse, dense count:" << _instances.DenseCount();
 #pragma omp parallel for 
 			for (uint64 i = 0; i < _instanceNum; i++)
 			{
+				//--完成名字设置
 				_instances[i]->name = join(_instances[i]->names, _args.ncsep);
 				if (startswith(_instances[i]->name, '_'))
 				{
@@ -1471,6 +1758,7 @@ namespace gezi {
 				Vector& features = _instances[i]->features;
 				features.SetLength(_featureNum);
 
+				//--尝试稠密稀疏的转换
 				if (features.IsDense())
 				{
 					if (features.keepSparse)
@@ -1493,6 +1781,17 @@ namespace gezi {
 						features.Densify(_args.sparsifyThre);
 					}
 				}
+
+			}
+			VLOG(2) << "After adjust for dense/sparse, dense count:" << _instances.DenseCount();
+		}
+		void Finallize()
+		{
+			FinallizeEachInstance();
+			CheckNumLabelsAndFix();
+			if (_instances.IsRankingInstances())
+			{
+				_instances.groups = _instances.GetGroups();
 			}
 		}
 
@@ -1502,7 +1801,7 @@ namespace gezi {
 		int _featureNum = 0;
 		bool _hasHeader = false;
 		bool _hasWeight = false;
-		FileFormat _fileFormat = FileFormat::Dense;
+		FileFormat _fileFormat = FileFormat::Unknown;
 
 		svec _firstColums;
 		svec _headerColums;

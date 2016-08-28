@@ -20,6 +20,7 @@
 #include "ScoreTracker.h"
 #include "Ensemble.h"
 #include "IStepSearch.h"
+#include "RecursiveRegressionTree.h"
 #include "Prediction/Instances/Instances.h"
 namespace gezi {
 
@@ -89,9 +90,12 @@ namespace gezi {
 		virtual void SmoothTree(RegressionTree& tree, Float smoothing)
 		{
 			AutoTimer timer("SmoothTree");
-			//if (smoothing != 0.0)
-			{//@TODO smooth
-
+			if (smoothing != 0.0)
+			{ //@FIMXE check smoothTree 在多机环境是否符合预期？ 目前没有考虑多机影响 是否Partitioning需要特殊处理? TLC里面有
+				shared_ptr<RecursiveRegressionTree> regularizer = make_shared<RecursiveRegressionTree>(tree, TreeLearner->Partitioning, 0);
+				double rootNodeOutput = regularizer->GetWeightedOutput();
+				//@TODO may be can speed up withoud resing RecursiveRegressionTree
+				regularizer->SmoothLeafOutputs(rootNodeOutput, smoothing);
 			}
 		}
 

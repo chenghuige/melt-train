@@ -14,11 +14,13 @@
 #ifndef RANKING_GBDT_ARGUMENTS_H_
 #define RANKING_GBDT_ARGUMENTS_H_
 
+#include "GbdtArguments.h"
 
 namespace gezi {
 
 struct RankingGbdtArguments : public GbdtArguments
 {
+	bool filterZeroLambdas = false;
 };
 
 }  //----end of namespace gezi

@@ -14,6 +14,8 @@
 #include "common_util.h"
 #include "Trainers/Gbdt/Gbdt.h"
 #include "Trainers/Gbdt/BinaryClassificationGbdt.h"
+#include "Trainers/Gbdt/RegressionGbdt.h"
+#include "Trainers/Gbdt/RankingGbdt.h"
 
 DECLARE_bool(calibrate);
 DECLARE_string(calibrator);
@@ -23,8 +25,11 @@ DECLARE_uint64(rs);
 DECLARE_int32(iter);
 DEFINE_int32(ntree, 100, "numTrees: Number of trees/iteraiton number");
 DECLARE_double(lr);
+DEFINE_double(lambda, 0.2, "same as lr, but notice hack for lr which will fail to set 0.001");
 DEFINE_int32(nl, 20, "numLeaves: Number of leaves maximam allowed in each regression tree");
 DEFINE_int32(mil, 10, "minInstancesInLeaf: Minimal instances in leaves allowd");
+//@TODO 需要测试一下mdepth 在并行的时候是否ok
+DEFINE_int32(mdepth, -1, "maxDepth: max depth allowed for the each tree, -1 means no depth restriction");
 DEFINE_bool(bsr, false, "bestStepRankingRegressionTrees: @TODO");
 DEFINE_double(sp, 0.1, "Sparsity level needed to use sparse feature representation, if 0.3 means be sparsify only if real data less then 30%, 0-1 the smaller more dense and faster but use more memeory");
 DEFINE_double(ff, 1, "The fraction of features (chosen randomly) to use on each iteration");
@@ -36,7 +41,7 @@ DEFINE_bool(psc, false, "Wether first randomly select a subset of features and t
 DEFINE_int32(bag, 0, "Number of trees in each bag (0 for disabling bagging)");
 DEFINE_double(bagfrac, 0.7, "Percentage of training queries used in each bag");
 //bagging 应该还是有问题。。。 关键是TrainSet的问题？ NumDocs 等等 scores等等
-DEFINE_int32(nbag, 1, "NumBags|if nbag > 1 then we actually has nbag * numtress = totalTrees  @FIXME"); 
+DEFINE_int32(nbag, 1, "NumBags|if nbag > 1 then we actually has nbag * numtress = totalTrees"); 
 DEFINE_double(nbagfrac, 0.7, "Percentage of training queries used in each bag");
 DECLARE_bool(bstrap);
 
@@ -44,11 +49,17 @@ DEFINE_double(bsfrac, 1.0, "BootStrapFraction|traditional bootstrap sampling wil
 
 DEFINE_double(entropy, 0, "entropyCoefficient|sets the entropy coefficient, which encourages the algorithm to prefer balanced splits in the tree (splits where an equal number of training documents go in each direction)");
 
+//@TODO 并行没有test smooth是否ok
+DEFINE_double(smooth, 0, "Smoothing| paramter for tree regularization, can take values from zero to one, zero means that no smoothing takes place while one means that trees are smoothed to the extent that no learning takes place at all. Smoothing essentially mixes each the output value of each leaf in the tree with the output values of its neighboring leaves. Leaves with many training documents will be modified less than leaves with few training documents. Smoothing trees is a form of regularization, which promoted generalization but may cause harm if used too aggressively");
+
 DEFINE_bool(rstart, false, "randomStart|Initialize with one random tree");
 
 DEFINE_int32(maxfs, 0, "maxFeaturesShow| max print feature num");
 
 DEFINE_int32(distributeMode, 0, "0:feature spliting, each use full feature space mem but calculating only on sub feature 1:feature spliting, each use only sub feature space  2:instance spliting");
+
+//-------------for gbdt ranking|lambdamart
+DEFINE_bool(fzl, false, "filterZeroLambdas|");
 
 namespace gezi {
 
@@ -59,13 +70,17 @@ namespace gezi {
 		_args->calibrateOutput = FLAGS_calibrate; //@TODO to Trainer deal
 		_args->calibratorName = FLAGS_calibrator;
 
-		if (!are_same(FLAGS_lr, 0.001)) //@TODO Float 判断相同 判断是否是0 另外如果用户再输入0.0001不起作用了就 不符合逻辑了
+		if (!are_same(FLAGS_lr, 0.001)) //@TODO Float 判断相同 判断是否是0 另外如果用户再输入0.001不起作用了就 不符合逻辑了
 			_args->learningRate = FLAGS_lr;
+		else
+			_args->learningRate = FLAGS_lambda;
 
 		if (FLAGS_iter != 50000) //复用LinearSVM部分定义的参数iter,其默认值是50000
 			_args->numTrees = FLAGS_iter;
 		else
 			_args->numTrees = FLAGS_ntree;
+
+		_args->maxDepth = FLAGS_mdepth;
 
 		if (FLAGS_nl < 2)
 			LOG(WARNING) << "The number of leaves must be >= 2, so use default value instead";
@@ -97,6 +112,7 @@ namespace gezi {
 		}
 
 		_args->entropyCoefficient = FLAGS_entropy;
+		_args->smoothing = FLAGS_smooth;
 
 		_args->maxBins = FLAGS_mb;
 
@@ -122,5 +138,15 @@ namespace gezi {
 	void BinaryClassificationGbdt::ParseClassificationArgs()
 	{
 		_args->maxCalibrationExamples = FLAGS_numCali;
+	}
+
+	void RegressionGbdt::ParseRegressionArgs()
+	{
+
+	}
+
+	void RankingGbdt::ParseRankingArgs()
+	{
+		_args->filterZeroLambdas = FLAGS_fzl;
 	}
 }

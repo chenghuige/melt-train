@@ -17,7 +17,7 @@
 #include "Dataset.h"
 #include "ObjectiveFunction.h"
 #include "IStepSearch.h"
-#include "BinaryClassificationGbdtArguments.h"
+#include "RegressionGbdtArguments.h"
 namespace gezi {
 
 	//GetGradientInOneQuery 如果不想用虚函数或者std::function 也可以利用模板设计模式  泛型和多态是两种思路 可以考虑不同场景怎样更合适

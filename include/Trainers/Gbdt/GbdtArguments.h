@@ -28,6 +28,8 @@ struct GbdtArguments
 	int minInstancesInLeaf = 10;
 	Float learningRate = 0.2;
 
+	int maxDepth = -1; //maxDepth: max depth allowed for the each tree
+
 	bool calibrateOutput = true; //calibrate| use calibrator to gen probability?
 	string calibratorName = "sigmoid"; //calibrator| sigmoid/platt naive pav @TODO 移动到Trainer父类处理
 

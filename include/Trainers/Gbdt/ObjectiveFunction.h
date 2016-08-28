@@ -63,6 +63,7 @@ namespace gezi {
 		//或者干脆用代码copy的代码 去掉这个内部虚函数
 		//std::function<void(int, const Fvec&)> GetGradientInOneQuery;
 	};
+
 	typedef shared_ptr<ObjectiveFunction> ObjectiveFunctionPtr;
 
 	template<typename Derived>

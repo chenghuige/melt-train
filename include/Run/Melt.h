@@ -86,6 +86,7 @@ namespace gezi {
 			SHOW_INFOS, //展示输入数据的基本信息  特征数目，样本数目，正例比例
 			CONVERT, //对输入样本文件载入然后输出要求的格式 比如 dense -> sparse
 			SPLIT_DATA, //对输入样本进行切分  比如 1:1 1:3:2 同时保持每份中正反例比例维持和原始数据一致
+			ADD_FAKE_HEADER, //只针对dense格式样本数据 添加伪造的 header 如  #name0 attr1 f0 f1 f2...,主要为了方便类似pandas的后续处理数据
 			GEN_CROSS_DATA, //输出交叉验证的文本数据文件 方便对比其它机器学习工具的实验效果
 			CHANGE_RAIO, //对输入样本进行正反例比例调整 比如 原始 1:30 调整为 1:1
 			RANDOMIZE, //对输入样本随机化处理，配合 -num > 0则只输出前num个样本 如果配合 -ci fr 或者  -ci forceRatio 那么保证比例,默认是不保证比例
@@ -130,6 +131,7 @@ namespace gezi {
 			VLOG(0) << i++ << " SHOW_FEATURES, //打印特征名";
 			VLOG(0) << i++ << " SHOW_INFOS, //展示输入数据的基本信息  特征数目，样本数目，正例比例";
 			VLOG(0) << i++ << " CONVERT, //对输入样本文件载入然后输出要求的格式 比如 dense -> sparse or to libsvm, libsvm2(label as 0 not -1), arff,vw format";
+			VLOG(0) << i++ << " ADD_FAKE_HEADER, //只针对dense格式样本数据 添加伪造的 header 如  #name0 attr1 f0 f1 f2...,主要为了方便类似pandas的后续处理数据";
 			VLOG(0) << i++ << " SPLIT_DATA, //对输入样本进行切分  比如 1:1 1:3:2 同时保持每份中正反例比例维持和原始数据一致";
 			VLOG(0) << i++ << " GEN_CROSS_DATA, //输出交叉验证的文本数据文件 方便对比其它机器学习工具的实验效果";
 			VLOG(0) << i++ << " CHANGE_RAIO //对输入样本进行正反例比例调整 比如 原始 1:30 调整为 1:1";
@@ -151,6 +153,22 @@ namespace gezi {
 			}
 			CHECK_GT(evaluators.size(), 0);
 			return evaluators;
+		}
+
+		TesterPtr GetTester(Instances& instances, PredictorPtr predictor)
+		{
+			if (_cmd.rankTest && instances.IsRankingInstances())
+			{
+				return PredictorUtils::GetRankerTester();
+			}
+			else if (_cmd.binaryClassificationTest)
+			{
+				return PredictorUtils::GetClassifierTester();
+			}
+			else
+			{
+				return PredictorUtils::GetTester(predictor);
+			}
 		}
 
 		void RunCrossValidation(Instances& instances, CrossValidationType cvType)
@@ -190,8 +208,8 @@ namespace gezi {
 			{
 				VLOG(0) << "The " << runIdx << " round";
 				RandomEngine rng = random_engine(_cmd.randSeed, runIdx * randomStep);
-				if (!_cmd.foldsSequential)
-					instances.Randomize(rng);
+				//if (!_cmd.foldsSequential) //与TLC不同 这里统一放到CVFoldCreator内部处理
+				//	instances.Randomize(rng);
 
 				ivec instanceFoldIndices = CVFoldCreator::CreateFoldIndices(instances, _cmd, rng);
 				for (int foldIdx = 0; foldIdx < _cmd.numFolds; foldIdx++)
@@ -236,10 +254,10 @@ namespace gezi {
 							if (tester == nullptr)
 							{
 #pragma  omp critical
-							{
-								tester = PredictorUtils::GetTester(predictor);
-								tester->isCrossValidationMode = true;
-							}
+								{
+									tester = GetTester(instances, predictor);
+									tester->isCrossValidationMode = true;
+								}
 							}
 							else
 							{
@@ -297,11 +315,11 @@ namespace gezi {
 				cvType = CrossValidationType::USE_SCRIPT;
 			}
 
-			//@FIXME for rank and multil class ?
-			if (TrainerFactory::CreateTrainer(_cmd.classifierName)->GetPredictionKind() != PredictionKind::BinaryClassification)
-			{ //如果不是二分类 就不走按照0，1确保比例的分割fold方式 
-				_cmd.foldsSequential = true;
-			}
+			////@FIXME for rank and multil class ?   20160528 这是错误思路 foldSequetial 是表示去掉随机性 顺序拆分
+			//if (TrainerFactory::CreateTrainer(_cmd.classifierName)->GetPredictionKind() != PredictionKind::BinaryClassification)
+			//{ //如果不是二分类 就不走按照0，1确保比例的分割fold方式 
+			//	_cmd.foldsSequential = true;
+			//}
 			//------------------------------run
 			RunCrossValidation(instances, cvType);
 		}
@@ -466,6 +484,7 @@ namespace gezi {
 				vector<Instances> parts;
 				if (_cmd.evaluateFraction > 0)
 				{
+					//@FIXME 对于RankingInstances不能这样随机划分 应该按照query随机划分
 					parts = InstancesUtil::RandomSplit(instances, _cmd.evaluateFraction, _cmd.randSeed);
 					VLOG(0) << "Split input insatnces to train and valid part with numTrainInsatnces: " << parts[0].Size()
 						<< " numValidInstances: " << parts[1].Size();
@@ -490,11 +509,11 @@ namespace gezi {
 					SetEarlyStopCheckFrequency(_cmd.earlyStopCheckFrequency).
 					SetEarlyStopRounds(_cmd.earlyStopRounds).
 					SetUseBestStage(_cmd.earlyStopUseBestStage);
-					validatingTrainer->Train(*pTrainInstances, validatingSet, evaluators);
-					if (_cmd.earlyStop)
-					{
-						write_file(validatingTrainer->BestIteration(), _cmd.resultDir + "/bestIter.txt");
-					}
+				validatingTrainer->Train(*pTrainInstances, validatingSet, evaluators);
+				if (_cmd.earlyStop)
+				{
+					write_file(validatingTrainer->BestIteration(), _cmd.resultDir + "/bestIter.txt");
+				}
 			}
 			else
 			{//--------------------------Simple Train
@@ -615,7 +634,7 @@ namespace gezi {
 			}
 			else
 			{ //默认走这里
-				auto tester = PredictorUtils::GetTester(predictor);
+				auto tester = GetTester(testInstances, predictor);
 				tester->Test(testInstances, predictor, instFile);
 			}
 			//使用Evaluator进行附加的evaluate 
@@ -692,21 +711,42 @@ namespace gezi {
 		}
 
 #define  SAVE_SHARED_PTR_ALL(obj)\
-												{\
+																{\
 		SAVE_SHARED_PTR(obj, _cmd.modelFolder); \
 		if (_cmd.modelfileXml)\
-												{\
+																{\
 		SAVE_SHARED_PTR_ASXML(obj, _cmd.modelFolder); \
-												}\
+																}\
 		if (_cmd.modelfileJson)\
-												{\
+																{\
 		SAVE_SHARED_PTR_ASJSON(obj, _cmd.modelFolder); \
-												}\
+																}\
 		if (_cmd.modelfileText)\
-												{\
+																{\
 		SAVE_SHARED_PTR_ASTEXT(obj, _cmd.modelFolder); \
-												}\
-												}
+																}\
+																}
+
+		void RunAddFakeHeader()
+		{
+			Noticer nt("Add fake header!");
+			string infile = _cmd.datafile;
+			//string suffix = normalizer->Name() + ".normed";
+			string suffix = "addheader";
+			string outfile = _cmd.outfile.empty() ? GetOutputFileNameWithSuffix(infile, suffix) : _cmd.outfile;
+			Pval(outfile);
+			////@TODO 理论上不需要解析生成instances 只需要判断出 schema信息 也就是 parser.ParseFirstLine 即可(获取到_columnTypes信息), 然后输出header 信息 + 原始数据文件信息即可
+			//Instances instances = create_instances(infile);
+			//if (instances.schema.fileFormat != FileFormat::Dense)
+			//{
+			//	LOG(WARNING) << "Not dense instances file, right now only support adding header for dense instance file, so do nothing";
+			//	return;
+			//}
+			//write(instances, outfile, true);
+
+			InstanceParser parser;
+			parser.AddFakeHeader(infile, outfile);
+		}
 
 		void RunNormalize()
 		{
@@ -718,10 +758,10 @@ namespace gezi {
 			string infile = _cmd.datafile;
 			//string suffix = normalizer->Name() + ".normed";
 			string suffix = "normed";
-			string outfile = _cmd.outfile.empty() ? GetOutputFileName(infile, suffix) : _cmd.outfile;
+			string outfile = _cmd.outfile.empty() ? GetOutputFileNameWithSuffix(infile, suffix) : _cmd.outfile;
 			Pval(outfile);
 
-			Instances instances = create_instances(_cmd.datafile);
+			Instances instances = create_instances(infile);
 
 			normalizer->RunNormalize(instances);
 
@@ -746,7 +786,7 @@ namespace gezi {
 			string infile = _cmd.datafile;
 			//string suffix = normalizer->Name() + ".normed";
 			string suffix = "normed";
-			string outfile = _cmd.outfile.empty() ? GetOutputFileName(infile, suffix) : _cmd.outfile;
+			string outfile = _cmd.outfile.empty() ? GetOutputFileNameWithSuffix(infile, suffix) : _cmd.outfile;
 			Pval(outfile);
 
 			Instances instances = create_instances(_cmd.datafile);
@@ -793,9 +833,9 @@ namespace gezi {
 			Noticer nt("FeatureStatus! You may try to use -vl 1 to print warning of possible no use features");
 			string infile = _cmd.datafile;
 			string suffix = "featurestatus";
-			string outfile = _cmd.outfile.empty() ? GetOutputFileName(infile, suffix)
+			string outfile = _cmd.outfile.empty() ? GetOutputFileNameWithSuffix(infile, suffix)
 				: _cmd.outfile;
-			string outfile2 = _cmd.outfile.empty() ? GetOutputFileName(infile, format("{}.csv", suffix), true)
+			string outfile2 = _cmd.outfile.empty() ? GetOutputFileNameWithSuffix(infile, format("{}.csv", suffix), true)
 				: format("{}.csv", _cmd.outfile);
 			Instances instances = create_instances(_cmd.datafile);
 			FeatureStatus::GenMeanVarInfo(instances, outfile, outfile2, _cmd.featureName);
@@ -804,16 +844,29 @@ namespace gezi {
 		//输入文件转换后输出
 		void RunConvert()
 		{
-			FileFormat defaultFileFormat = _cmd.inputFileFormat == kFormatNames[FileFormat::LibSVM] ? FileFormat::Unknown : FileFormat::LibSVM;
-			FileFormat fileFormat = get_value(kFormats, _cmd.outputFileFormat, defaultFileFormat);
 			Instances instances = create_instances(_cmd.datafile);
-			if (fileFormat == FileFormat::Unknown)
+			//FileFormat defaultFileFormat = _cmd.inputFileFormat == kFormatNames[FileFormat::LibSVM] ? FileFormat::Unknown : FileFormat::LibSVM; 
+			FileFormat defaultFileFormat = FileFormat::Unknown;
+			FileFormat fileFormat = get_value(kFormats, _cmd.outputFileFormat, defaultFileFormat);
+
+			//读入instances 再写入文件,再交叉验证会有一定的diff，但是大致一样，是写入 读入的一些误差
+			//gezi:~/ work / keywords / 0_filter_simid$ getline.py feature.txt 74
+			//	_20131210, 1702593154025809879_掌机	0	1	1	3	0	0	0	4.0	0.0 - 1.0	2	309.959167	1.204925	0.31242	0.164063	0.000000	0.000000	0.000000	3.030011	0.000000	0.000000	0.000000	0.000000	0.000000	0.000000	0.000000	0.000000	0.000000	0.000000	0.000000	0.000000	0.000000	0.000000	0.000000	0.000000	0.000000	3.164810	0.000000	0.000000	0.000000	0.000000	0.000000	0.000000	0.000000	0.000000	0.000000	0.000000	0.000000	0.000000	0.000000	0.000000	0.000000	0.000000	0.000000	0.000000	0.000000	0.000000	3.164810	0.000000	0.000000	0.000000	0.000000	0.000000	0.000000	0.000000	0.000000	0.000000	0	0	0	0	0	1	0
+			//gezi : ~/ work / keywords / 0_filter_simid$ getline.py feature.txt 74 > test.txt
+			//gezi : ~/ work / keywords / 0_filter_simid$ mlt test.txt - c convert
+
+			//gezi : ~/ work / keywords / 0_filter_simid$ cat test.unknown
+			//	_20131210, 1702593154025809879_掌机	0	1	1	3	0	0	0	4	0 - 1	2	309.959	1.20493	0.31242	0.164063	0	0	0	3.03001	0	0	0    3.16481	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	3.16481	0	0	0	0	0	0    0
+			//确认是最终写文件过程丢失一些精度  ofs.precision(std::numeric_limits<double>::digits10 + 1);//instances_util.h  可以解决 @TODO 其它地方有遇到类似问题没注意吗
+
+			if (fileFormat == instances.schema.fileFormat)
 			{
-				LOG(WARNING) << "Not specified ouput file format";
+				LOG(WARNING) << "Specified ouput file format is the same as input, so just write instances directly to another file, should be like as <cp file1 file2>";
 			}
-			else if (fileFormat == instances.schema.fileFormat)
+			else if (fileFormat == FileFormat::Unknown)
 			{
-				LOG(WARNING) << "Specified ouput file format is the same as input";
+				LOG(WARNING) << "Output fileFormat unknown, so just write instances directly to another file, should be like as <cp file1 file2>";
+				fileFormat = instances.schema.fileFormat;
 			}
 			//else
 			{
@@ -821,7 +874,7 @@ namespace gezi {
 				if (outfile.empty())
 				{
 					string suffix = kFormatNames[fileFormat];
-					outfile = GetOutputFileName(_cmd.datafile, suffix, true);
+					outfile = GetOutputFileNameWithSuffix(_cmd.datafile, suffix, true);
 					if (outfile == _cmd.datafile)
 					{
 						outfile += ".bak";
@@ -832,6 +885,31 @@ namespace gezi {
 		}
 
 		void SplitDataByLabel(const Instances& instances)
+		{
+			if (instances.NumClasses() <= 1)
+			{
+				LOG(WARNING) << "Could not divide data file by label, do nothing,  numClasses:" << instances.NumClasses();
+				return;
+			}
+			vector<Instances> instancesVec(instances.NumClasses(), Instances(instances.schema));
+			for (InstancePtr instance : instances)
+			{
+				instancesVec[int(instance->label)].push_back(instance);
+			}
+			for (size_t i = 0; i < instancesVec.size(); i++)
+			{
+				if (instancesVec[i].empty())
+				{
+					LOG(WARNING) << "No data for label " << i;
+					continue;
+				}
+				string outfileName = GetOutputFileNameWithSuffix(_cmd.datafile, format("label{}", i));
+				write(instancesVec[i], outfileName);
+			}
+		}
+
+		//废弃 过去只考虑 二分类的时候适用 现在统一 分割为  .label0  .label1 .label2...
+		void SplitBinaryClassificationInstancesByLabel(const Instances& instances)
 		{
 			Instances posInstances(instances.schema);
 			Instances negInstances(instances.schema);
@@ -845,12 +923,12 @@ namespace gezi {
 					negInstances.push_back(instance);
 			}
 			{
-				string outfile = GetOutputFileName(_cmd.datafile, "pos");
+				string outfile = GetOutputFileNameWithSuffix(_cmd.datafile, "pos");
 				Pval(outfile);
 				write(posInstances, outfile);
 			}
 			{
-				string outfile = GetOutputFileName(_cmd.datafile, "neg");
+				string outfile = GetOutputFileNameWithSuffix(_cmd.datafile, "neg");
 				Pval(outfile);
 				write(negInstances, outfile, fileFormat);
 			}
@@ -861,7 +939,8 @@ namespace gezi {
 			vector<Instances> parts;
 			if (_cmd.commandInput.empty())
 			{
-				VLOG(0) << "No input assume to split by label >0 or <=0, notice only for binary classificaion purpose";
+				//VLOG(0) << "No input assume to split by label >0 or <=0, notice only for binary classificaion purpose";
+				VLOG(0) << "No input assume to split by label";
 				SplitDataByLabel(instances);
 				return parts;
 			}
@@ -905,8 +984,6 @@ namespace gezi {
 			Pval(_cmd.numFolds);
 			int partNum = segs.size();
 			RandomEngine rng = random_engine(_cmd.randSeed);
-			if (!_cmd.foldsSequential)
-				instances.Randomize(rng);
 			ivec instanceFoldIndices = CVFoldCreator::CreateFoldIndices(instances, _cmd, rng);
 			parts.resize(partNum);
 
@@ -946,12 +1023,12 @@ namespace gezi {
 				for (int i = 0; i < partNum; i++)
 				{
 					string suffix = STR(i) + "_" + STR(partNum);
-					string outfile = GetOutputFileName(infile, suffix);
+					string outfile = GetOutputFileNameWithSuffix(infile, suffix);
 					{
 						string suffix = kFormatSuffixes[fileFormat];
 						if (suffix != "txt")
 						{
-							outfile = GetOutputFileName(outfile, suffix, true);
+							outfile = GetOutputFileNameWithSuffix(outfile, suffix, true);
 						}
 					}
 					Pval(outfile);
@@ -974,8 +1051,8 @@ namespace gezi {
 			{
 				VLOG(0) << "The " << runIdx << " round";
 				RandomEngine rng = random_engine(_cmd.randSeed, runIdx * randomStep);
-				if (!_cmd.foldsSequential)
-					instances.Randomize(rng);
+				//if (!_cmd.foldsSequential)
+				//	instances.Randomize(rng);
 
 				ivec instanceFoldIndices = CVFoldCreator::CreateFoldIndices(instances, _cmd, rng);
 				for (int foldIdx = 0; foldIdx < _cmd.numFolds; foldIdx++)
@@ -1026,7 +1103,7 @@ namespace gezi {
 
 			string infile = _cmd.datafile;
 			string suffix = replace(_cmd.commandInput, ':', '-');
-			string outfile = GetOutputFileName(infile, suffix);
+			string outfile = GetOutputFileNameWithSuffix(infile, suffix);
 			FileFormat fileFormat = get_value(kFormats, _cmd.outputFileFormat, FileFormat::Unknown);
 			if (posAdjustedNum == posNum)
 			{
@@ -1086,7 +1163,7 @@ namespace gezi {
 			{
 				suffix = format("{}.{}", suffix, _cmd.num);
 			}
-			string outfile = _cmd.outfile.empty() ? GetOutputFileName(_cmd.datafile, suffix) : _cmd.outfile;
+			string outfile = _cmd.outfile.empty() ? GetOutputFileNameWithSuffix(_cmd.datafile, suffix) : _cmd.outfile;
 			Pval(outfile);
 
 			if (_cmd.num > 0 && _cmd.num < instances.Count())
@@ -1216,7 +1293,7 @@ namespace gezi {
 		void RunExperiments()
 		{
 			Pval(omp_get_num_procs());
-			FLAGS_nt = gezi::set_num_threads(_cmd.numThreads);
+			FLAGS_nt = gezi::set_num_threads(_cmd.numThreads, 0);
 			Pval(gezi::get_num_threads());
 			//解析命令模式
 			string commandStr = arg(_cmd.command);
@@ -1272,6 +1349,9 @@ namespace gezi {
 				break;
 			case RunType::CONVERT:
 				RunConvert();
+				break;
+			case RunType::ADD_FAKE_HEADER:
+				RunAddFakeHeader();
 				break;
 			case RunType::SPLIT_DATA:
 				RunSplitData();
@@ -1347,6 +1427,7 @@ namespace gezi {
 			{ "showinfos", RunType::SHOW_INFOS },
 			{ "si", RunType::SHOW_INFOS },
 			{ "convert", RunType::CONVERT },
+			{ "addheader", RunType::ADD_FAKE_HEADER },
 			{ "splitdata", RunType::SPLIT_DATA },
 			{ "sd", RunType::SPLIT_DATA },
 			{ "gencrossdata", RunType::GEN_CROSS_DATA },

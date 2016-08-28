@@ -28,7 +28,9 @@ DEFINE_string(incl, "", "use excl will exlude those specified, use incl will onl
 
 DEFINE_int32(libsvmSI, 1, "libsvmStartIndex,For non libsvm sparse input file the startIndex is 0, for default libsvm startIndex is 1, here will also allow 0 start libsvm");
 //used in instances_util for converting instances
-DEFINE_int32(libsvmNL, -1, "libsvmNegLabel|For libsvm default neg label is -1 but you can change to 0 by setting this");
+DEFINE_int32(libsvmNL, 0, "libsvmNegLabel|For libsvm default neg label is 0 but you can change to -1 by setting this, notice xgboost will use 0 also");
+
+DEFINE_bool(mallocDense, false, "force malloc dense format");
 
 DEFINE_bool(sparse, false, "keep sparse");
 DEFINE_bool(dense, false, "keep dense");

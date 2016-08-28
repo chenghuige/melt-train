@@ -118,6 +118,7 @@
     <ClInclude Include="include\Trainers\Gbdt\IGradientAdjuster.h" />
     <ClInclude Include="include\Trainers\Gbdt\InstancesToDataset.h" />
     <ClInclude Include="include\Trainers\Gbdt\IStepSearch.h" />
+    <ClInclude Include="include\Trainers\Gbdt\LambdaRankObjectiveFunction.h" />
     <ClInclude Include="include\Trainers\Gbdt\LeastSquaresRegressionTreeLearner.h" />
     <ClInclude Include="include\Trainers\Gbdt\MappedObjectPool.h" />
     <ClInclude Include="include\Trainers\Gbdt\ObjectiveFunction.h" />
@@ -125,11 +126,15 @@
     <ClInclude Include="include\Trainers\Gbdt\ProbabilityFunctions.h" />
     <ClInclude Include="include\Trainers\Gbdt\QueryWeightsBestResressionStepGradientWrapper.h" />
     <ClInclude Include="include\Trainers\Gbdt\QueryWeightsGradientWrapper.h" />
+    <ClInclude Include="include\Trainers\Gbdt\RankingGbdt.h" />
     <ClInclude Include="include\Trainers\Gbdt\RankingGbdtArguments.h" />
+    <ClInclude Include="include\Trainers\Gbdt\RankingObjectiveFunction.h" />
+    <ClInclude Include="include\Trainers\Gbdt\RecursiveRegressionTree.h" />
     <ClInclude Include="include\Trainers\Gbdt\RegressionGbdt.h" />
     <ClInclude Include="include\Trainers\Gbdt\RegressionGbdtArguments.h" />
     <ClInclude Include="include\Trainers\Gbdt\RegressionObjectiveFunction.h" />
     <ClInclude Include="include\Trainers\Gbdt\RegressionTree.h" />
+    <ClInclude Include="include\Trainers\Gbdt\RegressionTreeNodeDocuments.h" />
     <ClInclude Include="include\Trainers\Gbdt\ScoreTracker.h" />
     <ClInclude Include="include\Trainers\Gbdt\TreeLearner.h" />
     <ClInclude Include="include\Trainers\Gbdt\TrivialGradientWrapper.h" />

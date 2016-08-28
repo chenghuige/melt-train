@@ -20,7 +20,7 @@ import os
 import tensorflow as tf 
 import nowarning
 from libcalibrator import CalibratorFactory 
-import libtrate
+#import libtrate
 
 import numpy as np
 
@@ -69,7 +69,11 @@ flags.DEFINE_string('summary_path', '/home/gezi/tmp/tensorflow_logs', 'currently
 
 flags.DEFINE_boolean('calibrate', True, 'calibrate the result or not')
 
-flags.DEFINE_boolean('calibrate_trainset', True, 'calibrate by trainset or testset')
+flags.DEFINE_boolean('calibrate_trainset', False, 'calibrate by trainset or testset')
+
+flags.DEFINE_boolean('auto_stop', True, 'auto stop iteration and store the best result')
+flags.DEFINE_float('min_improve', 0.001 , 'stop when improve less then min_improve')
+
 
 trainset_file = FLAGS.train
 testset_file = FLAGS.test
@@ -79,7 +83,6 @@ num_epochs = FLAGS.num_epochs
 batch_size = FLAGS.batch_size 
 
 method = FLAGS.method
-
 
 
 import cPickle
@@ -98,10 +101,8 @@ else:
 
 cout = open('cout.txt', 'w')
 
-print 'batch_size:', batch_size, ' learning_rate:', learning_rate, ' num_epochs:', num_epochs
 
-#from algos import Mlp, MlpOptions, LogisticRegression, LogisticRegressionOptions
-from algos import *
+from algo import *
 
 class AlgosFactory(object):
     def gen_algo(self, method):
@@ -127,6 +128,12 @@ class AlgosFactory(object):
         elif method == 'cnn':
             option = CnnOptions()
             return Cnn(option)
+        elif method == 'rnn':
+            option = RnnOptions()
+            return Rnn(option)
+        elif method == 'charcnn':
+            option = CharCnnOptions()
+            return CharCnn(option)
         else:
             print method, ' is not supported right now, will use default method mlp'
             method = 'mlp'
@@ -135,6 +142,8 @@ class AlgosFactory(object):
 class BinaryClassifier(object):
     def __init__(self):
         self.calibrator = CalibratorFactory.CreateCalibrator('sigmoid')
+        self.auc = 0
+
     def gen_algo(self, method):
         self.method = method
         return AlgosFactory().gen_algo(method)
@@ -149,10 +158,18 @@ class BinaryClassifier(object):
 
     def build_graph(self, algo, trainer):
         #with tf.device('/cpu:0'):
-        #py_x, self.weight = algo.forward(trainer)
+        
         py_x = algo.forward(trainer)
+        #py_x, l2 = algo.forward(trainer)
+
+
         Y = trainer.Y
         cost = tf.reduce_sum(tf.nn.sigmoid_cross_entropy_with_logits(py_x, Y))
+        
+        # if hasattr(algo, 'l2'):
+        #     cost += 0.0001 * algo.l2
+        #cost += 0.1 * l2 
+
         predict_op = tf.nn.sigmoid(py_x) 
         evaluate_op = None
         if FLAGS.use_auc_op:
@@ -186,12 +203,15 @@ class BinaryClassifier(object):
         self.train_op = train_op
         return cost, train_op, predict_op, evaluate_op
         
-    def calibrate(self, trY, train_predicts):
-        for i in xrange(len(train_predicts)):
-            cout.write('{}\t{}\n'.format(int(trY[i][0] > 0), float(train_predicts[i][0])))
-            self.calibrator.ProcessTrainingExample(float(train_predicts[i][0]), bool(trY[i][0] > 0), 1.0)
+    def calibrate(self, trY, predicts):
+        for i in xrange(len(predicts)):
+            cout.write('{}\t{}\n'.format(int(trY[i][0] > 0), float(predicts[i][0])))
+            self.calibrator.ProcessTrainingExample(float(predicts[i][0]), bool(trY[i][0] > 0), 1.0)
 
     def train(self, trainset_file, testset_file, method, num_epochs, learning_rate, model_path):
+        print 'batch_size:', batch_size, ' learning_rate:', learning_rate, ' num_epochs:', num_epochs
+        print 'method:',  method
+
         trainset = melt.load_dataset(trainset_file)
         print "finish loading train set ", trainset_file
         self.num_features = trainset.num_features
@@ -234,7 +254,7 @@ class BinaryClassifier(object):
             merged_summary_op = tf.merge_all_summaries()
             summary_writer = tf.train.SummaryWriter(FLAGS.summary_path, self.session.graph_def)
         
-        os.system('rm -rf ' + FLAGS.model)
+        #os.system('rm -rf ' + FLAGS.model)
         os.system('mkdir -p ' + FLAGS.model)
        
         self.save_info(model_path)
@@ -244,7 +264,11 @@ class BinaryClassifier(object):
                 trainset = melt.load_dataset(trainset_file)
 
             self.train_(trainset)
-            self.test_(testset, epoch = epoch)
+            need_stop = self.test_(testset, epoch = epoch)
+
+            if need_stop:
+                print 'need stop as improve is smaller then %f'%FLAGS.min_improve
+                break
 
             #print weight
             #@FIXME 
@@ -253,7 +277,10 @@ class BinaryClassifier(object):
 
         self.save_model(model_path)
         if FLAGS.calibrate:
-            self.calibrate_(trainset) #@TODO may be test set is right?
+            dataset = trainset
+            if not FLAGS.calibrate_trainset:
+                dataset = testset
+            self.calibrate_(dataset) #@TODO may be test set is right?
             CalibratorFactory.Save(self.calibrator, model_path + '/calibrator.bin')
             #self.calibrator.Save(model_path + '/calibrator.bin')
             self.calibrator.SaveText(model_path + '/calibrator.txt')
@@ -280,7 +307,7 @@ class BinaryClassifier(object):
 
     def test_(self, testset, epoch = 0):
         assert(testset.num_features == self.num_features)   
-        auc_ = 0.0
+        auc_ = 0.5
         if self.evaluate_op:
             teX, teY = testset.full_batch()
             predicts, auc_, cost_ = self.session.run([self.predict_op, self.evaluate_op, self.cost], feed_dict = melt.gen_feed_dict(self.trainer, self.algo, teX, teY, test_mode = True))
@@ -301,14 +328,21 @@ class BinaryClassifier(object):
 
             predicts = np.array(predicts)
 
-            #print teY
-            #print predicts
-            print np.array(zip(teY, predicts))
+            #print np.array(zip(teY, predicts))
             #print len(teY), len(predicts)
             auc_ = auc(teY, predicts)
-            #auc_ = 0.5
-        #predicts, auc_, cost_, weight = self.session.run([predict_op, evaluate_op, cost, self.weight], feed_dict = trainer.gen_feed_dict(teX, teY))
+
         print epoch, ' auc:', auc_,'cost:', cost_ / len(teY)
+
+        need_stop = False
+        if FLAGS.auto_stop and (auc_ - self.auc) < FLAGS.min_improve:
+            need_stop = True 
+
+        self.auc = auc_
+
+        return need_stop
+            
+
 
     def calibrate_(self, dataset):
         num_instances = dataset.num_instances()
@@ -380,20 +414,29 @@ class BinaryClassifier(object):
     def test(self, testset_file):
         testset = melt.load_dataset(testset_file)
         print "finish loading test set ", testset_file
-        test_(testSet)
+        self.test_(testset)
         
+
     def predict(self, feature_vecs):
         if type(feature_vecs) != list:
             feature_vecs = [feature_vecs]
-        spf = melt.sparse_vectors2sparse_features(feature_vecs)
-        predicts = self.session.run([self.predict_op], feed_dict=melt.gen_feed_dict(self.trainer, self.algo, spf, test_mode = True))
+
+        trX = None
+        if self.trainer.type == 'sparse':
+            trX = melt.sparse_vectors2sparse_features(feature_vecs)
+        else: #dense
+            trX = melt.dense_vectors2features(feature_vecs, self.trainer.index_only)
+
+        predicts = self.session.run([self.predict_op], feed_dict=melt.gen_feed_dict(self.trainer, self.algo, trX, test_mode = True))
         return predicts
         
     def predict_one(self, feature):
         feature_vecs = [feature]
-        return (self.predict(feature_vecs))[0][0][0]
+        score = (self.predict(feature_vecs))[0][0][0]
+        return score
     
-    def Predict(self, feature):
+    def Predict(self, feature, index_only = False):
+        #print self.predict_one(libtrate.Vector('24:0.153846,69:0.115385,342:0.666667,354:0.5,409:0.8,420:0.333333,1090:1,1127:0.333333,1241:1,1296:1,1645:0.333333,2058:0.333333,2217:0.333333,6012:0.5,6613:1,6887:1,7350:0.5,9523:0.25,9681:0.25,11030:1,16785:1,21710:0.5,22304:0.5,24282:1,28173:0.25,32809:1,32825:1,51361:1,52573:0.5,52876:1,54153:1,64670:1,95292:1,96030:1,120200:1,213355:1,228161:1,520301:1,797757:1,1191766:1,1263784:1,1263785:1,1263791:1,1263793:1,1263794:1,1263797:1,1263801:1,1263805:1,1263806:1,1263809:1'))
         return self.predict_one(feature)
     
     def Load(self, model_path):
@@ -406,10 +449,14 @@ def predict(classifer, file):
         label = l[1]
         feature_str = '\t'.join(l[3:])
         #print label, ' # ' , feature_str
-        fe = libtrate.Vector(feature_str)
+        
+        #fe = libtrate.Vector(feature_str)
+        
+        #print fe.str()
         #print fe.indices.size()
-        score = classifer.Predict(fe)
-        print label,' ', score
+        
+        #score = classifer.Predict(fe)
+        #print label,' ', score
 
 def main():
     classifer = BinaryClassifier()

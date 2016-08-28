@@ -21,6 +21,7 @@
 DECLARE_int32(distributeMode); //@TODO
 namespace gezi {
 
+	//Not is a..., here because online will use a partiaion of regression tree, so..
 	class RegressionTree : public OnlineRegressionTree
 	{
 	protected:
@@ -56,6 +57,7 @@ namespace gezi {
 			_gtChild.resize(maxLeaves - 1);
 			_leafValue.resize(maxLeaves);
 			_parent.resize(maxLeaves);
+			_depth.resize(maxLeaves, 0);
 		}
 
 		void Print()
@@ -174,11 +176,11 @@ namespace gezi {
 		{
 			if (NumLeaves == 1)
 			{
-				return ivec(1, 0);
+				return ivec({ 0 });
 			}
 			if (node < 0)
 			{
-				return ivec(~node, 1);
+				return ivec({ ~node });
 			}
 
 			//@TODO try cpplinq concatenate
@@ -271,6 +273,14 @@ namespace gezi {
 			_gtChild[indexOfNewInternal] = ~NumLeaves;
 			_leafValue[NumLeaves] = GTValue;
 			_parent[NumLeaves] = ~indexOfNewInternal;
+
+			_depth[leaf] += 1;
+			_depth[NumLeaves] = _depth[leaf];
+			if (_depth[leaf] > _maxDepth)
+			{
+				_maxDepth = _depth[leaf];
+			}
+
 			if (LTEValue > _maxOutput)
 			{
 				_maxOutput = LTEValue;
@@ -314,8 +324,43 @@ namespace gezi {
 			return NumLeaves - 1;
 		}
 
+		int Depth(int node = 0) const 
+		{
+			if (node >= 0)
+			{
+				return 1 + std::max(Depth(_lteChild[node]), Depth(_gtChild[node]));
+			}
+			else
+			{
+				return 0;
+			}
+		}
+
+		int MaxDepth() const
+		{
+			return _maxDepth;
+		}
+		
+		int GetDepth(int node) const
+		{
+			return _depth[node];
+		}
+
+		const ivec& GetDepthVec() const
+		{
+			return _depth;
+		}
+
+		void UpdateOutputWithDelta(int leafIndex, double delta)
+		{
+			_leafValue[leafIndex] += delta;
+		}
+
 	private:
-		ivec _parent;
+		ivec _parent; //每个叶子节点对应的parent index
+		
+		ivec _depth; //每个叶子节点对应的树的高度
+		int _maxDepth = 0;
 	};
 
 }  //----end of namespace gezi

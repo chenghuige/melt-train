@@ -1,63 +1,63 @@
 /**
  *  ==============================================================================
  *
- *          \file   RegressionGbdt.h
+ *          \file   RankingGbdt.h
  *
  *        \author   chenghuige
  *
- *          \date   2015-05-15 14:57:15.605539
+ *          \date   2016-06-19 17:19:59.671134
  *
  *  \Description:
  *  ==============================================================================
  */
 
-#ifndef REGRESSION_GBDT_H_
-#define REGRESSION_GBDT_H_
+#ifndef GEZI_RANKING_GBDT_H_
+#define GEZI_RANKING_GBDT_H_
 
 #include "common_util.h"
 #include "Gbdt.h"
-#include "RegressionGbdtArguments.h"
-#include "RegressionObjectiveFunction.h"
+#include "RankingGbdtArguments.h"
+#include "LambdaRankObjectiveFunction.h"
 namespace gezi {
 
-	class RegressionGbdt : public Gbdt
+	class RankingGbdt : public Gbdt
 	{
 	public:
 		Fvec* TrainSetLabels;
 
-		RegressionGbdt()
+		RankingGbdt()
 		{
 
 		}
 
 		virtual PredictionKind GetPredictionKind() override
 		{
-			return PredictionKind::Regression;
+			return PredictionKind::Ranking;
 		}
 
 		virtual LossKind GetLossKind() override
 		{
-			return LossKind::Squared;
+			return LossKind::Squared; //@TODO
 		}
 
 		virtual PredictorPtr CreatePredictor(vector<OnlineRegressionTree>& trees) override
 		{
-			auto predictor = make_shared<GbdtRegressionPredictor>(trees);
+			auto predictor = make_shared<GbdtRankingPredictor>(trees);
 			return predictor;
 		}
 
 		virtual void ParseArgs() override
 		{
 			Gbdt::ParseArgs();
-			_args = static_cast<RegressionGbdtArguments*>(Gbdt::_args.get());
-			ParseRegressionArgs();
+			_args = static_cast<RankingGbdtArguments*>(Gbdt::_args.get());
+			ParseRankingArgs();
 		}
 
-		void ParseRegressionArgs();
+		void ParseRankingArgs();
 
 		virtual void Finalize(Instances& instances) override
 		{
-		
+
 		}
 
 		virtual void PrepareLabels() override
@@ -67,13 +67,13 @@ namespace gezi {
 
 		virtual GbdtArgumentsPtr CreateArguments() override
 		{
-			return make_shared<RegressionGbdtArguments>();
+			return make_shared<RankingGbdtArguments>();
 		}
 
 		virtual ObjectiveFunctionPtr ConstructObjFunc() override
 		{
 			/*return make_shared<RegressionObjectiveFunction>(TrainSet, *TrainSetLabels, *(((RegressionGbdtArguments*)(_args.get()))));*/
-			return make_shared<RegressionObjectiveFunction>(TrainSet, *TrainSetLabels, *_args);
+			return make_shared<LambdaRankObjectiveFunction>(TrainSet, *TrainSetLabels, *_args);
 		}
 
 		//virtual void InitializeTests() override
@@ -81,10 +81,11 @@ namespace gezi {
 
 		//}
 	private:
-		RegressionGbdtArguments* _args = NULL;
+		RankingGbdtArguments* _args = NULL;
 	};
 
 
 }  //----end of namespace gezi
 
-#endif  //----end of REGRESSION_GBDT_H_
+
+#endif  //----end of GEZI_RANKING_GBDT_H_

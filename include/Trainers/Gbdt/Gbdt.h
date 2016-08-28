@@ -100,11 +100,17 @@ namespace gezi {
 		virtual string GetParam() override
 		{
 			stringstream ss;
+			CHECK(_args != nullptr);
 			ss << "numTrees:" << _args->numTrees << " "
 				<< "numLeaves:" << _args->numLeaves << " "
 				<< "minInstancesInLeaf:" << _args->minInstancesInLeaf << " "
 				<< "learningRate:" << _args->learningRate << " "
-				<< "featureFraction:" << _args->featureFraction;
+				<< "maxDepth:" << _args->maxDepth << " "
+				<< "entropy:" << _args->entropyCoefficient << " "
+				<< "smoothing:" << _args->smoothing << " "
+				<< "featureFraction:" << _args->featureFraction << " "
+				<< "bag:" << _args->baggingSize << " "
+				<< "bagTrainFraction:" << _args->baggingTrainFraction;
 			return ss.str();
 		}
 
@@ -237,6 +243,9 @@ namespace gezi {
 				{
 					_ensemble.Back().Print(TrainSet.Features);
 				}
+				VLOG(1) << "Tree: " << _ensemble.NumTrees() << " Leaves: " << _ensemble.Back().NumLeaves << " Depth: "
+					<< _ensemble.Back().MaxDepth();
+					//<< " " << _ensemble.Back().Depth();
 			}
 			_optimizationAlgorithm->FinalizeLearning(GetBestIteration());
 		}
@@ -254,13 +263,14 @@ namespace gezi {
 		virtual void Train(Instances& instances) override
 		{
 			VLOG(5) << "Train in gbdt";
+			ParseArgs();
+			VLOG(0) << "TrainParam: [" << GetParam() << " ]" << endl;
 			InnerTrain(instances);
 			Finalize(instances);
 		}
 
 		virtual void InnerTrain(Instances& instances) override
 		{
-			ParseArgs();
 			InputInstances = &instances;
 			if (_args->numBags == 1)
 			{
@@ -330,7 +340,9 @@ namespace gezi {
 		virtual TreeLearnerPtr ConstructTreeLearner()
 		{
 			PVAL(AreTargetsWeighted());
-			return make_shared<LeastSquaresRegressionTreeLearner>(TrainSet, _args->numLeaves, _args->minInstancesInLeaf, _args->entropyCoefficient,
+			return make_shared<LeastSquaresRegressionTreeLearner>(TrainSet,
+				_args->numLeaves, _args->minInstancesInLeaf, _args->maxDepth, 
+				_args->entropyCoefficient,
 				_args->featureFirstUsePenalty, _args->featureReusePenalty, _args->softmaxTemperature, _args->histogramPoolSize,
 				_args->randSeed, _args->splitFraction, _args->preSplitCheck,
 				_args->filterZeroLambdas, _args->allowDummyRootSplits, _args->gainConfidenceLevel,
@@ -506,7 +518,7 @@ namespace gezi {
 
 		virtual GbdtArgumentsPtr CreateArguments() = 0;
 	protected:
-		GbdtArgumentsPtr _args;
+		GbdtArgumentsPtr _args = nullptr;
 
 		Ensemble _ensemble;
 		OptimizationAlgorithmPtr _optimizationAlgorithm = nullptr;
