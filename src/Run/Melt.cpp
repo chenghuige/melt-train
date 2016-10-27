@@ -40,14 +40,15 @@ DEFINE_int32(checkFreq, 1, "earlyStopCheckFrequency| do early stop check every c
 DEFINE_int32(stopRounds, 10, "earlyStopRounds| will stop after no performance gain in stopRounds, for 1 will stop once performance will decrease");
 DEFINE_bool(useBestStage, false, "If setting useBestStage will return to best stage state for model");
 
-DEFINE_string(m, "model", "modelFolder");
+DEFINE_string(m, "model", "modelFolder/or modelPath");
+DEFINE_string(mn, "modelName", "for test mode, if set modelName, also means model is modelPath");
 DEFINE_bool(mcustom, false, "model using custom/handwrite save and load now only gbdt support");
 DEFINE_bool(mf, false, " modelfile: Gen model file? (for TrainTest)");
 DEFINE_bool(mc, false, " modelfileCode: Gen model file to save in C++ code £¿ (for Train or TrainTest)");
 DEFINE_string(codeType, "cpp", "Which language for modelfileCode ? default is cpp->model.cpp, or c->model.c or py for python -> model.py, php -> mode.php");
-DEFINE_bool(mt, false, "modelfileText:  Gen model file to save in text format ? (for Train or TrainTest");
-DEFINE_bool(mxml, false, "modelfileXml:  Gen model file to save in xml format ? (for Train or TrainTest");
-DEFINE_bool(mjson, false, "modelfileJson:  Gen model file to save in json format ? (for Train or TrainTest");
+DEFINE_bool(mt, false, "modelfileText:  Gen model file to save in text format ? (for Train or TrainTest) | in test mode, mt=true means loading text format model");
+DEFINE_bool(mxml, false, "modelfileXml:  Gen model file to save in xml format ? (for Train or TrainTest)");
+DEFINE_bool(mjson, false, "modelfileJson:  Gen model file to save in json format ? (for Train or TrainTest)");
 DEFINE_bool(mfeature, true, "modelFeatureInfo: Gen model featureInfo file? which usually means feature gain store in model.featureInfo");
 DEFINE_bool(snt, false, "saveNormalizerText: wether save normalizer as text/xml/json");
 DEFINE_bool(sct, false, "saveCalibratorText: wether save calibrator as text/xml/json");
@@ -85,89 +86,90 @@ DEFINE_bool(fast, false, "fast mode, will try fastest training, like calibrate =
 
 
 namespace gezi {
-	void Melt::ParseArguments()
-	{
-		_cmd.command = FLAGS_c;
-		_cmd.commandInput = FLAGS_ci;
-		_cmd.classifierName = FLAGS_cl;
-		_cmd.classifierSettings = FLAGS_cls;
-		_cmd.datafile = FLAGS_i;
-		_cmd.outfile = FLAGS_o;
-		_cmd.outDir = FLAGS_o;
-		_cmd.saveOutputFile = FLAGS_sof;
-		_cmd.testDatafile = FLAGS_test;
-		_cmd.validationDatafile = FLAGS_valid;
-		_cmd.modelFolder = FLAGS_m;
-		_cmd.useCustomModel = FLAGS_mcustom;
-		_cmd.modelfile = FLAGS_mf;
-		_cmd.modelfileCode = FLAGS_mc;
-		_cmd.codeType = FLAGS_codeType;
-		_cmd.modelfileText = FLAGS_mt;
-		_cmd.modelfileXml = FLAGS_mxml;
-		_cmd.modelfileJson = FLAGS_mjson;
-		_cmd.modelfileFeature = FLAGS_mfeature;
+  void Melt::ParseArguments()
+  {
+    _cmd.command = FLAGS_c;
+    _cmd.commandInput = FLAGS_ci;
+    _cmd.classifierName = FLAGS_cl;
+    _cmd.classifierSettings = FLAGS_cls;
+    _cmd.datafile = FLAGS_i;
+    _cmd.outfile = FLAGS_o;
+    _cmd.outDir = FLAGS_o;
+    _cmd.saveOutputFile = FLAGS_sof;
+    _cmd.testDatafile = FLAGS_test;
+    _cmd.validationDatafile = FLAGS_valid;
+    _cmd.modelFolder = FLAGS_m;
+    _cmd.modelName = FLAGS_mn;
+    _cmd.useCustomModel = FLAGS_mcustom;
+    _cmd.modelfile = FLAGS_mf;
+    _cmd.modelfileCode = FLAGS_mc;
+    _cmd.codeType = FLAGS_codeType;
+    _cmd.modelfileText = FLAGS_mt;
+    _cmd.modelfileXml = FLAGS_mxml;
+    _cmd.modelfileJson = FLAGS_mjson;
+    _cmd.modelfileFeature = FLAGS_mfeature;
 
-		_cmd.saveNormalizerText = FLAGS_snt;
-		_cmd.saveCalibratorText = FLAGS_sct;
+    _cmd.saveNormalizerText = FLAGS_snt;
+    _cmd.saveCalibratorText = FLAGS_sct;
 
-		_cmd.num = FLAGS_num;
+    _cmd.num = FLAGS_num;
 
-		_cmd.numFolds = FLAGS_k;
-		_cmd.numRuns = FLAGS_nr;
+    _cmd.numFolds = FLAGS_k;
+    _cmd.numRuns = FLAGS_nr;
 
-		_cmd.selfTest = FLAGS_st;
-		_cmd.rankTest = FLAGS_rankTest;
-		_cmd.binaryClassificationTest = FLAGS_bcTest;
-		
-		_cmd.selfEvaluate = FLAGS_se;
-		_cmd.selfEvaluate2 = FLAGS_se2;
-		_cmd.evaluateFrequency = FLAGS_efreq;
-		_cmd.evaluateFraction = FLAGS_efrac;
+    _cmd.selfTest = FLAGS_st;
+    _cmd.rankTest = FLAGS_rankTest;
+    _cmd.binaryClassificationTest = FLAGS_bcTest;
+    
+    _cmd.selfEvaluate = FLAGS_se;
+    _cmd.selfEvaluate2 = FLAGS_se2;
+    _cmd.evaluateFrequency = FLAGS_efreq;
+    _cmd.evaluateFraction = FLAGS_efrac;
 
-		_cmd.earlyStop = FLAGS_early;
-		_cmd.earlyStopCheckFrequency = FLAGS_checkFreq;
-		_cmd.earlyStopRounds = FLAGS_stopRounds;
-		_cmd.earlyStopUseBestStage = FLAGS_useBestStage;
+    _cmd.earlyStop = FLAGS_early;
+    _cmd.earlyStopCheckFrequency = FLAGS_checkFreq;
+    _cmd.earlyStopRounds = FLAGS_stopRounds;
+    _cmd.earlyStopUseBestStage = FLAGS_useBestStage;
 
-		if (FLAGS_rs == 0)
-		{
-			FLAGS_rs = random_seed();
-			_cmd.fullArguments = " ";
-		}
-		_cmd.randSeed = FLAGS_rs;
+    if (FLAGS_rs == 0)
+    {
+      FLAGS_rs = random_seed();
+      _cmd.fullArguments = " ";
+    }
+    _cmd.randSeed = FLAGS_rs;
 
-		//_cmd.stratify = FLAGS_strat;
-		_cmd.numThreads = FLAGS_nt;
-		_cmd.foldsSequential = FLAGS_foldSeq;
-		_cmd.trainProportion = FLAGS_tp;
-		_cmd.bootStrap = FLAGS_bstrap;
+    //_cmd.stratify = FLAGS_strat;
+    _cmd.numThreads = FLAGS_nt;
+    _cmd.foldsSequential = FLAGS_foldSeq;
+    _cmd.trainProportion = FLAGS_tp;
+    _cmd.bootStrap = FLAGS_bstrap;
 
-		_cmd.normalizeFeatures = FLAGS_norm;
-		_cmd.normalizerName = FLAGS_normalizer;
+    _cmd.normalizeFeatures = FLAGS_norm;
+    _cmd.normalizerName = FLAGS_normalizer;
 
-		_cmd.calibratorName = FLAGS_calibrator;
+    _cmd.calibratorName = FLAGS_calibrator;
 
-		_cmd.featureName = FLAGS_fn;
+    _cmd.featureName = FLAGS_fn;
 
-		_cmd.resultDir = FLAGS_rd;
-		_cmd.resultIndex = FLAGS_ri;
-		_cmd.resultFile = FLAGS_rf;
+    _cmd.resultDir = FLAGS_rd;
+    _cmd.resultIndex = FLAGS_ri;
+    _cmd.resultFile = FLAGS_rf;
 
-		_cmd.preNormalize = FLAGS_pn;
-	
-		if (!FLAGS_ev.empty())
-		{
-			_cmd.evaluateScript = FLAGS_ev + " ";
-			Pval(_cmd.evaluateScript);
-		}
+    _cmd.preNormalize = FLAGS_pn;
+  
+    if (!FLAGS_ev.empty())
+    {
+      _cmd.evaluateScript = FLAGS_ev + " ";
+      Pval(_cmd.evaluateScript);
+    }
 
-		_cmd.evaluatorNames = FLAGS_evaluator;
-		_cmd.inputFileFormat = FLAGS_format;
-		_cmd.outputFileFormat = FLAGS_off;
+    _cmd.evaluatorNames = FLAGS_evaluator;
+    _cmd.inputFileFormat = FLAGS_format;
+    _cmd.outputFileFormat = FLAGS_off;
 
-		if (FLAGS_fast)
-		{
-			FLAGS_calibrate = false;
-		}
-	}
+    if (FLAGS_fast)
+    {
+      FLAGS_calibrate = false;
+    }
+  }
 } //end of namespace gezi
