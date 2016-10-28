@@ -303,22 +303,6 @@ namespace gezi {
 			_leafValue[leaf] = value;
 		}
 
-		map<int, Float> GainMap()
-		{
-			map<int, Float> m;
-			GainMap(m);
-			return m;
-		}
-
-		void GainMap(map<int, Float>& m)
-		{
-			int numInternals = NumLeaves - 1;
-			for (int n = 0; n < numInternals; n++)
-			{
-				add_value(m, _splitFeature[n], _splitGain[n]);
-			}
-		}
-
 		const int NumNodes() const
 		{
 			return NumLeaves - 1;

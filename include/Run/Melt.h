@@ -157,6 +157,10 @@ namespace gezi {
 
     TesterPtr GetTester(Instances& instances, PredictorPtr predictor)
     {
+      if (!_cmd.metricName.empty())
+      {
+        return PredictorUtils::CreateTester(_cmd.metricName);
+      }
       if (_cmd.rankTest && instances.IsRankingInstances())
       {
         return PredictorUtils::GetRankerTester();
@@ -577,24 +581,59 @@ namespace gezi {
       predictor->Save(_cmd.modelFolder);
     }
 
+    Instances GetTrainInstances()
+    {
+      auto instances = create_instances(_cmd.datafile);
+      if (_cmd.trainProportion < 1)
+      {
+        if (_cmd.bootStrap)
+        {
+          instances = InstancesUtil::GenBootstrapInstances(instances, RandomEngine(_cmd.randSeed), _cmd.trainProportion);
+        }
+        else
+        {
+          instances.ShrinkData(_cmd.trainProportion, RandomEngine(_cmd.randSeed));
+        }
+      }
+      CHECK_GT(instances.Count(), 0) << "Read 0 test instances, aborting experiment";
+      return instances;
+    }
+
+    Instances GetTestInstances()
+    {
+      //@TODO hack for text input format //Not tested correctness yet
+      InstanceParser::TextFormatParsedTime(); //++ pared text from time这样表示需要使用词表数据
+      string testDatafile = _cmd.testDatafile.empty() ? _cmd.datafile : _cmd.testDatafile;
+      auto testInstances = create_instances(testDatafile);
+      CHECK_GT(testInstances.Count(), 0) << "Read 0 test instances, aborting experiment";
+      return testInstances;
+    }
+
+    void GetTrainTestInstances(Instances& trainInstances, Instances& testInstances)
+    {
+      if (!_cmd.testDatafile.empty())
+      {
+        trainInstances = GetTrainInstances();
+        string testDatafile = _cmd.testDatafile;
+        testInstances = create_instances(testDatafile);
+      }
+      else
+      {
+        Float trainProportion = _cmd.trainProportion;
+        if (trainProportion >= 1)
+        {
+          LOG(WARNING) << "In train test mode but not set --test (test file name) and also not --tp(trainProportion) < 1, will use default trainProportion 0.8";
+          trainProportion = 0.8;
+        }
+        auto instances = create_instances(_cmd.datafile);
+        InstancesUtil::RandomSplit(instances, trainInstances, testInstances, trainProportion, _cmd.randSeed);
+      }
+    }
+
     PredictorPtr RunTrain(Instances& instances)
     {
       PredictorPtr predictor;
-      {
-        instances = create_instances(_cmd.datafile);
-        if (_cmd.trainProportion < 1)
-        {
-          if (_cmd.bootStrap)
-          {
-            instances = InstancesUtil::GenBootstrapInstances(instances, RandomEngine(_cmd.randSeed), _cmd.trainProportion);
-          }
-          else
-          {
-            instances.ShrinkData(_cmd.trainProportion, RandomEngine(_cmd.randSeed));
-          }
-        }
-        CHECK_GT(instances.Count(), 0) << "Read 0 test instances, aborting experiment";
-      }
+      instances = GetTrainInstances();
       predictor = Train(instances);
       return predictor;
     }
@@ -651,12 +690,7 @@ namespace gezi {
       //------test
       try_create_dir(_cmd.resultDir);
 
-      //@TODO hack for text input format //Not tested correctness yet
-      InstanceParser::TextFormatParsedTime(); //++ pared text from time这样表示需要使用词表数据
-      string testDatafile = _cmd.testDatafile.empty() ? _cmd.datafile : _cmd.testDatafile;
-      auto testInstances = create_instances(testDatafile);
-      CHECK_GT(testInstances.Count(), 0) << "Read 0 test instances, aborting experiment";
-
+      auto testInstances = GetTestInstances();
       RunTest(predictor, testInstances);
     }
 
@@ -677,15 +711,16 @@ namespace gezi {
     {
       Noticer nt("TrainTest!");
       PredictorPtr predictor;
+      Instances trainInstances, testInstances;
+      GetTrainTestInstances(trainInstances, testInstances);
       {
-        Instances instances;
-        predictor = RunTrain(instances);
+        predictor = RunTrain(trainInstances);
       }
       if (_cmd.modelfile)
       { //训练+测试模式 默认是不save模型的 需要自己打开
         SavePredictor(predictor);
       }
-      RunTest(predictor);
+      RunTest(predictor, testInstances);
     }
 
     void RunFeatureSelection()
@@ -711,21 +746,21 @@ namespace gezi {
     }
 
 #define  SAVE_SHARED_PTR_ALL(obj)\
-                                {\
+                                        {\
     SAVE_SHARED_PTR(obj, _cmd.modelFolder); \
     if (_cmd.modelfileXml)\
-                                {\
+                                        {\
     SAVE_SHARED_PTR_ASXML(obj, _cmd.modelFolder); \
-                                }\
+                                        }\
     if (_cmd.modelfileJson)\
-                                {\
+                                        {\
     SAVE_SHARED_PTR_ASJSON(obj, _cmd.modelFolder); \
-                                }\
+                                        }\
     if (_cmd.modelfileText)\
-                                {\
+                                        {\
     SAVE_SHARED_PTR_ASTEXT(obj, _cmd.modelFolder); \
-                                }\
-                                }
+                                        }\
+                                        }
 
     void RunAddFakeHeader()
     {
@@ -865,7 +900,7 @@ namespace gezi {
       }
       else if (fileFormat == FileFormat::Unknown)
       {
-        LOG(WARNING) << "Output fileFormat unknown, so just write instances directly to another file, should be like as <cp file1 file2>";
+        LOG(WARNING) << "Output fileFormat unknown, so use same format as input file, the result should be the same as input file except for -excl/-incl";
         fileFormat = instances.schema.fileFormat;
       }
       //else
@@ -1022,7 +1057,7 @@ namespace gezi {
         FileFormat fileFormat = kFormats[_cmd.outputFileFormat];
         for (int i = 0; i < partNum; i++)
         {
-          string suffix = STR(i) + "_" + STR(partNum);
+          string suffix = STR(partNum) + "_" + STR(i);
           string outfile = GetOutputFileNameWithSuffix(infile, suffix);
           {
             string suffix = kFormatSuffixes[fileFormat];

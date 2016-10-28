@@ -57,6 +57,7 @@ namespace gezi {
     bool selfTest = false; //st| when -c train will test the train data its self after training
     bool rankTest = false; //if instances is ranking instances and rankTest is ture, then will use RankTester even if not ranking learner like gbdt classification
     bool binaryClassificationTest = false; //if set true, will force to use binary classification tester
+    string metricName = "";  //metric
 
     bool selfEvaluate = false; //se|when trainer is validatingTrainer, will self evaluate during training
     bool selfEvaluate2 = false;

@@ -256,7 +256,7 @@ namespace gezi {
 			{
 				std::cerr << "Per_feature_gain" << std::endl;
 				std::cerr << _ensemble.ToGainSummary(TrainSet.Features, _args->maxFeaturesShow);
-				std::cerr << "Per_feature_gain_end";
+				std::cerr << "Per_feature_gain_end" << std::endl;
 			}
 		}
 
@@ -264,7 +264,7 @@ namespace gezi {
 		{
 			VLOG(5) << "Train in gbdt";
 			ParseArgs();
-			VLOG(0) << "TrainParam: [" << GetParam() << " ]" << endl;
+			VLOG(0) << "TrainParam: [" << GetParam() << " ]";
 			InnerTrain(instances);
 			Finalize(instances);
 		}

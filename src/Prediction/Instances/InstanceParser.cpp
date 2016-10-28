@@ -38,29 +38,38 @@ DEFINE_double(spthre, 0.5, "sparsifyThre");
 
 DECLARE_string(format);
 DECLARE_string(rd);
+DECLARE_bool(rankTest);
 
 namespace gezi {
 
-	void InstanceParser::ParseArguments()
-	{
-		_args.labelIdx = FLAGS_label;
-		_args.weightIdx = FLAGS_weight;
-		_args.namesIdx = FLAGS_name;
-		_args.attrsIdx = FLAGS_attr;
-		_args.groupsIdx = FLAGS_group;
-		_args.hasHeader = FLAGS_header;
-		_args.sep = FLAGS_sep;
-		_args.ncsep = FLAGS_ncsep;
-		_args.excl = FLAGS_excl;
-		_args.incl = FLAGS_incl;
-		_args.keepSparse = FLAGS_sparse;
-		_args.keepDense = FLAGS_dense;
-		_args.sparsifyThre = FLAGS_spthre;
-		_args.inputFormat = FLAGS_format;
-		_args.resultDir = FLAGS_rd;
-		_args.libsvmStartIndex = FLAGS_libsvmSI;
-		_args.cacheInstance = FLAGS_cacheInst;
-	}
+  void InstanceParser::ParseArguments()
+  {
+    _args.labelIdx = FLAGS_label;
+    _args.weightIdx = FLAGS_weight;
+    _args.namesIdx = FLAGS_name;
+    _args.attrsIdx = FLAGS_attr;
+    if (FLAGS_rankTest & FLAGS_group.empty())
+    {
+      LOG(WARNING) << "Using rankTest and not set --group by default will use first column as groupKey";
+      _args.groupsIdx = "0";
+    }
+    else
+    {
+      _args.groupsIdx = FLAGS_group;
+    }
+    _args.hasHeader = FLAGS_header;
+    _args.sep = FLAGS_sep;
+    _args.ncsep = FLAGS_ncsep;
+    _args.excl = FLAGS_excl;
+    _args.incl = FLAGS_incl;
+    _args.keepSparse = FLAGS_sparse;
+    _args.keepDense = FLAGS_dense;
+    _args.sparsifyThre = FLAGS_spthre;
+    _args.inputFormat = FLAGS_format;
+    _args.resultDir = FLAGS_rd;
+    _args.libsvmStartIndex = FLAGS_libsvmSI;
+    _args.cacheInstance = FLAGS_cacheInst;
+  }
 
 }  //----end of namespace gezi
 

@@ -68,6 +68,8 @@ DEFINE_bool(st, false, "selftTest: when -c train will test the train data its se
 DEFINE_bool(rankTest, false, "if instances is ranking instances and rankTest is ture, then will use RankTester even if not ranking learner like gbdt classification");
 DEFINE_bool(bcTest, false, "if set true, will force to use binary classification tester");
 
+DEFINE_string(metric, "", "if set will use specfic metric for test, (binary, multi, regression, rank)");
+
 
 //@FIXME
 //DEFINE_string(ev, "/home/users/chenghuige/rsc/app/search/sep/anti-spam/melt/tools3/evaluate/evaluate", "evaluate: use what to evalute the result, notice if not find this one will try to use local evaluate");
@@ -120,6 +122,7 @@ namespace gezi {
     _cmd.selfTest = FLAGS_st;
     _cmd.rankTest = FLAGS_rankTest;
     _cmd.binaryClassificationTest = FLAGS_bcTest;
+    _cmd.metricName = FLAGS_metric;
     
     _cmd.selfEvaluate = FLAGS_se;
     _cmd.selfEvaluate2 = FLAGS_se2;
