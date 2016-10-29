@@ -436,7 +436,7 @@ namespace gezi {
 					{ // pick a slot
 						if (_weightUpdates.size() < _args.sampleSize)
 						{
-							_weightUpdates.emplace_back(currentWeightUpdate);
+							_weightUpdates.emplace_back(move(currentWeightUpdate));
 							_biasUpdates.push_back(currentBiasUpdate);
 						}
 						else

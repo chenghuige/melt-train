@@ -36,6 +36,8 @@ DEFINE_bool(sparse, false, "keep sparse");
 DEFINE_bool(dense, false, "keep dense");
 DEFINE_double(spthre, 0.5, "sparsifyThre");
 
+DEFINE_string(featureNameFile, "feature_name.txt", "");
+
 DECLARE_string(format);
 DECLARE_string(rd);
 DECLARE_bool(rankTest);
@@ -69,6 +71,8 @@ namespace gezi {
     _args.resultDir = FLAGS_rd;
     _args.libsvmStartIndex = FLAGS_libsvmSI;
     _args.cacheInstance = FLAGS_cacheInst;
+
+    _args.featureNameFile = FLAGS_featureNameFile;
   }
 
 }  //----end of namespace gezi

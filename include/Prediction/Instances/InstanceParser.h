@@ -108,6 +108,7 @@ namespace gezi {
       double sparsifyThre = 0.5;
       string resultDir = "";//rd|
       bool cacheInstance = false;//|if cacheInsantce will seralize instance as binary
+      string featureNameFile;
     };
 
     InstanceParser()
@@ -123,7 +124,7 @@ namespace gezi {
       _instances.name = dataFile;
       Parse_(dataFile);
       Finallize();
-      
+
       if (printInfo)
       {
         PrintInfo();
@@ -301,7 +302,7 @@ namespace gezi {
       set<string> s(t.begin(), t.end());
       if (pattern == "e")
       { //exact
-        for (int i = 0; i < _featureNum; i++)
+        for (int i = 0; i < _numFeatures; i++)
         {
           if (s.count(_instances.schema.featureNames[i]))
           {
@@ -311,7 +312,7 @@ namespace gezi {
       }
       else if (pattern == "s")
       { //substr
-        for (int i = 0; i < _featureNum; i++)
+        for (int i = 0; i < _numFeatures; i++)
         {
           for (auto p : s)
           {
@@ -326,7 +327,7 @@ namespace gezi {
       { //regex
         RegexSearcher rs;
         rs.add(s);
-        for (int i = 0; i < _featureNum; i++)
+        for (int i = 0; i < _numFeatures; i++)
         {
           if (rs.has_match(_instances.schema.featureNames[i]))
           {
@@ -354,7 +355,7 @@ namespace gezi {
         }
         else
         {
-          filterArray.resize(_featureNum, false);
+          filterArray.resize(_numFeatures, false);
 
           if (incls.size() > 100)
           {
@@ -390,7 +391,7 @@ namespace gezi {
         {
           if (filterArray.empty())
           {
-            filterArray.resize(_featureNum, true);
+            filterArray.resize(_numFeatures, true);
           }
 
           if (excls.size() > 100)
@@ -418,18 +419,23 @@ namespace gezi {
 
       if (filterArray.empty())
       {
-        filterArray.resize(_featureNum, true);
+        filterArray.resize(_numFeatures, true);
       }
 
       return filterArray;
     }
 
-    bool IsSparse()
+    bool IsSparse() const
     {
       return !IsDense();
     }
 
-    bool IsDense()
+    bool IsDense() const
+    {
+      return _fileFormat == FileFormat::Dense;
+    }
+
+    bool IsDenseFormat() const
     {
       return _fileFormat == FileFormat::Dense;
     }
@@ -553,7 +559,7 @@ namespace gezi {
             _instances.schema.groupKeys.push_back(_headerColums[i]);
           }
         }
-        _featureNum = _instances.FeatureNum();
+        _numFeatures = _instances.NumFeatures();
       }
       else
       { //需要统计特征数目
@@ -569,18 +575,23 @@ namespace gezi {
               numFeatures++;
             }
           }
-          _featureNum = numFeatures;
+          _numFeatures = numFeatures;
         }
         //else if (_fileFormat == FileFormat::Sparse)
-        //{ //注意已经解析首个数据行 获取到 特征数目了(_featureNum) 但是注意 SparseNoLength, Text获取不到
-          //_instances.schema.featureNames.reserve(_featureNum);
-          //for (int i = 0; i < _featureNum; i++) //@TODO may exceed int capacity
-          //{
-          //	string name = format("f{}", i);
-          //	_instances.schema.featureNames.push_back(name);
-          //}
+        //{ //注意已经解析首个数据行 获取到 特征数目了(_numFeatures) 但是注意 SparseNoLength, Text获取不到
+        //_instances.schema.featureNames.reserve(_numFeatures);
+        //for (int i = 0; i < _numFeatures; i++) //@TODO may exceed int capacity
+        //{
+        //	string name = format("f{}", i);
+        //	_instances.schema.featureNames.push_back(name);
         //}
-        _instances.schema.featureNames.SetNumFeatures(_featureNum); //@NOTICE
+        //}
+
+        {//try to load from default feature name file
+          VLOG(0) << "Try load feature names from " << _args.featureNameFile;
+          _instances.schema.featureNames.Load(_args.featureNameFile);
+          _instances.schema.featureNames.SetNumFeatures(_numFeatures);
+        }
         {
           for (auto index : _namesIdx)
           {
@@ -616,7 +627,7 @@ namespace gezi {
       for (uint64 i = start; i < end; i++)
       {
         string line = lines[i];
-        _instances[i - start] = make_shared<Instance>(_featureNum);
+        _instances[i - start] = make_shared<Instance>(_numFeatures);
         Instance& instance = *_instances[i - start];
         Vector& features = instance.features;
         features.PrepareDense();
@@ -771,7 +782,7 @@ namespace gezi {
       for (uint64 i = start; i < end; i++)
       {
         string line = lines[i];
-        _instances[i - start] = make_shared<Instance>(_featureNum);
+        _instances[i - start] = make_shared<Instance>(_numFeatures);
         Instance& instance = *_instances[i - start];
         Vector& features = instance.features;
         if (_groupsIdx.empty())
@@ -949,9 +960,9 @@ namespace gezi {
         //					}
         //				}
       }
-      _featureNum = maxIndex + 1;
-      Rabit::Allreduce<op::Max>(_featureNum);
-      _instances.schema.featureNames.SetNumFeatures(_featureNum);
+      _numFeatures = maxIndex + 1;
+      Rabit::Allreduce<op::Max>(_numFeatures);
+      _instances.schema.featureNames.SetNumFeatures(_numFeatures);
     }
 
     FileFormat GetFileFormat(string line)
@@ -990,7 +1001,7 @@ namespace gezi {
           {
             if (contains(_firstColums[j], ':'))
             {
-              _featureNum = INT(_firstColums[i]); //sparse格式解析出特征数目！ @IMPORTANT
+              _numFeatures = INT(_firstColums[i]); //sparse格式解析出特征数目！ @IMPORTANT
               _columnTypes[i] = ColumnType::Attribute;
               return FileFormat::Sparse;
             }
@@ -1043,7 +1054,7 @@ namespace gezi {
       //VLOG(2) << format("InitColumnTypes time: {}", timer.elapsed_ms());
       //timer.restart();
 
-      
+
       if (_fileFormat == FileFormat::Unknown)
       {
         _fileFormat = kFormats[_format];
@@ -1067,7 +1078,7 @@ namespace gezi {
     void PrintInfo()
     {
       Pval(kFormatNames[_fileFormat]);
-      Pval(_instances.FeatureNum());
+      Pval(_instances.NumFeatures());
       Pval(_instances.Count());
       uint64 positiveCount = _instances.PositiveCount();
       Pval(positiveCount);
@@ -1099,20 +1110,14 @@ namespace gezi {
       uint64 denseCount = _instances.DenseCount();
       Float denseRatio = denseCount / (double)_instances.Count();
       Pval2(denseCount, denseRatio);
-
-      PVEC(_instances.schema.tagNames);
-      PVEC(_instances.schema.attributeNames);
-      PVAL(IsDense());
-      if (IsDense())
-      {
-        PVEC(_instances.schema.featureNames);
-      }
-      else
-      {
-        PVEC_TOPN(_instances.schema.featureNames, 10);
-      }
-      PVAL(_args.keepSparse);
-      PVAL(_args.keepDense);
+      Pval(IsDenseFormat());
+      Pvec(_instances.schema.tagNames);
+      Pvec(_instances.schema.attributeNames);
+      Pvec(_instances.schema.groupKeys);
+      Pvec_TopN(_instances.schema.featureNames, 10);
+      Pval(_instances.schema.featureNames.NumFeatureNames());
+      Pval_1(_args.keepSparse);
+      Pval_1(_args.keepDense);
     }
 
     char GuessSeparator(string line, string seps)
@@ -1197,7 +1202,7 @@ namespace gezi {
       for (uint64 i = start; i < end; i++)
       {
         string line = boost::trim_right_copy(lines[i]);
-        _instances[i - start] = make_shared<Instance>(_featureNum);
+        _instances[i - start] = make_shared<Instance>(_numFeatures);
         Instance& instance = *_instances[i - start];
         Vector& features = instance.features;
         if (_groupsIdx.empty())
@@ -1262,9 +1267,9 @@ namespace gezi {
         //					features.Add(index - 1, value); //libsvm 是1开始 melt/tlc内部0开始处理
         //				}
       }
-      _featureNum = _args.libsvmStartIndex == 1 ? maxIndex : maxIndex + 1;
-      Rabit::Allreduce<op::Max>(_featureNum);
-      _instances.schema.featureNames.SetNumFeatures(_featureNum);
+      _numFeatures = _args.libsvmStartIndex == 1 ? maxIndex : maxIndex + 1;
+      Rabit::Allreduce<op::Max>(_numFeatures);
+      _instances.schema.featureNames.SetNumFeatures(_numFeatures);
     }
 
     //针对malloc rank格式数据的 分割解析函数
@@ -1319,7 +1324,7 @@ namespace gezi {
       for (uint64 i = start; i < end; i++)
       {
         string line = boost::trim_right_copy(lines[i]);
-        _instances[i - start] = make_shared<Instance>(_featureNum);
+        _instances[i - start] = make_shared<Instance>(_numFeatures);
         Instance& instance = *_instances[i - start];
         Vector& features = instance.features;
 
@@ -1340,9 +1345,9 @@ namespace gezi {
         });
         instance.groupKey = gezi::join(groupKeys, _args.ncsep);
       }
-      _featureNum = maxIndex;
-      Rabit::Allreduce<op::Max>(_featureNum);
-      _instances.schema.featureNames.SetNumFeatures(_featureNum);
+      _numFeatures = maxIndex;
+      Rabit::Allreduce<op::Max>(_numFeatures);
+      _instances.schema.featureNames.SetNumFeatures(_numFeatures);
     }
 
     void CreateInstancesFromVWFormat(const svec& lines, uint64 start)
@@ -1351,7 +1356,7 @@ namespace gezi {
       uint64 end = start + _instanceNum;
       for (uint64 i = start; i < end; i++)
       {
-        _instances[i - start] = make_shared<Instance>(_featureNum);
+        _instances[i - start] = make_shared<Instance>(_numFeatures);
         Instance& instance = *_instances[i - start];
         instance.line = lines[i];
         instance.label = lines[i][0] == '1' ? 1 : -1;
@@ -1449,7 +1454,7 @@ namespace gezi {
         //					}
         //				}
       }
-      _featureNum = GetIdentifer().size();
+      _numFeatures = GetIdentifer().size();
       SetTextFeatureNames();
       GetIdentifer().Save(_args.resultDir + "/identifer.bin");
     }
@@ -1458,13 +1463,13 @@ namespace gezi {
     void ParseTextForTest(const svec& lines, uint64 start)
     {
       VLOG(0) << "ParseTextForTest";
-      _featureNum = GetIdentifer().size();
-      if (_featureNum == 0)
+      _numFeatures = GetIdentifer().size();
+      if (_numFeatures == 0)
       { //可能RunTest模式 需要加载词表
         string path = _args.resultDir + "/identifer.bin";
         InstanceParser::GetIdentifer().Load(path);
-        _featureNum = GetIdentifer().size();
-        CHECK(_featureNum != 0) << "No identifer in memory or to load from disk " << path;
+        _numFeatures = GetIdentifer().size();
+        CHECK(_numFeatures != 0) << "No identifer in memory or to load from disk " << path;
       }
 
       SetTextFeatureNames();
@@ -1473,7 +1478,7 @@ namespace gezi {
       for (uint64 i = start; i < end; i++)
       {
         string line = lines[i];
-        _instances[i - start] = make_shared<Instance>(_featureNum);
+        _instances[i - start] = make_shared<Instance>(_numFeatures);
         Instance& instance = *_instances[i - start];
         Vector& features = instance.features;
         if (_groupsIdx.empty())
@@ -1623,9 +1628,9 @@ namespace gezi {
 
     //------for malloc rank data format   #    label, qid:0  libsvm-features
     void TryAdaptForMallocRankFormat(svec& lines)
-    { 
+    {
       //malloc rank需要自动解析 不带任何其他输入信息
-      if (_args.namesIdx.empty() && _args.attrsIdx.empty() 
+      if (_args.namesIdx.empty() && _args.attrsIdx.empty()
         && _args.labelIdx == -1 &&
         _args.groupsIdx.empty() && gezi::contains(lines[0], "qid:"))
       {
@@ -1676,11 +1681,11 @@ namespace gezi {
       PVAL_(timer.elapsed_ms(), "ParseFirstLine");
 
       timer.restart();
-      if (_featureNum == 0)
+      if (_numFeatures == 0)
       { //如果是没有指明Length的文本格式包括libsvm格式 都是没有指明 这时候仍然不确定特征数目
         //尝试设置一个较大的默认值 后续会再修正的 注意过滤的时候不要按照匹配了 按照index设定
         //libsvm格式的也按照melt标准0开始匹配
-        _featureNum = std::numeric_limits<int>::max();
+        _numFeatures = std::numeric_limits<int>::max();
       }
       {
         _selectedArray = GetSelectedArray();
@@ -1759,7 +1764,7 @@ namespace gezi {
           _instances[i]->name = _instances[i]->name.substr(1);
         }
         Vector& features = _instances[i]->features;
-        features.SetLength(_featureNum);
+        features.SetLength(_numFeatures);
 
         //--尝试稠密稀疏的转换
         if (features.IsDense())
@@ -1801,7 +1806,7 @@ namespace gezi {
   private:
     Instances _instances;
     uint64 _instanceNum = 0;
-    int _featureNum = 0;
+    int _numFeatures = 0;
     bool _hasHeader = false;
     bool _hasWeight = false;
     FileFormat _fileFormat = FileFormat::Unknown;

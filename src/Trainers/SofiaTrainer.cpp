@@ -279,7 +279,7 @@ namespace gezi {
 			instance->features.ForEach([&](int index, Float value) {
 				sfVec.PushPair(index + 1, value);
 			});
-			vec.emplace_back(sfVec);
+			vec.emplace_back(move(sfVec));
 		}
 		return sfDataSet;
 	}

@@ -43,19 +43,19 @@ namespace gezi {
       vector<OnlineRegressionTree> trees;
       for (auto& tree : _trees)
       {
-        trees.emplace_back((OnlineRegressionTree)tree);
+        trees.emplace_back(move((OnlineRegressionTree)tree));
       }
       return trees;
     }
 
     void AddTree(RegressionTree& tree) //@TODO RegressionTree&& ? python wrapper ok?
     {
-      _trees.emplace_back(tree);
+      _trees.emplace_back(move(tree));
     }
 
     void AddTreeAt(RegressionTree& tree, int index)
     {
-      _trees.emplace(_trees.begin() + index, tree);
+      _trees.emplace(_trees.begin() + index, move(tree));
     }
 
     template<typename T>
