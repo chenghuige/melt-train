@@ -41,7 +41,7 @@ DEFINE_int32(stopRounds, 10, "earlyStopRounds| will stop after no performance ga
 DEFINE_bool(useBestStage, false, "If setting useBestStage will return to best stage state for model");
 
 DEFINE_string(m, "model", "modelFolder/or modelPath");
-DEFINE_string(mn, "modelName", "for test mode, if set modelName, also means model is modelPath");
+DEFINE_string(mn, "", "for test mode, if set modelName, also means model is modelPath");
 DEFINE_bool(mcustom, false, "model using custom/handwrite save and load now only gbdt support");
 DEFINE_bool(mf, false, " modelfile: Gen model file? (for TrainTest)");
 DEFINE_bool(mc, false, " modelfileCode: Gen model file to save in C++ code £¿ (for Train or TrainTest)");
@@ -54,7 +54,8 @@ DEFINE_bool(snt, false, "saveNormalizerText: wether save normalizer as text/xml/
 DEFINE_bool(sct, false, "saveCalibratorText: wether save calibrator as text/xml/json");
 
 DEFINE_string(rd, "./result", "resultDir: where to put the result data");
-DEFINE_string(rf, "", "resultFile: not used in cross validation which use resultDir only, can be used in test or train-test, if set FLAGS_rf than will write result to resultFile instead of to resultDir/0.inst.txt or resultDir/n.inst.txt if you set Flags_ri");
+DEFINE_string(rf, "", "resultFile: not used in cross validation which use resultDir only, can be used in test or train-test, if set FLAGS_rf than will write result to resultFile instead of to resultDir/0.inst.txt or resultDir/n.inst.txt");
+DEFINE_bool(wr, true, "write result or not");
 DEFINE_int32(ri, 0, "resultIndex: the name ouf out file like 0.model.txt 0.model 0.inst.txt");
 
 DEFINE_uint64(num, 0, "choose num instances or use as other number realted meaning");
@@ -156,6 +157,7 @@ namespace gezi {
 
     _cmd.resultDir = FLAGS_rd;
     _cmd.resultIndex = FLAGS_ri;
+    _cmd.writeResult = FLAGS_wr;
     _cmd.resultFile = FLAGS_rf;
 
     _cmd.preNormalize = FLAGS_pn;

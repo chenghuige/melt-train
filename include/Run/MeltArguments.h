@@ -69,11 +69,12 @@ namespace gezi {
     int earlyStopRounds = 10;
     bool earlyStopUseBestStage = false;
 
-    string modelDir = "";
+    string modelDir = ""; //m|
     string outDir = "";
-    string resultDir = "./result";
-    string resultFile = "";
-    int resultIndex = 0;
+    string resultDir = "./result"; //rd|
+    string resultFile = ""; //rf|
+    bool writeResult = true; //wr|wether to write result file
+    int resultIndex = 0; //ri|
 
     string evaluateScript = "";
 

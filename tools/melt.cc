@@ -92,7 +92,6 @@ int main(int argc, char *argv[])
   melt.Cmd().fullArguments = melt.Cmd().fullArguments.empty() ? 
     gezi::join(args) :
     format("{} -rs {}", gezi::join(args), melt.Cmd().randSeed);
-  try_create_dir(melt.Cmd().resultDir);
   melt.RunExperiments();
   return 0;
 }

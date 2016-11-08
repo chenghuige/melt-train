@@ -591,6 +591,8 @@ namespace gezi {
           VLOG(0) << "Try load feature names from " << _args.featureNameFile;
           _instances.schema.featureNames.Load(_args.featureNameFile);
           _instances.schema.featureNames.SetNumFeatures(_numFeatures);
+          Pval_1(_instances.schema.featureNames.NumFeatures());
+          Pval_1(_instances.schema.featureNames.NumFeatureNames());
         }
         {
           for (auto index : _namesIdx)
@@ -1114,7 +1116,8 @@ namespace gezi {
       Pvec(_instances.schema.tagNames);
       Pvec(_instances.schema.attributeNames);
       Pvec(_instances.schema.groupKeys);
-      Pvec_TopN(_instances.schema.featureNames, 10);
+      Pvec_LastN(_instances.schema.featureNames, 10);
+      Pval(_instances.schema.featureNames.NumFeatures());
       Pval(_instances.schema.featureNames.NumFeatureNames());
       Pval_1(_args.keepSparse);
       Pval_1(_args.keepDense);

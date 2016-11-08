@@ -179,11 +179,19 @@ namespace gezi {
     {
       //--------------------------- 输出文件头
       string fullInstFile = _cmd.resultDir + "/" + STR(_cmd.resultIndex) + ".inst.txt";
-      VLOG(0) << "Writting instance predict file to " << fullInstFile;
+      if (!_cmd.writeResult)
+      {
+        fullInstFile = "";
+        VLOG(0) << "RunCrossValidation without saving inst file";
+      }
+      else
+      {
+        try_create_dir(_cmd.resultDir);
+        VLOG(0) << "Writting instance predict file to " << fullInstFile;
+      }
       ofstream ofs; //如果 cvType == CrossValidationType::USE_SCRIPT  使用
       if (cvType == CrossValidationType::USE_SCRIPT || cvType == CrossValidationType::DEFAULT)
       {
-        try_create_dir(_cmd.resultDir);
         if (cvType == CrossValidationType::USE_SCRIPT)
         {
           ofs.open(fullInstFile);
@@ -221,6 +229,10 @@ namespace gezi {
           VLOG(0) << "Cross validaion foldIdx " << foldIdx;
           string instfile = format("{}/{}_{}_{}.inst.txt", _cmd.resultDir, _cmd.resultIndex
             , runIdx, foldIdx);
+          if (!_cmd.writeResult)
+          {
+            instfile = "";
+          }
 
           Instances trainData, testData;
           //只是trainProportion < 1 才需要rng
@@ -330,7 +342,10 @@ namespace gezi {
 
     void WriteInstFileHeader(ofstream& ofs)
     {
-      ofs << "Instance\tTrue\tAssigned\tOutput\tProbability" << endl;
+      if (ofs.is_open())
+      {
+        ofs << "Instance\tTrue\tAssigned\tOutput\tProbability" << endl;
+      }
     }
 
     //------------------depreated 当前只是二分类支持这个 应该都走 tester->Test,当前保留只是为了二分类同时使用evaluate.py这样的外部脚本
@@ -368,10 +383,12 @@ namespace gezi {
         }
 
         int assigned = output > 0 ? 1 : 0;
-        ofs << name << "\t" << instance->label << "\t"
-          << assigned << "\t" << output << "\t"
-          << probability << endl;
-
+        if (ofs.is_open())
+        {
+          ofs << name << "\t" << instance->label << "\t"
+            << assigned << "\t" << output << "\t"
+            << probability << endl;
+        }
         idx++;
       }
     }
@@ -392,6 +409,8 @@ namespace gezi {
         }
 
         int assigned = output > 0 ? 1 : 0;
+        if (ofs.is_open())
+        {
 #pragma  omp critical
         {
           ofs << name << "\t" << instance->label << "\t"
@@ -401,6 +420,7 @@ namespace gezi {
         currentOfs << name << "\t" << instance->label << "\t"
           << assigned << "\t" << output << "\t"
           << probability << endl;
+        }
 
         idx++;
       }
@@ -660,7 +680,16 @@ namespace gezi {
     void RunTest(PredictorPtr predictor, Instances& testInstances)
     {
       string instFile = _cmd.resultFile.empty() ? format("{}/{}.inst.txt", _cmd.resultDir, _cmd.resultIndex) : _cmd.resultFile;
-      VLOG(0) << "Test " << testInstances.name << " and writting instance predict file to " << instFile;
+      if (!_cmd.writeResult)
+      {
+        instFile = "";
+        VLOG(0) << "Test " << testInstances.name << " but not writting instance predict file";
+      }
+      else
+      {
+        try_create_dir(_cmd.resultDir);
+        VLOG(0) << "Test " << testInstances.name << " and writting instance predict file to " << instFile;
+      }
       if (!_cmd.evaluatorNames.empty())
       {//多次test,确保testInstances不被改变
         predictor->SetNormalizeCopy();
@@ -688,8 +717,6 @@ namespace gezi {
     void RunTest(PredictorPtr predictor)
     {
       //------test
-      try_create_dir(_cmd.resultDir);
-
       auto testInstances = GetTestInstances();
       RunTest(predictor, testInstances);
     }
